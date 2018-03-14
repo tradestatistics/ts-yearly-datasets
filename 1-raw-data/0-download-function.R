@@ -24,13 +24,17 @@ download <- function() {
   message("Paste UN COMTRADE token (or press ESC if you don't have a token)")
   token <- readline(prompt = "token: ")
   
-  message(
-    "\n (1) HS rev 1992\n (2) HS rev 1996\n (3) HS rev 2002\n (4) HS rev 2007\n (5) HS rev 2012\n (6) SITC rev 2 "
+  download_data_rev <- menu(
+    c("HS rev 1992", "HS rev 1996", "HS rev 2002", "HS rev 2007", "HS rev 2012", "SITC rev 2"),
+    title = "Select dataset:", 
+    graphics = T
   )
-  
-  download_data_rev <- readline(prompt = "Select dataset: ")
 
-  remove_old_files <- readline(prompt = "Remove old files (y/n): ")
+  remove_old_files <- menu(
+    c("yes", "no"), 
+    title = "Remove old files (y/n):",
+    graphics = T
+  )
   
   # input validation --------------------------------------------------------
   
@@ -144,7 +148,7 @@ download <- function() {
   
   data_downloading <- function(t) {
     Sys.sleep(sample(seq(2, 4, by=1), 1))
-    if (remove_old_files == "y" & (links$local_file_date[[t]] < links$server_file_date[[t]]) & !is.na(links$old_file[[t]])) {
+    if (remove_old_files == 1 & (links$local_file_date[[t]] < links$server_file_date[[t]]) & !is.na(links$old_file[[t]])) {
       try(file.remove(links$old_file[[t]]))
     }
     if (!file.exists(links$new_file[[t]])) {

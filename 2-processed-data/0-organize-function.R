@@ -21,11 +21,11 @@ organize <- function(compress_output = T) {
   )
   readline(prompt = "Press [enter] to continue")
   
-  message(
-    "\n (1) HS rev 1992\n (2) HS rev 1996\n (3) HS rev 2002\n (4) HS rev 2007\n (5) HS rev 2012\n (6) SITC rev 2 "
+  dataset <- menu(
+    c("HS rev 1992", "HS rev 1996", "HS rev 2002", "HS rev 2007", "HS rev 2012", "SITC rev 2"),
+    title = "Select dataset:", 
+    graphics = T
   )
-  
-  dataset <- readline(prompt = "Select dataset: ")
   
   # input validation --------------------------------------------------------
   
