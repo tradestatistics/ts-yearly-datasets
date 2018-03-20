@@ -21,9 +21,6 @@ download <- function() {
   )
   readline(prompt = "Press [enter] to continue")
   
-  message("Paste UN COMTRADE token (or press ESC if you don't have a token)")
-  token <- readline(prompt = "token: ")
-  
   download_data_rev <- menu(
     c("HS rev 1992", "HS rev 1996", "HS rev 2002", "HS rev 2007", "HS rev 2012", "SITC rev 2"),
     title = "Select dataset:", 
@@ -36,15 +33,7 @@ download <- function() {
     graphics = T
   )
   
-  # input validation --------------------------------------------------------
-  
-  if (!download_data_rev %in% 1:6) {
-    stop("Only numeric values are valid for dataset selection.")
-  }
-  
-  if (!download_data_rev %in% c("y","n")) {
-    stop("Only yes/no values are valid for remove old files option.")
-  }
+  token <- rstudioapi::askForPassword(prompt = "Paste UN COMTRADE token (or press cancel if you don't have a token)")
   
   # packages ----------------------------------------------------------------
 
