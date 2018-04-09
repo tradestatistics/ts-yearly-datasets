@@ -53,7 +53,7 @@ organize <- function(compress_output = T) {
   if (dataset == 5) { rev <- 2012 }
   if (dataset == 6) { rev <- 2 }
   
-  if (classification == "sitc" & rev == 2) { years <- 2000:2016 }
+  if (classification == "sitc" & rev == 2) { years <- 1990:2016 }
   if (classification == "hs") { years <- rev:2016 }
   
   # number of digits --------------------------------------------------------
@@ -62,14 +62,14 @@ organize <- function(compress_output = T) {
   
   # input dirs --------------------------------------------------------------
   
-  raw_dir <- "1-raw-dir"
-  raw_zip_dir <- paste0(raw_dir, "/", classification, "-rev", rev, "/zip")
-  raw_csv_dir <- paste0(raw_dir, "/", classification, "-rev", rev, "/csv")
-  
+  raw_dir <- "1-raw-data"
+  raw_zip_dir <- sprintf("%s/%s-rev%s/zip", raw_dir, classification, rev)
+  raw_csv_dir <- sprintf("%s/%s-rev%s/csv", raw_dir, classification, rev)
+
   # output dirs -------------------------------------------------------------
 
   data_dir <- "2-processed-data"
-  rev_dir <- paste0(data_dir, "/", classification, "-rev", rev)
+  rev_dir <- sprintf("%s/%s-rev%s", data_dir, classification, rev)
   try(dir.create(rev_dir))
   
   # helpers -----------------------------------------------------------------
@@ -85,7 +85,7 @@ organize <- function(compress_output = T) {
     } else {
       messageline()
       message(paste("Unzipping", raw_zip_list[[t]]))
-      system(paste0("7z e -aos ", raw_zip_list[[t]], " -oc:", raw_csv_dir))
+      system(sprintf("7z e -aos %s -oc:%s", raw_zip_list[[t]], raw_csv_dir))
     }
   }
   
@@ -127,8 +127,8 @@ organize <- function(compress_output = T) {
   
   # list output files -------------------------------------------------------
 
-  verified_feather_list <- paste0(rev_dir, "/", classification, "-rev", rev, "-", years, ".feather")
-  
+  verified_feather_list <- sprintf("%s/%s-rev%s-%s.feather", rev_dir, classification, rev, years)
+
   verified_zip_list <- verified_feather_list %>%
     gsub("feather", "zip", .)
   
@@ -149,15 +149,13 @@ organize <- function(compress_output = T) {
       messageline()
       message(paste("Dividing year", years[[t]]))
       
-      raw_csv <- fread2(raw_csv_list[[t]]) %>% 
+      # clean data --------------------------------------------------------------
+
+      verified_feather <- fread2(raw_csv_list[[t]]) %>% 
         rename(trade_value_usd = trade_value_us) %>% 
         select(trade_flow, reporter_iso, partner_iso, aggregate_level, commodity_code, trade_value_usd, netweight_kg) %>% 
-        filter(
-          aggregate_level %in% J
-        ) %>% 
-        filter(
-          trade_flow == "Export" | trade_flow == "Import"
-        ) %>%
+        filter(aggregate_level %in% J) %>% 
+        filter(trade_flow == "Export" | trade_flow == "Import") %>%
         filter(
           !is.na(reporter_iso),
           !is.na(partner_iso),
@@ -169,56 +167,75 @@ organize <- function(compress_output = T) {
         mutate(
           reporter_iso = tolower(reporter_iso),
           partner_iso = tolower(partner_iso)
-        )
-      
-      usd_spread <- raw_csv %>% 
-        select(-c(aggregate_level, netweight_kg)) %>% 
-        spread(trade_flow, trade_value_usd) %>% 
-        rename(export_usd = Export, import_usd = Import) %>% 
+        ) %>% 
+        filter(
+          reporter_iso != "sxm", 
+          partner_iso != "sxm", # San Marino is "smr" and not "sxm"
+          reporter_iso != "wld", 
+          partner_iso != "wld" # the World (wld) is not needed as the OEC aggregates and computes total trade
+        ) %>%
         mutate(year = years[[t]]) %>%
         select(year, everything())
       
-      kg_spread <- raw_csv %>% 
-        select(-c(aggregate_level, trade_value_usd)) %>% 
-        spread(trade_flow, netweight_kg) %>% 
-        rename(export_kg = Export, import_kg = Import)
+      # exports data ------------------------------------------------------------
       
-      rm(raw_csv)
+      exports <- verified_feather %>% 
+        filter(trade_flow == "Export") %>% 
+        unite(pairs, reporter_iso, partner_iso, sep = "_", remove = F) %>% 
+        select(-c(trade_flow, reporter_iso, partner_iso)) %>% 
+        rename(export_usd = trade_value_usd, export_kg = netweight_kg)
       
-      verified_feather <- usd_spread %>% 
-        left_join(kg_spread) %>%
-        filter(reporter_iso != "sxm", partner_iso != "sxm", # San Marino is "smr" and not "sxm"
-               reporter_iso != "wld", partner_iso != "wld") %>% # the World (wld) is not needed as the OEC aggregates and computes total trade
-        unite(pairs,
-              reporter_iso,
-              partner_iso,
-              commodity_code,
-              remove = FALSE)
+      exports_mirrored <- verified_feather %>% 
+        filter(trade_flow == "Import") %>% 
+        unite(pairs, partner_iso, reporter_iso, sep = "_", remove = F) %>% 
+        rename(export_usd_mirrored = trade_value_usd, export_kg_mirrored = netweight_kg) %>% 
+        select(pairs, commodity_code, export_usd_mirrored, export_kg_mirrored)
       
-      rm(usd_spread, kg_spread)
+      exports_model <- exports %>% 
+        full_join(exports_mirrored, by = c("pairs", "commodity_code")) %>% 
+        group_by(commodity_code) %>% 
+        summarise(
+          export_usd = sum(export_usd, na.rm = T),
+          export_usd_mirrored = sum(export_usd_mirrored, na.rm = T)
+        ) %>% 
+        mutate(fob_cif_ratio = export_usd_mirrored / export_usd)
       
-      replacements <- verified_feather %>%
-        select(reporter_iso, partner_iso, commodity_code, export_usd, import_usd, export_kg, import_kg) %>%
-        unite(pairs, partner_iso, reporter_iso, commodity_code) %>%
-        rename(import_usd_rep = export_usd,
-               export_usd_rep = import_usd,
-               import_kg_rep = export_kg,
-               export_kg_rep = import_kg)
+      cif_fob_rate <- median(exports_model$fob_cif_ratio, na.rm = T)
       
-      verified_feather <- verified_feather %>%
-        left_join(replacements, by = "pairs") %>% 
-        mutate(
-          export_usd = if_else(is.na(export_usd) | export_usd == 0, export_usd_rep, export_usd),
-          import_usd = if_else(is.na(import_usd) | import_usd == 0, import_usd_rep, import_usd),
-          export_kg = if_else(is.na(export_kg) | export_kg == 0, export_kg_rep, export_kg),
-          import_kg = if_else(is.na(import_kg) | import_kg == 0, import_kg_rep, import_kg),
-          marker = ifelse(export_usd == export_usd_rep & import_usd == import_usd_rep, 3,
-                          ifelse(export_usd == export_usd_rep & import_usd != import_usd_rep, 2,
-                                 ifelse(export_usd != export_usd_rep & import_usd == import_usd_rep, 1, NA)))
-        ) %>%
-        select(-c(export_usd_rep, import_usd_rep, export_kg_rep, import_kg_rep, pairs))
-
-      rm(replacements)
+      exports_model <- exports %>% 
+        full_join(exports_mirrored, by = c("pairs", "commodity_code")) %>% 
+        mutate(export_usd = max(export_usd, export_usd_mirrored / cif_fob_rate, na.rm = T)) %>% 
+        select(-matches("mirrored"))
+      
+      rm(exports, exports_mirrored)
+      
+      # imports data ------------------------------------------------------------
+      
+      imports <- verified_feather %>% 
+        filter(trade_flow == "Import") %>% 
+        unite(pairs, reporter_iso, partner_iso, sep = "_", remove = F) %>% 
+        select(-c(trade_flow, reporter_iso, partner_iso)) %>% 
+        rename(import_usd = trade_value_usd, import_kg = netweight_kg) %>% 
+        mutate(import_usd = import_usd / cif_fob_rate)
+      
+      imports_mirrored <- verified_feather %>% 
+        filter(trade_flow == "Export") %>% 
+        unite(pairs, partner_iso, reporter_iso, sep = "_", remove = F) %>% 
+        rename(import_usd_mirrored = trade_value_usd, import_kg_mirrored = netweight_kg) %>% 
+        select(pairs, commodity_code, import_usd_mirrored, import_kg_mirrored)
+      
+      imports_model <- imports %>% 
+        full_join(imports_mirrored, by = c("pairs", "commodity_code")) %>% 
+        mutate(import_usd = max(import_usd, import_usd_mirrored, na.rm = T)) %>% 
+        select(pairs, commodity_code, import_usd, import_kg)
+      
+      rm(imports, imports_mirrored, verified_feather)
+      
+      # trade data --------------------------------------------------------------
+      
+      verified_feather <- exports_model %>% 
+        full_join(imports_model) %>% 
+        separate(pairs, c("reporter_iso", "partner_iso"), sep = "_")
       
       write_feather(verified_feather, verified_feather_list[[t]])
       
@@ -243,3 +260,5 @@ organize <- function(compress_output = T) {
   rm(raw_zip_list, raw_csv_list, verified_feather_list, verified_zip_list)
   
 }
+
+organize()

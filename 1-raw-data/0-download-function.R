@@ -101,7 +101,7 @@ download <- function() {
   # SITC rev 2 --------------------------------------------------------------
   
   if (download_data_rev2 == T) {
-    years <- 2000:2016
+    years <- 1990:2016
     rev <- 2
     classification <- "S2"
   }
@@ -116,8 +116,8 @@ download <- function() {
   
   try(dir.create(classification_dir))
   
-  zip_dir <- paste0(classification_dir, "zip/")
-  csv_dir <- paste0(classification_dir, "csv/")
+  zip_dir <- paste0(classification_dir, "/zip/")
+  csv_dir <- paste0(classification_dir, "/csv/")
   
   try(dir.create(zip_dir))
   
@@ -159,18 +159,16 @@ download <- function() {
   }
   
   # download data -----------------------------------------------------------
-
-  if (file.exists(paste0(classification_dir, "downloaded-files-", Sys.Date(), ".csv"))) {
-    old_links <- as_tibble(fread(paste0(
-      classification_dir, "downloaded-files-", Sys.Date(), ".csv"
-    ))) %>%
+  
+  try(
+    old_links <- as_tibble(fread(list.files(classification_dir, pattern = "downloaded", full.names = T))) %>%
       mutate(
         local_file_date = gsub(".*pub-", "", file),
         local_file_date = gsub("_fmt.*", "", local_file_date),
         local_file_date = as.Date(local_file_date, "%Y%m%d")
       ) %>%
       rename(old_file = file)
-  }
+  )
   
   links <- tibble(year = years, 
                   url = paste0(
@@ -185,9 +183,9 @@ download <- function() {
   
   file <- mclapply(1:length(years), get_filenames, mc.cores = n_cores)
   
-  links$file <- as.character(file); rm(file)
+  links$file <- as.character(file)
   
-  if (file.exists(paste0(classification_dir, "downloaded-files-", Sys.Date(), ".csv"))) {
+  if (exists("old_links")) {
     links <- links %>%
       mutate(file = paste0(zip_dir, file),
              file = gsub("\r", "", file)) %>%
@@ -197,7 +195,15 @@ download <- function() {
         server_file_date = as.Date(server_file_date, "%Y%m%d")
       ) %>%
       left_join(old_links %>% select(-url), by = "year") %>%
-      rename(new_file = file)
+      rename(new_file = file) %>% 
+      mutate(
+        server_file_date = as.Date(
+          ifelse(is.na(local_file_date), server_file_date + 1, server_file_date), origin="1970-01-01"
+        ),
+        local_file_date = as.Date(
+          ifelse(is.na(local_file_date), server_file_date - 1, local_file_date), origin="1970-01-01"
+        )
+      )
   } else {
     links <- links %>%
       mutate(file = paste0(zip_dir, file),
@@ -209,7 +215,7 @@ download <- function() {
       ) %>%
       mutate(old_file = NA) %>% # trick in case there are no old files 
       mutate(local_file_date = server_file_date) %>% 
-      mutate(server_file_date = server_file_date + 1) %>% # trick in case there are no old files 
+      mutate(server_file_date = as.Date(server_file_date + 1, origin="1970-01-01")) %>% # trick in case there are no old files 
       rename(new_file = file)
   }
   
@@ -220,7 +226,7 @@ download <- function() {
     select(year, url, new_file, local_file_date) %>%
     rename(file = new_file)
   
-  fwrite(links, paste0(classification_dir, "downloaded-files-", Sys.Date(), ".csv"))
+  fwrite(links, paste0(classification_dir, "/downloaded-files-", Sys.Date(), ".csv"))
   
 }
 
