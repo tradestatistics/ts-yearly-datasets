@@ -33,17 +33,25 @@ download <- function() {
     graphics = T
   )
   
-  token <- rstudioapi::askForPassword(prompt = "Paste UN COMTRADE token (or press cancel if you don't have a token)")
+  token <- menu(
+    c("yes", "no"), 
+    title = "Have you stored your token safely in your .Renviron file?",
+    graphics = T
+  )
+  
+  stopifnot(token == 1)
+  
+  token <- Sys.getenv("token")
   
   # packages ----------------------------------------------------------------
 
   if (!require("pacman")) install.packages("pacman")
-  p_load(data.table, dplyr, doParallel)
+  p_load(data.table, dplyr, jsonlite, doParallel)
   
   # multicore parameters ----------------------------------------------------
 
   #n_cores <- 4
-  n_cores <- ceiling(detectCores() - 1)
+  n_cores <- detectCores() - 1
   
   # revisions ---------------------------------------------------------------
 
@@ -122,31 +130,38 @@ download <- function() {
   try(dir.create(zip_dir))
   
   # helpers -----------------------------------------------------------------
-
-  get_filenames <- function(t) {
-    Sys.sleep(sample(seq(2, 4, by=1), 1))
-    system(
-      paste(
-        "curl -IXGET -r 0-10",
-        links$url[[t]],
-        "| grep attachment | sed 's/^.\\+filename=//'"
-      ),
-      intern = T
-    )
-  }
   
   data_downloading <- function(t) {
-    Sys.sleep(sample(seq(2, 4, by=1), 1))
-    if (remove_old_files == 1 & (links$local_file_date[[t]] < links$server_file_date[[t]]) & !is.na(links$old_file[[t]])) {
+    if (remove_old_files == 1 & 
+        (links$local_file_date[[t]] < links$server_file_date[[t]]) & 
+        !is.na(links$old_file[[t]])) {
       try(file.remove(links$old_file[[t]]))
     }
     if (!file.exists(links$new_file[[t]])) {
       message(paste("Downloading", links$new_file[[t]]))
       if (links$local_file_date[[t]] < links$server_file_date[[t]]) {
-        try(download.file(links$url[[t]],
+        Sys.sleep(sample(seq(5, 10, by = 1), 1))
+        try(
+          download.file(links$url[[t]],
+                        links$new_file[[t]],
+                        method = "wget",
+                        quiet = T,
+                        extra = "--no-check-certificate")
+        )
+        
+        if(file.size(links$new_file[[t]]) == 0) { fs <- 1 } else { fs <- 0 }
+        
+        while (fs > 0) {
+          try(
+            download.file(links$url[[t]],
                           links$new_file[[t]],
                           method = "wget",
-                          extra = "--no-check-certificate"))
+                          quiet = T,
+                          extra = "--no-check-certificate")
+          )
+          
+          if (file.size(links$new_file[[t]]) == 0) { fs <- fs + 1 } else { fs <- 0 }
+        }
       } else {
         message(paste(
           "Existing data is not older than server data. Skipping",
@@ -161,7 +176,11 @@ download <- function() {
   # download data -----------------------------------------------------------
   
   try(
-    old_links <- as_tibble(fread(list.files(classification_dir, pattern = "downloaded", full.names = T))) %>%
+    old_file <- list.files(classification_dir, pattern = "downloaded", full.names = T)
+  )
+  
+  if (length(old_file) > 0) (
+    old_links <- as_tibble(fread(old_file)) %>%
       mutate(
         local_file_date = gsub(".*pub-", "", file),
         local_file_date = gsub("_fmt.*", "", local_file_date),
@@ -181,14 +200,13 @@ download <- function() {
                   ), 
                   file = NA)
   
-  file <- mclapply(1:length(years), get_filenames, mc.cores = n_cores)
-  
-  links$file <- as.character(file)
+  files <- fromJSON(sprintf("https://comtrade.un.org/api/refs/da/bulk?freq=A&r=ALL&px=%s&token=%s", classification, token)) %>% 
+    filter(ps %in% years) %>% 
+    arrange(ps)
   
   if (exists("old_links")) {
     links <- links %>%
-      mutate(file = paste0(zip_dir, file),
-             file = gsub("\r", "", file)) %>%
+      mutate(file = paste0(zip_dir, files$name)) %>%
       mutate(
         server_file_date = gsub(".*pub-", "", file),
         server_file_date = gsub("_fmt.*", "", server_file_date),
@@ -198,16 +216,15 @@ download <- function() {
       rename(new_file = file) %>% 
       mutate(
         server_file_date = as.Date(
-          ifelse(is.na(local_file_date), server_file_date + 1, server_file_date), origin="1970-01-01"
+          ifelse(is.na(local_file_date), server_file_date + 1, server_file_date), origin = "1970-01-01"
         ),
         local_file_date = as.Date(
-          ifelse(is.na(local_file_date), server_file_date - 1, local_file_date), origin="1970-01-01"
+          ifelse(is.na(local_file_date), server_file_date - 1, local_file_date), origin = "1970-01-01"
         )
       )
   } else {
     links <- links %>%
-      mutate(file = paste0(zip_dir, file),
-             file = gsub("\r", "", file)) %>%
+      mutate(file = paste0(zip_dir, files$name)) %>%
       mutate(
         server_file_date = gsub(".*pub-", "", file),
         server_file_date = gsub("_fmt.*", "", server_file_date),
@@ -215,7 +232,7 @@ download <- function() {
       ) %>%
       mutate(old_file = NA) %>% # trick in case there are no old files 
       mutate(local_file_date = server_file_date) %>% 
-      mutate(server_file_date = as.Date(server_file_date + 1, origin="1970-01-01")) %>% # trick in case there are no old files 
+      mutate(server_file_date = as.Date(server_file_date + 1, origin = "1970-01-01")) %>% # trick in case there are no old files 
       rename(new_file = file)
   }
   
@@ -226,6 +243,7 @@ download <- function() {
     select(year, url, new_file, local_file_date) %>%
     rename(file = new_file)
   
+  try(file.remove(old_file))
   fwrite(links, paste0(classification_dir, "/downloaded-files-", Sys.Date(), ".csv"))
   
 }

@@ -141,6 +141,9 @@ organize <- function(compress_output = T) {
   messageline()
   message("Rearranging files. Please wait...")
   
+  # See Anderson & van Wincoop, 2004, Hummels, 2006 and Gaulier & Zignago, 2010 for 8% consistency
+  cif_fob_rate <- 1.08
+  
   cl <- makeCluster(n_cores, type = "FORK")
   registerDoParallel(cores = n_cores)
   
@@ -193,17 +196,6 @@ organize <- function(compress_output = T) {
       
       exports_model <- exports %>% 
         full_join(exports_mirrored, by = c("pairs", "commodity_code")) %>% 
-        group_by(commodity_code) %>% 
-        summarise(
-          export_usd = sum(export_usd, na.rm = T),
-          export_usd_mirrored = sum(export_usd_mirrored, na.rm = T)
-        ) %>% 
-        mutate(fob_cif_ratio = export_usd_mirrored / export_usd)
-      
-      cif_fob_rate <- median(exports_model$fob_cif_ratio, na.rm = T)
-      
-      exports_model <- exports %>% 
-        full_join(exports_mirrored, by = c("pairs", "commodity_code")) %>% 
         mutate(export_usd = max(export_usd, export_usd_mirrored / cif_fob_rate, na.rm = T)) %>% 
         select(-matches("mirrored"))
       
@@ -226,7 +218,7 @@ organize <- function(compress_output = T) {
       
       imports_model <- imports %>% 
         full_join(imports_mirrored, by = c("pairs", "commodity_code")) %>% 
-        mutate(import_usd = max(import_usd, import_usd_mirrored, na.rm = T)) %>% 
+        mutate(import_usd = max(import_usd / cif_fob_rate, import_usd_mirrored, na.rm = T)) %>% 
         select(pairs, commodity_code, import_usd, import_kg)
       
       rm(imports, imports_mirrored, verified_feather)
