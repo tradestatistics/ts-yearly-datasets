@@ -7,7 +7,7 @@ organize <- function(compress_output = T) {
   message(
     "This function takes data obtained from UN Comtrade by using download functions in this project and creates tidy datasets ready to be added to the OEC"
   )
-  message("\nCopyright (c) 2017, Datawheel\n")
+  message("\nCopyright (c) 2017, Mauricio Pacha Vargas\n")
   readline(prompt = "Press [enter] to continue")
   message("\nThe MIT License\n")
   message(
@@ -96,7 +96,7 @@ organize <- function(compress_output = T) {
     as_tibble(fread(
       x, colClasses = list(
         character = c("Commodity Code"),
-        numeric = c("Netweight (kg)", "Trade Value (US$)")
+        numeric = c("Trade Value (US$)")
       )
     )) %>% clean_names()
   }
@@ -156,7 +156,7 @@ organize <- function(compress_output = T) {
 
       verified_feather <- fread2(raw_csv_list[[t]]) %>% 
         rename(trade_value_usd = trade_value_us) %>% 
-        select(trade_flow, reporter_iso, partner_iso, aggregate_level, commodity_code, trade_value_usd, netweight_kg) %>% 
+        select(trade_flow, reporter_iso, partner_iso, aggregate_level, commodity_code, trade_value_usd) %>% 
         filter(aggregate_level %in% J) %>% 
         filter(trade_flow == "Export" | trade_flow == "Import") %>%
         filter(
@@ -176,28 +176,28 @@ organize <- function(compress_output = T) {
           partner_iso != "sxm", # San Marino is "smr" and not "sxm"
           reporter_iso != "wld", 
           partner_iso != "wld" # the World (wld) is not needed as the OEC aggregates and computes total trade
-        ) %>%
-        mutate(year = years[[t]]) %>%
-        select(year, everything())
+        )
       
       # exports data ------------------------------------------------------------
       
       exports <- verified_feather %>% 
         filter(trade_flow == "Export") %>% 
         unite(pairs, reporter_iso, partner_iso, sep = "_", remove = F) %>% 
-        select(-c(trade_flow, reporter_iso, partner_iso)) %>% 
-        rename(export_usd = trade_value_usd, export_kg = netweight_kg)
+        rename(export_usd = trade_value_usd) %>% 
+        select(pairs, commodity_code, export_usd)
       
       exports_mirrored <- verified_feather %>% 
         filter(trade_flow == "Import") %>% 
         unite(pairs, partner_iso, reporter_iso, sep = "_", remove = F) %>% 
-        rename(export_usd_mirrored = trade_value_usd, export_kg_mirrored = netweight_kg) %>% 
-        select(pairs, commodity_code, export_usd_mirrored, export_kg_mirrored)
+        rename(export_usd_mirrored = trade_value_usd) %>% 
+        select(pairs, commodity_code, export_usd_mirrored)
       
       exports_model <- exports %>% 
         full_join(exports_mirrored, by = c("pairs", "commodity_code")) %>% 
+        rowwise() %>% 
         mutate(export_usd = max(export_usd, export_usd_mirrored / cif_fob_rate, na.rm = T)) %>% 
-        select(-matches("mirrored"))
+        select(-matches("mirrored")) %>% 
+        ungroup()
       
       rm(exports, exports_mirrored)
       
@@ -206,20 +206,21 @@ organize <- function(compress_output = T) {
       imports <- verified_feather %>% 
         filter(trade_flow == "Import") %>% 
         unite(pairs, reporter_iso, partner_iso, sep = "_", remove = F) %>% 
-        select(-c(trade_flow, reporter_iso, partner_iso)) %>% 
-        rename(import_usd = trade_value_usd, import_kg = netweight_kg) %>% 
-        mutate(import_usd = import_usd / cif_fob_rate)
+        rename(import_usd = trade_value_usd) %>% 
+        select(pairs, commodity_code, import_usd)
       
       imports_mirrored <- verified_feather %>% 
         filter(trade_flow == "Export") %>% 
         unite(pairs, partner_iso, reporter_iso, sep = "_", remove = F) %>% 
-        rename(import_usd_mirrored = trade_value_usd, import_kg_mirrored = netweight_kg) %>% 
-        select(pairs, commodity_code, import_usd_mirrored, import_kg_mirrored)
+        rename(import_usd_mirrored = trade_value_usd) %>% 
+        select(pairs, commodity_code, import_usd_mirrored)
       
       imports_model <- imports %>% 
         full_join(imports_mirrored, by = c("pairs", "commodity_code")) %>% 
+        rowwise() %>% 
         mutate(import_usd = max(import_usd / cif_fob_rate, import_usd_mirrored, na.rm = T)) %>% 
-        select(pairs, commodity_code, import_usd, import_kg)
+        select(pairs, commodity_code, import_usd) %>% 
+        ungroup()
       
       rm(imports, imports_mirrored, verified_feather)
       
@@ -227,7 +228,9 @@ organize <- function(compress_output = T) {
       
       verified_feather <- exports_model %>% 
         full_join(imports_model) %>% 
-        separate(pairs, c("reporter_iso", "partner_iso"), sep = "_")
+        separate(pairs, c("reporter_iso", "partner_iso"), sep = "_") %>% 
+        mutate(year = years[[t]]) %>%
+        select(year, everything())
       
       write_feather(verified_feather, verified_feather_list[[t]])
       

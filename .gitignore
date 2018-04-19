@@ -8,5 +8,5 @@ __MACOSX
 2-processed-data/**/*.csv
 2-processed-data/**/*.feather
 README_cache/
-packrat/lib*/
+packrat/
 .Renviron
