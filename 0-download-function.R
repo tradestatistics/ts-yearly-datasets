@@ -22,7 +22,7 @@ download <- function() {
   readline(prompt = "Press [enter] to continue")
   
   download_data_rev <- menu(
-    c("HS rev 1992", "HS rev 1996", "HS rev 2002", "HS rev 2007", "HS rev 2012", "SITC rev 2"),
+    c("HS rev 1992", "HS rev 1996", "HS rev 2002", "HS rev 2007", "SITC rev 2"),
     title = "Select dataset:", 
     graphics = T
   )
@@ -59,12 +59,7 @@ download <- function() {
   download_data_rev1996 <- ifelse(download_data_rev == 2, T, F)
   download_data_rev2002 <- ifelse(download_data_rev == 3, T, F)
   download_data_rev2007 <- ifelse(download_data_rev == 4, T, F)
-  download_data_rev2012 <- ifelse(download_data_rev == 5, T, F)
-  download_data_rev2 <- ifelse(download_data_rev == 6, T, F)
-  
-  # directories -------------------------------------------------------------
-
-  raw_dir <- "1-raw-data/"
+  download_data_rev2 <- ifelse(download_data_rev == 5, T, F)
   
   # HS 1992 -----------------------------------------------------------------
 
@@ -98,14 +93,6 @@ download <- function() {
     classification <- "H3"
   }
   
-  # HS 2012 -----------------------------------------------------------------
-  
-  if (download_data_rev2012 == T) {
-    years <- 2012:2016
-    rev <- 2012
-    classification <- "H4"
-  }
-  
   # SITC rev 2 --------------------------------------------------------------
   
   if (download_data_rev2 == T) {
@@ -117,9 +104,9 @@ download <- function() {
   # download trade data -----------------------------------------------------
   
   if (download_data_rev < 6) {
-    classification_dir <- paste0(raw_dir, "hs-rev", rev)
+    classification_dir <- paste0("hs-rev", rev)
   } else {
-    classification_dir <- paste0(raw_dir, "sitc-rev", rev)
+    classification_dir <- paste0("sitc-rev", rev)
   }
   
   try(dir.create(classification_dir))

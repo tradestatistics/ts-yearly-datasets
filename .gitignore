@@ -5,8 +5,8 @@
 .DS_Store
 __MACOSX
 *.zip
-2-processed-data/**/*.csv
-2-processed-data/**/*.feather
+*.csv
+*.feather
 README_cache/
 packrat/
 .Renviron
