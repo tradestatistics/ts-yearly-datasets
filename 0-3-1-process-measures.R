@@ -1,7 +1,6 @@
 # Open oec-yearly-data.Rproj before running this function
 
 measures <- function() {
-  
   # user parameters ---------------------------------------------------------
   
   message(
@@ -122,8 +121,8 @@ measures <- function() {
     }
   }
   
-  Rcpp::sourceCpp("0-scripts/matrices-1.cpp")
-  Rcpp::sourceCpp("0-scripts/matrices-2.cpp")
+  Rcpp::sourceCpp("0-3-2-process-measures-matrices-1.cpp")
+  Rcpp::sourceCpp("0-3-2-process-measures-matrices-2.cpp")
   
   # list input files --------------------------------------------------------
   

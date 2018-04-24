@@ -1,7 +1,6 @@
 # Open oec-yearly-data.Rproj before running this function
 
 tables <- function() {
-  
   # user parameters ---------------------------------------------------------
   
   message(
@@ -23,7 +22,7 @@ tables <- function() {
   
   dataset <- menu(
     c("HS rev 1992", "HS rev 1996", "HS rev 2002", "HS rev 2007", "SITC rev 2"),
-    title = "Select dataset:", 
+    title = "Select dataset:",
     graphics = T
   )
   
@@ -50,7 +49,7 @@ tables <- function() {
   # multicore parameters ----------------------------------------------------
   
   #n_cores <- 4
-  n_cores <- ceiling(detectCores() / 2)
+  n_cores <- ceiling(detectCores() / 2) - 1
   
   # years by classification -------------------------------------------------
   
@@ -77,17 +76,17 @@ tables <- function() {
     years_missing_t_minus_1 <- 2002; years_missing_t_minus_5 <- 2003:2006; years_full <- 2007:2016
   }
   if (classification == "hs" & rev == 2007) {
-    years_missing_t_minus_1 <- 2007; years_missing_t_minus_5 <- 2008; years_full <- 2009:2016
+    years_missing_t_minus_1 <- 2007; years_missing_t_minus_5 <- 2008:2011; years_full <- 2012:2016
   }
   
   # input data --------------------------------------------------------------
   
-  country_names <- as_tibble(fread("../oec-observatory-codes/1-country-data/country-names.tsv")) %>% 
+  country_names <- as_tibble(fread("../oec-observatory-codes/1-country-data/country-names.tsv")) %>%
     select(-name)
   
   if (dataset == 1) {
-    product_names <- as_tibble(fread("../oec-observatory-codes/2-product-data/hs-rev1992-product-names.tsv")) %>% 
-      select(-name) %>% 
+    product_names <- as_tibble(fread("../oec-observatory-codes/2-product-data/hs-rev1992-product-names.tsv")) %>%
+      select(-name) %>%
       rename(
         commodity_code = hs92,
         prod_id = id
@@ -95,8 +94,8 @@ tables <- function() {
   }
   
   if (dataset == 2) {
-    product_names <- as_tibble(fread("../oec-observatory-codes/2-product-data/hs-rev1996-product-names.tsv")) %>% 
-      select(-name) %>% 
+    product_names <- as_tibble(fread("../oec-observatory-codes/2-product-data/hs-rev1996-product-names.tsv")) %>%
+      select(-name) %>%
       rename(
         commodity_code = hs96,
         prod_id = id
@@ -104,8 +103,8 @@ tables <- function() {
   }
   
   if (dataset == 3) {
-    product_names <- as_tibble(fread("../oec-observatory-codes/2-product-data/hs-rev2002-product-names.tsv")) %>% 
-      select(-name) %>% 
+    product_names <- as_tibble(fread("../oec-observatory-codes/2-product-data/hs-rev2002-product-names.tsv")) %>%
+      select(-name) %>%
       rename(
         commodity_code = hs02,
         prod_id = id
@@ -113,8 +112,8 @@ tables <- function() {
   }
   
   if (dataset == 4) {
-    product_names <- as_tibble(fread("../oec-observatory-codes/2-product-data/hs-rev2007-product-names.tsv")) %>% 
-      select(-name) %>% 
+    product_names <- as_tibble(fread("../oec-observatory-codes/2-product-data/hs-rev2007-product-names.tsv")) %>%
+      select(-name) %>%
       rename(
         commodity_code = hs07,
         prod_id = id
@@ -122,8 +121,8 @@ tables <- function() {
   }
   
   if (dataset == 5) {
-    product_names <- as_tibble(fread("../oec-observatory-codes/2-product-data/sitc-rev2-product-names.tsv")) %>% 
-      select(-name) %>% 
+    product_names <- as_tibble(fread("../oec-observatory-codes/2-product-data/sitc-rev2-product-names.tsv")) %>%
+      select(-name) %>%
       rename(
         commodity_code = sitc,
         prod_id = id
@@ -244,16 +243,16 @@ tables <- function() {
   
   # list output files -------------------------------------------------------
   
-  clean_feather_list <- clean_zip_list %>% 
-    gsub("zip", "feather", .) %>% 
+  clean_feather_list <- clean_zip_list %>%
+    gsub("zip", "feather", .) %>%
     gsub(clean_dir, tables_dir, .)
   
-  rca_exp_feather_list <- rca_exp_zip_list %>% 
-    gsub("zip", "feather", .) %>% 
+  rca_exp_feather_list <- rca_exp_zip_list %>%
+    gsub("zip", "feather", .) %>%
     gsub(rca_exports_dir, rca_exp_dir, .)
   
-  rca_imp_feather_list <- rca_imp_zip_list %>% 
-    gsub("zip", "feather", .) %>% 
+  rca_imp_feather_list <- rca_imp_zip_list %>%
+    gsub("zip", "feather", .) %>%
     gsub(rca_imports_dir, rca_imp_dir, .)
   
   yodp_csv_list <- sprintf("%s/yodp-%s-rev%s-%s-%s.csv", yodp_dir, classification, rev, J, years)
@@ -290,37 +289,37 @@ tables <- function() {
   for (t in match(years_missing_t_minus_1, years)) {
     if(file.exists(yodp_csv_list[[t]]) |
        file.exists(yodp_zip_list[[t]])) {
-      messageline() 
-      message(paste("YODP table for the year", t, "exists. Skipping."))
+      messageline()
+      message(paste("YODP table for the year", years[t], "exists. Skipping."))
     } else {
-      messageline() 
-      message(paste("Creating YODP table for the year", t))
+      messageline()
+      message(paste("Creating YODP table for the year", years[t]))
       
       # yodp 1 ------------------------------------------------------------------
       
-      yodp_t1 <- read_feather(clean_feather_list[[t]]) %>% 
+      yodp_t1 <- read_feather(clean_feather_list[[t]]) %>%
         rename(
-          export_val = export_usd, 
+          export_val = export_usd,
           import_val = import_usd
-        ) %>% 
-        mutate(commodity_code = str_sub(commodity_code, 1, J)) %>% 
-        group_by(year, reporter_iso, partner_iso, commodity_code) %>% 
+        ) %>%
+        mutate(commodity_code = str_sub(commodity_code, 1, J)) %>%
+        group_by(year, reporter_iso, partner_iso, commodity_code) %>%
         summarise(
           export_val = sum(export_val, na.rm = T),
           import_val = sum(import_val, na.rm = T)
-        ) %>% 
-        ungroup() %>% 
-        mutate(prod_id_len = J) %>% 
-        left_join(country_names, by = c("reporter_iso" = "id_3char")) %>% 
-        left_join(country_names, by = c("partner_iso" = "id_3char")) %>% 
-        left_join(product_names) %>% 
+        ) %>%
+        ungroup() %>%
+        mutate(prod_id_len = J) %>%
+        left_join(country_names, by = c("reporter_iso" = "id_3char")) %>%
+        left_join(country_names, by = c("partner_iso" = "id_3char")) %>%
+        left_join(product_names) %>%
         rename(
-          origin_id = id.x, 
+          origin_id = id.x,
           dest_id = id.y
-        ) %>% 
+        ) %>%
         select(year, origin_id, dest_id, prod_id, prod_id_len, export_val, import_val)
       
-      yodp_t1 <- yodp_t1 %>% 
+      yodp_t1 <- yodp_t1 %>%
         mutate(
           export_val_growth_val = NA,
           export_val_growth_val_5 = NA,
@@ -330,7 +329,7 @@ tables <- function() {
           import_val_growth_val_5 = NA,
           import_val_growth_pct = NA,
           import_val_growth_pct_5 = NA
-        ) %>% 
+        ) %>%
         mutate(
           export_val = if_else(export_val == 0, as.numeric(NA), export_val),
           import_val = if_else(import_val == 0, as.numeric(NA), import_val)
@@ -340,14 +339,14 @@ tables <- function() {
       
       # yod 1 ------------------------------------------------------------------
       
-      yod_t1 <- yodp_t1 %>% 
-        select(year, origin_id, dest_id, export_val, import_val) %>% 
-        group_by(year, origin_id, dest_id) %>% 
+      yod_t1 <- yodp_t1 %>%
+        select(year, origin_id, dest_id, export_val, import_val) %>%
+        group_by(year, origin_id, dest_id) %>%
         summarise(
           export_val = sum(export_val, na.rm = T),
           import_val = sum(import_val, na.rm = T)
-        ) %>% 
-        ungroup() %>% 
+        ) %>%
+        ungroup() %>%
         mutate(
           export_val_growth_val = NA,
           export_val_growth_val_5 = NA,
@@ -365,36 +364,36 @@ tables <- function() {
       
       # yop 1 ------------------------------------------------------------------
       
-      rca_exp <- read_feather(rca_exp_feather_list[[t]]) %>% 
+      rca_exp <- read_feather(rca_exp_feather_list[[t]]) %>%
         left_join(product_names) %>%
-        left_join(country_names, by = c("reporter_iso" = "id_3char")) %>% 
-        select(-c(year, commodity_code, reporter_iso)) %>% 
+        left_join(country_names, by = c("reporter_iso" = "id_3char")) %>%
+        select(-c(year, commodity_code, reporter_iso)) %>%
         rename(
           origin_id = id,
           export_rca = rca_export_smooth
         )
       
-      rca_imp <- read_feather(rca_imp_feather_list[[t]]) %>% 
-        left_join(product_names) %>% 
-        left_join(country_names, by = c("reporter_iso" = "id_3char")) %>% 
-        select(-c(year, commodity_code, reporter_iso)) %>% 
+      rca_imp <- read_feather(rca_imp_feather_list[[t]]) %>%
+        left_join(product_names) %>%
+        left_join(country_names, by = c("reporter_iso" = "id_3char")) %>%
+        select(-c(year, commodity_code, reporter_iso)) %>%
         rename(
           origin_id = id,
           import_rca = rca_import_smooth
         )
-        
-      yop_t1 <- yodp_t1 %>% 
-        select(year, origin_id, prod_id, export_val, import_val) %>% 
-        group_by(year, origin_id, prod_id) %>% 
+      
+      yop_t1 <- yodp_t1 %>%
+        select(year, origin_id, prod_id, export_val, import_val) %>%
+        group_by(year, origin_id, prod_id) %>%
         summarise(
           export_val = sum(export_val, na.rm = T),
           import_val = sum(import_val, na.rm = T)
-        ) %>% 
-        ungroup() %>% 
-        mutate(prod_id_len = J) %>% 
-        select(year, origin_id, prod_id, prod_id_len, export_val, import_val) %>% 
-        left_join(rca_exp) %>% 
-        left_join(rca_imp) %>% 
+        ) %>%
+        ungroup() %>%
+        mutate(prod_id_len = J) %>%
+        select(year, origin_id, prod_id, prod_id_len, export_val, import_val) %>%
+        left_join(rca_exp) %>%
+        left_join(rca_imp) %>%
         mutate(
           export_val_growth_val = NA,
           export_val_growth_val_5 = NA,
@@ -412,16 +411,16 @@ tables <- function() {
       
       # ydp 1 ------------------------------------------------------------------
       
-      ydp_t1 <- yodp_t1 %>% 
-        select(year, dest_id, prod_id, export_val, import_val) %>% 
-        group_by(year, dest_id, prod_id) %>% 
+      ydp_t1 <- yodp_t1 %>%
+        select(year, dest_id, prod_id, export_val, import_val) %>%
+        group_by(year, dest_id, prod_id) %>%
         summarise(
           export_val = sum(export_val, na.rm = T),
           import_val = sum(import_val, na.rm = T)
-        ) %>% 
-        ungroup() %>% 
-        mutate(prod_id_len = J) %>% 
-        select(year, dest_id, prod_id, prod_id_len, export_val, import_val) %>% 
+        ) %>%
+        ungroup() %>%
+        mutate(prod_id_len = J) %>%
+        select(year, dest_id, prod_id, prod_id_len, export_val, import_val) %>%
         mutate(
           export_val_growth_val = NA,
           export_val_growth_val_5 = NA,
@@ -439,36 +438,36 @@ tables <- function() {
       
       # yo 1 -------------------------------------------------------------------
       
-      max_exp <- yodp_t1 %>% 
-        group_by(origin_id, prod_id) %>% 
-        summarise(export_val = sum(export_val, na.rm = T)) %>% 
-        group_by(origin_id) %>% 
-        slice(which.max(export_val)) %>% 
+      max_exp <- yodp_t1 %>%
+        group_by(origin_id, prod_id) %>%
+        summarise(export_val = sum(export_val, na.rm = T)) %>%
+        group_by(origin_id) %>%
+        slice(which.max(export_val)) %>%
         rename(
           top_export_id = prod_id,
           top_export = export_val
         )
       
-      max_imp <- yodp_t1 %>% 
-        group_by(origin_id, prod_id) %>% 
-        summarise(import_val = sum(import_val, na.rm = T)) %>% 
-        group_by(origin_id) %>% 
-        slice(which.max(import_val)) %>% 
+      max_imp <- yodp_t1 %>%
+        group_by(origin_id, prod_id) %>%
+        summarise(import_val = sum(import_val, na.rm = T)) %>%
+        group_by(origin_id) %>%
+        slice(which.max(import_val)) %>%
         rename(
           top_import_id = prod_id,
           top_import = import_val
         )
       
-      yo_t1 <- yodp_t1 %>% 
-        select(year, origin_id, export_val, import_val) %>% 
-        group_by(year, origin_id) %>% 
+      yo_t1 <- yodp_t1 %>%
+        select(year, origin_id, export_val, import_val) %>%
+        group_by(year, origin_id) %>%
         summarise(
           export_val = sum(export_val, na.rm = T),
           import_val = sum(import_val, na.rm = T)
-        ) %>% 
-        ungroup() %>% 
-        left_join(max_exp, by = "origin_id") %>% 
-        left_join(max_imp, by = "origin_id") %>% 
+        ) %>%
+        ungroup() %>%
+        left_join(max_exp, by = "origin_id") %>%
+        left_join(max_imp, by = "origin_id") %>%
         mutate(
           export_val_growth_val = NA,
           export_val_growth_val_5 = NA,
@@ -486,14 +485,14 @@ tables <- function() {
       
       # yd 1 -------------------------------------------------------------------
       
-      yd_t1 <- yodp_t1 %>% 
-        select(year, dest_id, export_val, import_val) %>% 
-        group_by(year, dest_id) %>% 
+      yd_t1 <- yodp_t1 %>%
+        select(year, dest_id, export_val, import_val) %>%
+        group_by(year, dest_id) %>%
         summarise(
           export_val = sum(export_val, na.rm = T),
           import_val = sum(import_val, na.rm = T)
-        ) %>% 
-        ungroup() %>% 
+        ) %>%
+        ungroup() %>%
         mutate(
           export_val_growth_val = NA,
           export_val_growth_val_5 = NA,
@@ -511,41 +510,41 @@ tables <- function() {
       
       # yp 1 -------------------------------------------------------------------
       
-      pci_t1 <- pci %>% 
-        filter(year == years[[t]]) %>% 
-        left_join(product_names) %>% 
+      pci_t1 <- pci %>%
+        filter(year == years[[t]]) %>%
+        left_join(product_names) %>%
         select(-c(year, commodity_code))
       
-      max_exp <- yodp_t1 %>% 
-        group_by(origin_id, prod_id) %>% 
-        summarise(export_val = sum(export_val, na.rm = T)) %>% 
-        group_by(prod_id) %>% 
-        slice(which.max(export_val)) %>% 
-        rename(top_exporter_id = origin_id) %>% 
+      max_exp <- yodp_t1 %>%
+        group_by(origin_id, prod_id) %>%
+        summarise(export_val = sum(export_val, na.rm = T)) %>%
+        group_by(prod_id) %>%
+        slice(which.max(export_val)) %>%
+        rename(top_exporter_id = origin_id) %>%
         select(-export_val)
       
-      max_imp <- yodp_t1 %>% 
-        group_by(origin_id, prod_id) %>% 
-        summarise(import_val = sum(import_val, na.rm = T)) %>% 
-        group_by(prod_id) %>% 
-        slice(which.max(import_val)) %>% 
-        rename(top_importer_id = origin_id) %>% 
+      max_imp <- yodp_t1 %>%
+        group_by(origin_id, prod_id) %>%
+        summarise(import_val = sum(import_val, na.rm = T)) %>%
+        group_by(prod_id) %>%
+        slice(which.max(import_val)) %>%
+        rename(top_importer_id = origin_id) %>%
         select(-import_val)
       
-      yp_t1 <- yodp_t1 %>% 
-        select(year, prod_id, export_val, import_val) %>% 
-        group_by(year, prod_id) %>% 
+      yp_t1 <- yodp_t1 %>%
+        select(year, prod_id, export_val, import_val) %>%
+        group_by(year, prod_id) %>%
         summarise(
           export_val = sum(export_val, na.rm = T),
           import_val = sum(import_val, na.rm = T)
-        ) %>% 
-        ungroup() %>% 
-        mutate(prod_id_len = J) %>% 
-        select(year, prod_id, prod_id_len, export_val, import_val) %>% 
-        left_join(pci_t1, by = "prod_id") %>% 
-        mutate(pci_rank_delta = NA) %>% 
-        left_join(max_exp, by = "prod_id") %>% 
-        left_join(max_imp, by = "prod_id") %>% 
+        ) %>%
+        ungroup() %>%
+        mutate(prod_id_len = J) %>%
+        select(year, prod_id, prod_id_len, export_val, import_val) %>%
+        left_join(pci_t1, by = "prod_id") %>%
+        mutate(pci_rank_delta = NA) %>%
+        left_join(max_exp, by = "prod_id") %>%
+        left_join(max_imp, by = "prod_id") %>%
         mutate(
           export_val_growth_val = NA,
           export_val_growth_val_5 = NA,
@@ -571,67 +570,67 @@ tables <- function() {
   foreach (t = match(years_missing_t_minus_5, years)) %dopar% {
     if(file.exists(yodp_csv_list[[t]]) |
        file.exists(yodp_zip_list[[t]])) {
-      messageline() 
-      message(paste("YODP table for the year", t, "exists. Skipping."))
+      messageline()
+      message(paste("YODP table for the year", years[t], "exists. Skipping."))
     } else {
-      messageline() 
-      message(paste("Creating YODP table for the year", t))
+      messageline()
+      message(paste("Creating YODP table for the year", years[t]))
       
       # yodp 2 ------------------------------------------------------------------
       
-      yodp_t1 <- read_feather(clean_feather_list[[t]]) %>% 
+      yodp_t1 <- read_feather(clean_feather_list[[t]]) %>%
         rename(
-          export_val = export_usd, 
+          export_val = export_usd,
           import_val = import_usd
-        ) %>% 
-        mutate(commodity_code = str_sub(commodity_code, 1, J)) %>% 
-        left_join(country_names, by = c("reporter_iso" = "id_3char")) %>% 
-        left_join(country_names, by = c("partner_iso" = "id_3char")) %>% 
-        left_join(product_names) %>% 
+        ) %>%
+        mutate(commodity_code = str_sub(commodity_code, 1, J)) %>%
+        left_join(country_names, by = c("reporter_iso" = "id_3char")) %>%
+        left_join(country_names, by = c("partner_iso" = "id_3char")) %>%
+        left_join(product_names) %>%
         rename(
-          origin_id = id.x, 
+          origin_id = id.x,
           dest_id = id.y
-        ) %>% 
-        unite(pairs, origin_id, dest_id, prod_id) %>% 
-        group_by(year, pairs) %>% 
+        ) %>%
+        unite(pairs, origin_id, dest_id, prod_id) %>%
+        group_by(year, pairs) %>%
         summarise(
           export_val = sum(export_val, na.rm = T),
           import_val = sum(import_val, na.rm = T)
-        ) %>% 
-        ungroup() %>% 
-        mutate(prod_id_len = J) %>% 
+        ) %>%
+        ungroup() %>%
+        mutate(prod_id_len = J) %>%
         select(year, pairs, prod_id_len, export_val, import_val)
       
-      yodp_t2 <- read_feather(clean_feather_list[[t-1]]) %>% 
+      yodp_t2 <- read_feather(clean_feather_list[[t-1]]) %>%
         rename(
-          export_val = export_usd, 
+          export_val = export_usd,
           import_val = import_usd
-        ) %>% 
-        mutate(commodity_code = str_sub(commodity_code, 1, J)) %>% 
-        left_join(country_names, by = c("reporter_iso" = "id_3char")) %>% 
-        left_join(country_names, by = c("partner_iso" = "id_3char")) %>% 
-        left_join(product_names) %>% 
+        ) %>%
+        mutate(commodity_code = str_sub(commodity_code, 1, J)) %>%
+        left_join(country_names, by = c("reporter_iso" = "id_3char")) %>%
+        left_join(country_names, by = c("partner_iso" = "id_3char")) %>%
+        left_join(product_names) %>%
         rename(
-          origin_id = id.x, 
+          origin_id = id.x,
           dest_id = id.y
-        ) %>% 
-        unite(pairs, origin_id, dest_id, prod_id) %>% 
-        group_by(pairs) %>% 
+        ) %>%
+        unite(pairs, origin_id, dest_id, prod_id) %>%
+        group_by(pairs) %>%
         summarise(
           export_val_t2 = sum(export_val, na.rm = T),
           import_val_t2 = sum(import_val, na.rm = T)
-        ) %>% 
-        ungroup() %>% 
+        ) %>%
+        ungroup() %>%
         select(pairs, export_val_t2, import_val_t2)
       
-      yodp_t1 <- yodp_t1 %>% 
-        left_join(yodp_t2) %>% 
+      yodp_t1 <- yodp_t1 %>%
+        left_join(yodp_t2) %>%
         mutate(
           export_val = if_else(export_val == 0, as.numeric(NA), export_val),
           import_val = if_else(import_val == 0, as.numeric(NA), import_val),
           export_val_t2 = if_else(export_val_t2 == 0, as.numeric(NA), export_val_t2),
           import_val_t2 = if_else(import_val_t2 == 0, as.numeric(NA), import_val_t2)
-        ) %>% 
+        ) %>%
         mutate(
           export_val_growth_val = export_val - export_val_t2,
           export_val_growth_val_5 = NA,
@@ -641,7 +640,7 @@ tables <- function() {
           import_val_growth_val_5 = NA,
           import_val_growth_pct = import_val_growth_val / import_val_t2,
           import_val_growth_pct_5 = NA
-        ) %>% 
+        ) %>%
         separate(pairs, c("origin_id", "dest_id", "prod_id"))
       
       fwrite(yodp_t1 %>% select(-c(export_val_t2, import_val_t2)), yodp_csv_list[[t]])
@@ -650,22 +649,22 @@ tables <- function() {
       
       # yod 2 ------------------------------------------------------------------
       
-      yod_t1 <- yodp_t1 %>% 
-        select(year, origin_id, dest_id, export_val, import_val, export_val_t2, import_val_t2) %>% 
-        group_by(year, origin_id, dest_id) %>% 
+      yod_t1 <- yodp_t1 %>%
+        select(year, origin_id, dest_id, export_val, import_val, export_val_t2, import_val_t2) %>%
+        group_by(year, origin_id, dest_id) %>%
         summarise(
           export_val = sum(export_val, na.rm = T),
           import_val = sum(import_val, na.rm = T),
           export_val_t2 = sum(export_val_t2, na.rm = T),
           import_val_t2 = sum(import_val_t2, na.rm = T)
-        ) %>% 
-        ungroup() %>% 
+        ) %>%
+        ungroup() %>%
         mutate(
           export_val = if_else(export_val == 0, as.numeric(NA), export_val),
           import_val = if_else(import_val == 0, as.numeric(NA), import_val),
           export_val_t2 = if_else(export_val_t2 == 0, as.numeric(NA), export_val_t2),
           import_val_t2 = if_else(import_val_t2 == 0, as.numeric(NA), import_val_t2)
-        ) %>% 
+        ) %>%
         mutate(
           export_val_growth_val = export_val - export_val_t2,
           export_val_growth_val_5 = NA,
@@ -675,7 +674,7 @@ tables <- function() {
           import_val_growth_val_5 = NA,
           import_val_growth_pct = import_val_growth_val / import_val_t2,
           import_val_growth_pct_5 = NA
-        ) %>% 
+        ) %>%
         select(-c(export_val_t2, import_val_t2))
       
       fwrite(yod_t1, yod_csv_list[[t]])
@@ -684,43 +683,43 @@ tables <- function() {
       
       # yop 2 ------------------------------------------------------------------
       
-      rca_exp <- read_feather(rca_exp_feather_list[[t]]) %>% 
+      rca_exp <- read_feather(rca_exp_feather_list[[t]]) %>%
         left_join(product_names) %>%
-        left_join(country_names, by = c("reporter_iso" = "id_3char")) %>% 
-        select(-c(year, commodity_code, reporter_iso)) %>% 
+        left_join(country_names, by = c("reporter_iso" = "id_3char")) %>%
+        select(-c(year, commodity_code, reporter_iso)) %>%
         rename(
           origin_id = id,
           export_rca = rca_export_smooth
         )
       
-      rca_imp <- read_feather(rca_imp_feather_list[[t]]) %>% 
-        left_join(product_names) %>% 
-        left_join(country_names, by = c("reporter_iso" = "id_3char")) %>% 
-        select(-c(year, commodity_code, reporter_iso)) %>% 
+      rca_imp <- read_feather(rca_imp_feather_list[[t]]) %>%
+        left_join(product_names) %>%
+        left_join(country_names, by = c("reporter_iso" = "id_3char")) %>%
+        select(-c(year, commodity_code, reporter_iso)) %>%
         rename(
           origin_id = id,
           import_rca = rca_import_smooth
         )
       
-      yop_t1 <- yodp_t1 %>% 
-        select(year, origin_id, prod_id, export_val, import_val, export_val_t2, import_val_t2) %>% 
-        group_by(year, origin_id, prod_id) %>% 
+      yop_t1 <- yodp_t1 %>%
+        select(year, origin_id, prod_id, export_val, import_val, export_val_t2, import_val_t2) %>%
+        group_by(year, origin_id, prod_id) %>%
         summarise(
           export_val = sum(export_val, na.rm = T),
           import_val = sum(import_val, na.rm = T),
           export_val_t2 = sum(export_val_t2, na.rm = T),
           import_val_t2 = sum(import_val_t2, na.rm = T)
-        ) %>% 
-        ungroup() %>% 
-        mutate(prod_id_len = J) %>% 
+        ) %>%
+        ungroup() %>%
+        mutate(prod_id_len = J) %>%
         mutate(
           export_val = if_else(export_val == 0, as.numeric(NA), export_val),
           import_val = if_else(import_val == 0, as.numeric(NA), import_val),
           export_val_t2 = if_else(export_val_t2 == 0, as.numeric(NA), export_val_t2),
           import_val_t2 = if_else(import_val_t2 == 0, as.numeric(NA), import_val_t2)
-        ) %>% 
-        left_join(rca_exp) %>% 
-        left_join(rca_imp) %>% 
+        ) %>%
+        left_join(rca_exp) %>%
+        left_join(rca_imp) %>%
         mutate(
           export_val_growth_val = export_val - export_val_t2,
           export_val_growth_val_5 = NA,
@@ -730,8 +729,8 @@ tables <- function() {
           import_val_growth_val_5 = NA,
           import_val_growth_pct = import_val_growth_val / import_val_t2,
           import_val_growth_pct_5 = NA
-        ) %>% 
-        select(year, origin_id, prod_id, prod_id_len, everything()) %>% 
+        ) %>%
+        select(year, origin_id, prod_id, prod_id_len, everything()) %>%
         select(-c(export_val_t2, import_val_t2))
       
       fwrite(yop_t1, yop_csv_list[[t]])
@@ -740,23 +739,23 @@ tables <- function() {
       
       # ydp 2 ------------------------------------------------------------------
       
-      ydp_t1 <- yodp_t1 %>% 
-        select(year, dest_id, prod_id, export_val, import_val, export_val_t2, import_val_t2) %>% 
-        group_by(year, dest_id, prod_id) %>% 
+      ydp_t1 <- yodp_t1 %>%
+        select(year, dest_id, prod_id, export_val, import_val, export_val_t2, import_val_t2) %>%
+        group_by(year, dest_id, prod_id) %>%
         summarise(
           export_val = sum(export_val, na.rm = T),
           import_val = sum(import_val, na.rm = T),
           export_val_t2 = sum(export_val_t2, na.rm = T),
           import_val_t2 = sum(import_val_t2, na.rm = T)
-        ) %>% 
-        ungroup() %>% 
-        mutate(prod_id_len = J) %>% 
+        ) %>%
+        ungroup() %>%
+        mutate(prod_id_len = J) %>%
         mutate(
           export_val = if_else(export_val == 0, as.numeric(NA), export_val),
           import_val = if_else(import_val == 0, as.numeric(NA), import_val),
           export_val_t2 = if_else(export_val_t2 == 0, as.numeric(NA), export_val_t2),
           import_val_t2 = if_else(import_val_t2 == 0, as.numeric(NA), import_val_t2)
-        ) %>% 
+        ) %>%
         mutate(
           export_val_growth_val = export_val - export_val_t2,
           export_val_growth_val_5 = NA,
@@ -766,8 +765,8 @@ tables <- function() {
           import_val_growth_val_5 = NA,
           import_val_growth_pct = import_val_growth_val / import_val_t2,
           import_val_growth_pct_5 = NA
-        ) %>% 
-        select(year, dest_id, prod_id, prod_id_len, everything()) %>% 
+        ) %>%
+        select(year, dest_id, prod_id, prod_id_len, everything()) %>%
         select(-c(export_val_t2, import_val_t2))
       
       fwrite(ydp_t1, ydp_csv_list[[t]])
@@ -776,44 +775,44 @@ tables <- function() {
       
       # yo 2 -------------------------------------------------------------------
       
-      max_exp <- yodp_t1 %>% 
-        group_by(origin_id, prod_id) %>% 
-        summarise(export_val = sum(export_val, na.rm = T)) %>% 
-        group_by(origin_id) %>% 
-        slice(which.max(export_val)) %>% 
+      max_exp <- yodp_t1 %>%
+        group_by(origin_id, prod_id) %>%
+        summarise(export_val = sum(export_val, na.rm = T)) %>%
+        group_by(origin_id) %>%
+        slice(which.max(export_val)) %>%
         rename(
           top_export_id = prod_id,
           top_export = export_val
         )
       
-      max_imp <- yodp_t1 %>% 
-        group_by(origin_id, prod_id) %>% 
-        summarise(import_val = sum(import_val, na.rm = T)) %>% 
-        group_by(origin_id) %>% 
-        slice(which.max(import_val)) %>% 
+      max_imp <- yodp_t1 %>%
+        group_by(origin_id, prod_id) %>%
+        summarise(import_val = sum(import_val, na.rm = T)) %>%
+        group_by(origin_id) %>%
+        slice(which.max(import_val)) %>%
         rename(
           top_import_id = prod_id,
           top_import = import_val
         )
       
-      yo_t1 <- yodp_t1 %>% 
-        select(year, origin_id, export_val, import_val, export_val_t2, import_val_t2) %>% 
-        group_by(year, origin_id) %>% 
+      yo_t1 <- yodp_t1 %>%
+        select(year, origin_id, export_val, import_val, export_val_t2, import_val_t2) %>%
+        group_by(year, origin_id) %>%
         summarise(
           export_val = sum(export_val, na.rm = T),
           import_val = sum(import_val, na.rm = T),
           export_val_t2 = sum(export_val_t2, na.rm = T),
           import_val_t2 = sum(import_val_t2, na.rm = T)
-        ) %>% 
-        ungroup() %>% 
-        left_join(max_exp, by = "origin_id") %>% 
-        left_join(max_imp, by = "origin_id") %>% 
+        ) %>%
+        ungroup() %>%
+        left_join(max_exp, by = "origin_id") %>%
+        left_join(max_imp, by = "origin_id") %>%
         mutate(
           export_val = if_else(export_val == 0, as.numeric(NA), export_val),
           import_val = if_else(import_val == 0, as.numeric(NA), import_val),
           export_val_t2 = if_else(export_val_t2 == 0, as.numeric(NA), export_val_t2),
           import_val_t2 = if_else(import_val_t2 == 0, as.numeric(NA), import_val_t2)
-        ) %>% 
+        ) %>%
         mutate(
           export_val_growth_val = export_val - export_val_t2,
           export_val_growth_val_5 = NA,
@@ -823,7 +822,7 @@ tables <- function() {
           import_val_growth_val_5 = NA,
           import_val_growth_pct = import_val_growth_val / import_val_t2,
           import_val_growth_pct_5 = NA
-        ) %>% 
+        ) %>%
         select(-c(export_val_t2, import_val_t2))
       
       fwrite(yo_t1, yo_csv_list[[t]])
@@ -832,22 +831,22 @@ tables <- function() {
       
       # yd 2 -------------------------------------------------------------------
       
-      yd_t1 <- yodp_t1 %>% 
-        select(year, dest_id, export_val, import_val, export_val_t2, import_val_t2) %>% 
-        group_by(year, dest_id) %>% 
+      yd_t1 <- yodp_t1 %>%
+        select(year, dest_id, export_val, import_val, export_val_t2, import_val_t2) %>%
+        group_by(year, dest_id) %>%
         summarise(
           export_val = sum(export_val, na.rm = T),
           import_val = sum(import_val, na.rm = T),
           export_val_t2 = sum(export_val_t2, na.rm = T),
           import_val_t2 = sum(import_val_t2, na.rm = T)
-        ) %>% 
-        ungroup() %>% 
+        ) %>%
+        ungroup() %>%
         mutate(
           export_val = if_else(export_val == 0, as.numeric(NA), export_val),
           import_val = if_else(import_val == 0, as.numeric(NA), import_val),
           export_val_t2 = if_else(export_val_t2 == 0, as.numeric(NA), export_val_t2),
           import_val_t2 = if_else(import_val_t2 == 0, as.numeric(NA), import_val_t2)
-        ) %>% 
+        ) %>%
         mutate(
           export_val_growth_val = export_val - export_val_t2,
           export_val_growth_val_5 = NA,
@@ -857,7 +856,7 @@ tables <- function() {
           import_val_growth_val_5 = NA,
           import_val_growth_pct = import_val_growth_val / import_val_t2,
           import_val_growth_pct_5 = NA
-        ) %>% 
+        ) %>%
         select(-c(export_val_t2, import_val_t2))
       
       fwrite(yd_t1, yd_csv_list[[t]])
@@ -866,56 +865,56 @@ tables <- function() {
       
       # yp 2 -------------------------------------------------------------------
       
-      pci_t1 <- pci %>% 
-        filter(year == years[[t]]) %>% 
-        left_join(product_names) %>% 
+      pci_t1 <- pci %>%
+        filter(year == years[[t]]) %>%
+        left_join(product_names) %>%
         select(-c(year, commodity_code))
       
-      pci_t2 <- pci %>% 
-        filter(year == years[[t-1]]) %>% 
-        left_join(product_names) %>% 
+      pci_t2 <- pci %>%
+        filter(year == years[[t-1]]) %>%
+        left_join(product_names) %>%
         select(-c(year, commodity_code))
       
-      max_exp <- yodp_t1 %>% 
-        group_by(origin_id, prod_id) %>% 
-        summarise(export_val = sum(export_val, na.rm = T)) %>% 
-        group_by(prod_id) %>% 
-        slice(which.max(export_val)) %>% 
-        rename(top_exporter_id = origin_id) %>% 
+      max_exp <- yodp_t1 %>%
+        group_by(origin_id, prod_id) %>%
+        summarise(export_val = sum(export_val, na.rm = T)) %>%
+        group_by(prod_id) %>%
+        slice(which.max(export_val)) %>%
+        rename(top_exporter_id = origin_id) %>%
         select(-export_val)
       
-      max_imp <- yodp_t1 %>% 
-        group_by(origin_id, prod_id) %>% 
-        summarise(import_val = sum(import_val, na.rm = T)) %>% 
-        group_by(prod_id) %>% 
-        slice(which.max(import_val)) %>% 
-        rename(top_importer_id = origin_id) %>% 
+      max_imp <- yodp_t1 %>%
+        group_by(origin_id, prod_id) %>%
+        summarise(import_val = sum(import_val, na.rm = T)) %>%
+        group_by(prod_id) %>%
+        slice(which.max(import_val)) %>%
+        rename(top_importer_id = origin_id) %>%
         select(-import_val)
       
-      yp_t1 <- yodp_t1 %>% 
-        select(year, prod_id, export_val, import_val, export_val_t2, import_val_t2) %>% 
-        group_by(year, prod_id) %>% 
+      yp_t1 <- yodp_t1 %>%
+        select(year, prod_id, export_val, import_val, export_val_t2, import_val_t2) %>%
+        group_by(year, prod_id) %>%
         summarise(
           export_val = sum(export_val, na.rm = T),
           import_val = sum(import_val, na.rm = T),
           export_val_t2 = sum(export_val_t2, na.rm = T),
           import_val_t2 = sum(import_val_t2, na.rm = T)
-        ) %>% 
-        ungroup() %>% 
-        mutate(prod_id_len = J) %>% 
-        left_join(pci_t1, by = "prod_id") %>% 
-        left_join(pci_t2, by = "prod_id") %>% 
-        mutate(pci_rank_delta = pci_rank.x - pci_rank.y) %>% 
-        select(-c(pci_rank.x, pci_rank.y, pci.y)) %>% 
-        rename(pci = pci.x) %>% 
-        left_join(max_exp, by = "prod_id") %>% 
-        left_join(max_imp, by = "prod_id") %>% 
+        ) %>%
+        ungroup() %>%
+        mutate(prod_id_len = J) %>%
+        left_join(pci_t1, by = "prod_id") %>%
+        left_join(pci_t2, by = "prod_id") %>%
+        mutate(pci_rank_delta = pci_rank.x - pci_rank.y) %>%
+        select(-c(pci_rank.x, pci_rank.y, pci.y)) %>%
+        rename(pci = pci.x) %>%
+        left_join(max_exp, by = "prod_id") %>%
+        left_join(max_imp, by = "prod_id") %>%
         mutate(
           export_val = if_else(export_val == 0, as.numeric(NA), export_val),
           import_val = if_else(import_val == 0, as.numeric(NA), import_val),
           export_val_t2 = if_else(export_val_t2 == 0, as.numeric(NA), export_val_t2),
           import_val_t2 = if_else(import_val_t2 == 0, as.numeric(NA), import_val_t2)
-        ) %>% 
+        ) %>%
         mutate(
           export_val_growth_val = export_val - export_val_t2,
           export_val_growth_val_5 = NA,
@@ -925,8 +924,8 @@ tables <- function() {
           import_val_growth_val_5 = NA,
           import_val_growth_pct = import_val_growth_val / import_val_t2,
           import_val_growth_pct_5 = NA
-        ) %>% 
-        select(-c(export_val_t2, import_val_t2)) %>% 
+        ) %>%
+        select(-c(export_val_t2, import_val_t2)) %>%
         select(year, prod_id, prod_id_len, everything())
       
       fwrite(yp_t1, yp_csv_list[[t]])
@@ -946,84 +945,84 @@ tables <- function() {
   foreach (t = match(years_full, years)) %dopar% {
     if(file.exists(yodp_csv_list[[t]]) |
        file.exists(yodp_zip_list[[t]])) {
-      messageline() 
-      message(paste("YODP table for the year", t, "exists. Skipping."))
+      messageline()
+      message(paste("YODP table for the year", years[t], "exists. Skipping."))
     } else {
-      messageline() 
-      message(paste("Creating YODP table for the year", t))
+      messageline()
+      message(paste("Creating YODP table for the year", years[t]))
       
       # yodp 3 ------------------------------------------------------------------
       
-      yodp_t1 <- read_feather(clean_feather_list[[t]]) %>% 
+      yodp_t1 <- read_feather(clean_feather_list[[t]]) %>%
         rename(
-          export_val = export_usd, 
+          export_val = export_usd,
           import_val = import_usd
-        ) %>% 
-        mutate(commodity_code = str_sub(commodity_code, 1, J)) %>% 
-        left_join(country_names, by = c("reporter_iso" = "id_3char")) %>% 
-        left_join(country_names, by = c("partner_iso" = "id_3char")) %>% 
-        left_join(product_names) %>% 
+        ) %>%
+        mutate(commodity_code = str_sub(commodity_code, 1, J)) %>%
+        left_join(country_names, by = c("reporter_iso" = "id_3char")) %>%
+        left_join(country_names, by = c("partner_iso" = "id_3char")) %>%
+        left_join(product_names) %>%
         rename(
-          origin_id = id.x, 
+          origin_id = id.x,
           dest_id = id.y
-        ) %>% 
-        unite(pairs, origin_id, dest_id, prod_id) %>% 
-        group_by(year, pairs) %>% 
+        ) %>%
+        unite(pairs, origin_id, dest_id, prod_id) %>%
+        group_by(year, pairs) %>%
         summarise(
           export_val = sum(export_val, na.rm = T),
           import_val = sum(import_val, na.rm = T)
-        ) %>% 
-        ungroup() %>% 
-        mutate(prod_id_len = J) %>% 
+        ) %>%
+        ungroup() %>%
+        mutate(prod_id_len = J) %>%
         select(year, pairs, prod_id_len, export_val, import_val)
       
-      yodp_t2 <- read_feather(clean_feather_list[[t-1]]) %>% 
+      yodp_t2 <- read_feather(clean_feather_list[[t-1]]) %>%
         rename(
-          export_val = export_usd, 
+          export_val = export_usd,
           import_val = import_usd
-        ) %>% 
-        mutate(commodity_code = str_sub(commodity_code, 1, J)) %>% 
-        left_join(country_names, by = c("reporter_iso" = "id_3char")) %>% 
-        left_join(country_names, by = c("partner_iso" = "id_3char")) %>% 
-        left_join(product_names) %>% 
+        ) %>%
+        mutate(commodity_code = str_sub(commodity_code, 1, J)) %>%
+        left_join(country_names, by = c("reporter_iso" = "id_3char")) %>%
+        left_join(country_names, by = c("partner_iso" = "id_3char")) %>%
+        left_join(product_names) %>%
         rename(
-          origin_id = id.x, 
+          origin_id = id.x,
           dest_id = id.y
-        ) %>% 
-        unite(pairs, origin_id, dest_id, prod_id) %>% 
-        group_by(pairs) %>% 
+        ) %>%
+        unite(pairs, origin_id, dest_id, prod_id) %>%
+        group_by(pairs) %>%
         summarise(
           export_val_t2 = sum(export_val, na.rm = T),
           import_val_t2 = sum(import_val, na.rm = T)
-        ) %>% 
-        ungroup() %>% 
+        ) %>%
+        ungroup() %>%
         select(pairs, export_val_t2, import_val_t2)
       
-      yodp_t3 <- read_feather(clean_feather_list[[t-5]]) %>% 
+      yodp_t3 <- read_feather(clean_feather_list[[t-5]]) %>%
         rename(
-          export_val = export_usd, 
+          export_val = export_usd,
           import_val = import_usd
-        ) %>% 
-        mutate(commodity_code = str_sub(commodity_code, 1, J)) %>% 
-        left_join(country_names, by = c("reporter_iso" = "id_3char")) %>% 
-        left_join(country_names, by = c("partner_iso" = "id_3char")) %>% 
-        left_join(product_names) %>% 
+        ) %>%
+        mutate(commodity_code = str_sub(commodity_code, 1, J)) %>%
+        left_join(country_names, by = c("reporter_iso" = "id_3char")) %>%
+        left_join(country_names, by = c("partner_iso" = "id_3char")) %>%
+        left_join(product_names) %>%
         rename(
-          origin_id = id.x, 
+          origin_id = id.x,
           dest_id = id.y
-        ) %>% 
-        unite(pairs, origin_id, dest_id, prod_id) %>% 
-        group_by(pairs) %>% 
+        ) %>%
+        unite(pairs, origin_id, dest_id, prod_id) %>%
+        group_by(pairs) %>%
         summarise(
           export_val_t3 = sum(export_val, na.rm = T),
           import_val_t3 = sum(import_val, na.rm = T)
-        ) %>% 
-        ungroup() %>% 
+        ) %>%
+        ungroup() %>%
         select(pairs, export_val_t3, import_val_t3)
       
-      yodp_t1 <- yodp_t1 %>% 
-        left_join(yodp_t2) %>% 
-        left_join(yodp_t3) %>% 
+      yodp_t1 <- yodp_t1 %>%
+        left_join(yodp_t2) %>%
+        left_join(yodp_t3) %>%
         mutate(
           export_val = if_else(export_val == 0, as.numeric(NA), export_val),
           import_val = if_else(import_val == 0, as.numeric(NA), import_val),
@@ -1031,7 +1030,7 @@ tables <- function() {
           import_val_t2 = if_else(import_val_t2 == 0, as.numeric(NA), import_val_t2),
           export_val_t3 = if_else(export_val_t3 == 0, as.numeric(NA), export_val_t3),
           import_val_t3 = if_else(import_val_t3 == 0, as.numeric(NA), import_val_t3)
-        ) %>% 
+        ) %>%
         mutate(
           export_val_growth_val = export_val - export_val_t2,
           export_val_growth_val_5 = export_val - export_val_t3,
@@ -1041,7 +1040,7 @@ tables <- function() {
           import_val_growth_val_5 = import_val - import_val_t3,
           import_val_growth_pct = import_val_growth_val / import_val_t2,
           import_val_growth_pct_5 = import_val_growth_val / import_val_t3
-        ) %>% 
+        ) %>%
         separate(pairs, c("origin_id", "dest_id", "prod_id"))
       
       fwrite(yodp_t1 %>% select(-c(matches("export_val_t"), matches("import_val_t"))), yodp_csv_list[[t]])
@@ -1050,9 +1049,9 @@ tables <- function() {
       
       # yod 3 ------------------------------------------------------------------
       
-      yod_t1 <- yodp_t1 %>% 
-        select(year, origin_id, dest_id, matches("export_val"), matches("import_val")) %>% 
-        group_by(year, origin_id, dest_id) %>% 
+      yod_t1 <- yodp_t1 %>%
+        select(year, origin_id, dest_id, matches("export_val"), matches("import_val")) %>%
+        group_by(year, origin_id, dest_id) %>%
         summarise(
           export_val = sum(export_val, na.rm = T),
           import_val = sum(import_val, na.rm = T),
@@ -1060,8 +1059,8 @@ tables <- function() {
           import_val_t2 = sum(import_val_t2, na.rm = T),
           export_val_t3 = sum(export_val_t3, na.rm = T),
           import_val_t3 = sum(import_val_t3, na.rm = T)
-        ) %>% 
-        ungroup() %>% 
+        ) %>%
+        ungroup() %>%
         mutate(
           export_val = if_else(export_val == 0, as.numeric(NA), export_val),
           import_val = if_else(import_val == 0, as.numeric(NA), import_val),
@@ -1069,7 +1068,7 @@ tables <- function() {
           import_val_t2 = if_else(import_val_t2 == 0, as.numeric(NA), import_val_t2),
           export_val_t3 = if_else(export_val_t3 == 0, as.numeric(NA), export_val_t3),
           import_val_t3 = if_else(import_val_t3 == 0, as.numeric(NA), import_val_t3)
-        ) %>% 
+        ) %>%
         mutate(
           export_val_growth_val = export_val - export_val_t2,
           export_val_growth_val_5 = export_val - export_val_t3,
@@ -1079,7 +1078,7 @@ tables <- function() {
           import_val_growth_val_5 = import_val - import_val_t3,
           import_val_growth_pct = import_val_growth_val / import_val_t2,
           import_val_growth_pct_5 = import_val_growth_val / import_val_t3
-        ) %>% 
+        ) %>%
         select(-c(matches("export_val_t"), matches("import_val_t")))
       
       fwrite(yod_t1, yod_csv_list[[t]])
@@ -1088,27 +1087,27 @@ tables <- function() {
       
       # yop 3 ------------------------------------------------------------------
       
-      rca_exp <- read_feather(rca_exp_feather_list[[t]]) %>% 
+      rca_exp <- read_feather(rca_exp_feather_list[[t]]) %>%
         left_join(product_names) %>%
-        left_join(country_names, by = c("reporter_iso" = "id_3char")) %>% 
-        select(-c(year, commodity_code, reporter_iso)) %>% 
+        left_join(country_names, by = c("reporter_iso" = "id_3char")) %>%
+        select(-c(year, commodity_code, reporter_iso)) %>%
         rename(
           origin_id = id,
           export_rca = rca_export_smooth
         )
       
-      rca_imp <- read_feather(rca_imp_feather_list[[t]]) %>% 
-        left_join(product_names) %>% 
-        left_join(country_names, by = c("reporter_iso" = "id_3char")) %>% 
-        select(-c(year, commodity_code, reporter_iso)) %>% 
+      rca_imp <- read_feather(rca_imp_feather_list[[t]]) %>%
+        left_join(product_names) %>%
+        left_join(country_names, by = c("reporter_iso" = "id_3char")) %>%
+        select(-c(year, commodity_code, reporter_iso)) %>%
         rename(
           origin_id = id,
           import_rca = rca_import_smooth
         )
       
-      yop_t1 <- yodp_t1 %>% 
-        select(year, origin_id, prod_id, matches("export_val"), matches("import_val")) %>% 
-        group_by(year, origin_id, prod_id) %>% 
+      yop_t1 <- yodp_t1 %>%
+        select(year, origin_id, prod_id, matches("export_val"), matches("import_val")) %>%
+        group_by(year, origin_id, prod_id) %>%
         summarise(
           export_val = sum(export_val, na.rm = T),
           import_val = sum(import_val, na.rm = T),
@@ -1116,9 +1115,9 @@ tables <- function() {
           import_val_t2 = sum(import_val_t2, na.rm = T),
           export_val_t3 = sum(export_val_t3, na.rm = T),
           import_val_t3 = sum(import_val_t3, na.rm = T)
-        ) %>% 
-        ungroup() %>% 
-        mutate(prod_id_len = J) %>% 
+        ) %>%
+        ungroup() %>%
+        mutate(prod_id_len = J) %>%
         mutate(
           export_val = if_else(export_val == 0, as.numeric(NA), export_val),
           import_val = if_else(import_val == 0, as.numeric(NA), import_val),
@@ -1126,9 +1125,9 @@ tables <- function() {
           import_val_t2 = if_else(import_val_t2 == 0, as.numeric(NA), import_val_t2),
           export_val_t3 = if_else(export_val_t3 == 0, as.numeric(NA), export_val_t3),
           import_val_t3 = if_else(import_val_t3 == 0, as.numeric(NA), import_val_t3)
-        ) %>% 
-        left_join(rca_exp) %>% 
-        left_join(rca_imp) %>% 
+        ) %>%
+        left_join(rca_exp) %>%
+        left_join(rca_imp) %>%
         mutate(
           export_val_growth_val = export_val - export_val_t2,
           export_val_growth_val_5 = export_val - export_val_t3,
@@ -1138,8 +1137,8 @@ tables <- function() {
           import_val_growth_val_5 = import_val - import_val_t3,
           import_val_growth_pct = import_val_growth_val / import_val_t2,
           import_val_growth_pct_5 = import_val_growth_val / import_val_t3
-        ) %>% 
-        select(year, origin_id, prod_id, prod_id_len, everything()) %>% 
+        ) %>%
+        select(year, origin_id, prod_id, prod_id_len, everything()) %>%
         select(-c(matches("export_val_t"), matches("import_val_t")))
       
       fwrite(yop_t1, yop_csv_list[[t]])
@@ -1148,9 +1147,9 @@ tables <- function() {
       
       # ydp 3 ------------------------------------------------------------------
       
-      ydp_t1 <- yodp_t1 %>% 
-        select(year, dest_id, prod_id, matches("export_val"), matches("import_val")) %>% 
-        group_by(year, dest_id, prod_id) %>% 
+      ydp_t1 <- yodp_t1 %>%
+        select(year, dest_id, prod_id, matches("export_val"), matches("import_val")) %>%
+        group_by(year, dest_id, prod_id) %>%
         summarise(
           export_val = sum(export_val, na.rm = T),
           import_val = sum(import_val, na.rm = T),
@@ -1158,9 +1157,9 @@ tables <- function() {
           import_val_t2 = sum(import_val_t2, na.rm = T),
           export_val_t3 = sum(export_val_t3, na.rm = T),
           import_val_t3 = sum(import_val_t3, na.rm = T)
-        ) %>% 
-        ungroup() %>% 
-        mutate(prod_id_len = J) %>% 
+        ) %>%
+        ungroup() %>%
+        mutate(prod_id_len = J) %>%
         mutate(
           export_val = if_else(export_val == 0, as.numeric(NA), export_val),
           import_val = if_else(import_val == 0, as.numeric(NA), import_val),
@@ -1168,7 +1167,7 @@ tables <- function() {
           import_val_t2 = if_else(import_val_t2 == 0, as.numeric(NA), import_val_t2),
           export_val_t3 = if_else(export_val_t3 == 0, as.numeric(NA), export_val_t3),
           import_val_t3 = if_else(import_val_t3 == 0, as.numeric(NA), import_val_t3)
-        ) %>% 
+        ) %>%
         mutate(
           export_val_growth_val = export_val - export_val_t2,
           export_val_growth_val_5 = export_val - export_val_t3,
@@ -1178,8 +1177,8 @@ tables <- function() {
           import_val_growth_val_5 = import_val - import_val_t3,
           import_val_growth_pct = import_val_growth_val / import_val_t2,
           import_val_growth_pct_5 = import_val_growth_val / import_val_t3
-        ) %>% 
-        select(year, dest_id, prod_id, prod_id_len, everything()) %>% 
+        ) %>%
+        select(year, dest_id, prod_id, prod_id_len, everything()) %>%
         select(-c(matches("export_val_t"), matches("import_val_t")))
       
       fwrite(ydp_t1, ydp_csv_list[[t]])
@@ -1188,29 +1187,29 @@ tables <- function() {
       
       # yo 3 -------------------------------------------------------------------
       
-      max_exp <- yodp_t1 %>% 
-        group_by(origin_id, prod_id) %>% 
-        summarise(export_val = sum(export_val, na.rm = T)) %>% 
-        group_by(origin_id) %>% 
-        slice(which.max(export_val)) %>% 
+      max_exp <- yodp_t1 %>%
+        group_by(origin_id, prod_id) %>%
+        summarise(export_val = sum(export_val, na.rm = T)) %>%
+        group_by(origin_id) %>%
+        slice(which.max(export_val)) %>%
         rename(
           top_export_id = prod_id,
           top_export = export_val
         )
       
-      max_imp <- yodp_t1 %>% 
-        group_by(origin_id, prod_id) %>% 
-        summarise(import_val = sum(import_val, na.rm = T)) %>% 
-        group_by(origin_id) %>% 
-        slice(which.max(import_val)) %>% 
+      max_imp <- yodp_t1 %>%
+        group_by(origin_id, prod_id) %>%
+        summarise(import_val = sum(import_val, na.rm = T)) %>%
+        group_by(origin_id) %>%
+        slice(which.max(import_val)) %>%
         rename(
           top_import_id = prod_id,
           top_import = import_val
         )
       
-      yo_t1 <- yodp_t1 %>% 
-        select(year, origin_id, matches("export_val"), matches("import_val")) %>% 
-        group_by(year, origin_id) %>% 
+      yo_t1 <- yodp_t1 %>%
+        select(year, origin_id, matches("export_val"), matches("import_val")) %>%
+        group_by(year, origin_id) %>%
         summarise(
           export_val = sum(export_val, na.rm = T),
           import_val = sum(import_val, na.rm = T),
@@ -1218,10 +1217,10 @@ tables <- function() {
           import_val_t2 = sum(import_val_t2, na.rm = T),
           export_val_t3 = sum(export_val_t3, na.rm = T),
           import_val_t3 = sum(import_val_t3, na.rm = T)
-        ) %>% 
-        ungroup() %>% 
-        left_join(max_exp, by = "origin_id") %>% 
-        left_join(max_imp, by = "origin_id") %>% 
+        ) %>%
+        ungroup() %>%
+        left_join(max_exp, by = "origin_id") %>%
+        left_join(max_imp, by = "origin_id") %>%
         mutate(
           export_val = if_else(export_val == 0, as.numeric(NA), export_val),
           import_val = if_else(import_val == 0, as.numeric(NA), import_val),
@@ -1229,7 +1228,7 @@ tables <- function() {
           import_val_t2 = if_else(import_val_t2 == 0, as.numeric(NA), import_val_t2),
           export_val_t3 = if_else(export_val_t3 == 0, as.numeric(NA), export_val_t3),
           import_val_t3 = if_else(import_val_t3 == 0, as.numeric(NA), import_val_t3)
-        ) %>% 
+        ) %>%
         mutate(
           export_val_growth_val = export_val - export_val_t2,
           export_val_growth_val_5 = export_val - export_val_t3,
@@ -1239,7 +1238,7 @@ tables <- function() {
           import_val_growth_val_5 = import_val - import_val_t3,
           import_val_growth_pct = import_val_growth_val / import_val_t2,
           import_val_growth_pct_5 = import_val_growth_val / import_val_t3
-        ) %>% 
+        ) %>%
         select(-c(matches("export_val_t"), matches("import_val_t")))
       
       fwrite(yo_t1, yo_csv_list[[t]])
@@ -1248,9 +1247,9 @@ tables <- function() {
       
       # yd 3 -------------------------------------------------------------------
       
-      yd_t1 <- yodp_t1 %>% 
-        select(year, dest_id, matches("export_val"), matches("import_val")) %>% 
-        group_by(year, dest_id) %>% 
+      yd_t1 <- yodp_t1 %>%
+        select(year, dest_id, matches("export_val"), matches("import_val")) %>%
+        group_by(year, dest_id) %>%
         summarise(
           export_val = sum(export_val, na.rm = T),
           import_val = sum(import_val, na.rm = T),
@@ -1258,8 +1257,8 @@ tables <- function() {
           import_val_t2 = sum(import_val_t2, na.rm = T),
           export_val_t3 = sum(export_val_t3, na.rm = T),
           import_val_t3 = sum(import_val_t3, na.rm = T)
-        ) %>% 
-        ungroup() %>% 
+        ) %>%
+        ungroup() %>%
         mutate(
           export_val = if_else(export_val == 0, as.numeric(NA), export_val),
           import_val = if_else(import_val == 0, as.numeric(NA), import_val),
@@ -1267,7 +1266,7 @@ tables <- function() {
           import_val_t2 = if_else(import_val_t2 == 0, as.numeric(NA), import_val_t2),
           export_val_t3 = if_else(export_val_t3 == 0, as.numeric(NA), export_val_t3),
           import_val_t3 = if_else(import_val_t3 == 0, as.numeric(NA), import_val_t3)
-        ) %>% 
+        ) %>%
         mutate(
           export_val_growth_val = export_val - export_val_t2,
           export_val_growth_val_5 = export_val - export_val_t3,
@@ -1277,7 +1276,7 @@ tables <- function() {
           import_val_growth_val_5 = import_val - import_val_t3,
           import_val_growth_pct = import_val_growth_val / import_val_t2,
           import_val_growth_pct_5 = import_val_growth_val / import_val_t3
-        ) %>% 
+        ) %>%
         select(-c(matches("export_val_t"), matches("import_val_t")))
       
       fwrite(yd_t1, yd_csv_list[[t]])
@@ -1286,35 +1285,35 @@ tables <- function() {
       
       # yp 3 -------------------------------------------------------------------
       
-      pci_t1 <- pci %>% 
-        filter(year == years[[t]]) %>% 
-        left_join(product_names) %>% 
+      pci_t1 <- pci %>%
+        filter(year == years[[t]]) %>%
+        left_join(product_names) %>%
         select(-c(year, commodity_code))
       
-      pci_t2 <- pci %>% 
-        filter(year == years[[t-1]]) %>% 
-        left_join(product_names) %>% 
+      pci_t2 <- pci %>%
+        filter(year == years[[t-1]]) %>%
+        left_join(product_names) %>%
         select(-c(year, commodity_code))
       
-      max_exp <- yodp_t1 %>% 
-        group_by(origin_id, prod_id) %>% 
-        summarise(export_val = sum(export_val, na.rm = T)) %>% 
-        group_by(prod_id) %>% 
-        slice(which.max(export_val)) %>% 
-        rename(top_exporter_id = origin_id) %>% 
+      max_exp <- yodp_t1 %>%
+        group_by(origin_id, prod_id) %>%
+        summarise(export_val = sum(export_val, na.rm = T)) %>%
+        group_by(prod_id) %>%
+        slice(which.max(export_val)) %>%
+        rename(top_exporter_id = origin_id) %>%
         select(-export_val)
       
-      max_imp <- yodp_t1 %>% 
-        group_by(origin_id, prod_id) %>% 
-        summarise(import_val = sum(import_val, na.rm = T)) %>% 
-        group_by(prod_id) %>% 
-        slice(which.max(import_val)) %>% 
-        rename(top_importer_id = origin_id) %>% 
+      max_imp <- yodp_t1 %>%
+        group_by(origin_id, prod_id) %>%
+        summarise(import_val = sum(import_val, na.rm = T)) %>%
+        group_by(prod_id) %>%
+        slice(which.max(import_val)) %>%
+        rename(top_importer_id = origin_id) %>%
         select(-import_val)
       
-      yp_t1 <- yodp_t1 %>% 
-        select(year, prod_id, matches("export_val"), matches("import_val")) %>% 
-        group_by(year, prod_id) %>% 
+      yp_t1 <- yodp_t1 %>%
+        select(year, prod_id, matches("export_val"), matches("import_val")) %>%
+        group_by(year, prod_id) %>%
         summarise(
           export_val = sum(export_val, na.rm = T),
           import_val = sum(import_val, na.rm = T),
@@ -1322,16 +1321,16 @@ tables <- function() {
           import_val_t2 = sum(import_val_t2, na.rm = T),
           export_val_t3 = sum(export_val_t3, na.rm = T),
           import_val_t3 = sum(import_val_t3, na.rm = T)
-        ) %>% 
-        ungroup() %>% 
-        mutate(prod_id_len = J) %>% 
-        left_join(pci_t1, by = "prod_id") %>% 
-        left_join(pci_t2, by = "prod_id") %>% 
-        mutate(pci_rank_delta = pci_rank.x - pci_rank.y) %>% 
-        select(-c(pci_rank.x, pci_rank.y, pci.y)) %>% 
-        rename(pci = pci.x) %>% 
-        left_join(max_exp, by = "prod_id") %>% 
-        left_join(max_imp, by = "prod_id") %>% 
+        ) %>%
+        ungroup() %>%
+        mutate(prod_id_len = J) %>%
+        left_join(pci_t1, by = "prod_id") %>%
+        left_join(pci_t2, by = "prod_id") %>%
+        mutate(pci_rank_delta = pci_rank.x - pci_rank.y) %>%
+        select(-c(pci_rank.x, pci_rank.y, pci.y)) %>%
+        rename(pci = pci.x) %>%
+        left_join(max_exp, by = "prod_id") %>%
+        left_join(max_imp, by = "prod_id") %>%
         mutate(
           export_val = if_else(export_val == 0, as.numeric(NA), export_val),
           import_val = if_else(import_val == 0, as.numeric(NA), import_val),
@@ -1339,7 +1338,7 @@ tables <- function() {
           import_val_t2 = if_else(import_val_t2 == 0, as.numeric(NA), import_val_t2),
           export_val_t3 = if_else(export_val_t3 == 0, as.numeric(NA), export_val_t3),
           import_val_t3 = if_else(import_val_t3 == 0, as.numeric(NA), import_val_t3)
-        ) %>% 
+        ) %>%
         mutate(
           export_val_growth_val = export_val - export_val_t2,
           export_val_growth_val_5 = export_val - export_val_t3,
@@ -1349,8 +1348,8 @@ tables <- function() {
           import_val_growth_val_5 = import_val - import_val_t3,
           import_val_growth_pct = import_val_growth_val / import_val_t2,
           import_val_growth_pct_5 = import_val_growth_val / import_val_t3
-        ) %>% 
-        select(-c(matches("export_val_t"), matches("import_val_t"))) %>% 
+        ) %>%
+        select(-c(matches("export_val_t"), matches("import_val_t"))) %>%
         select(year, prod_id, prod_id_len, everything())
       
       fwrite(yp_t1, yp_csv_list[[t]])
@@ -1363,7 +1362,7 @@ tables <- function() {
   rm(cl)
   
   # compress output ---------------------------------------------------------
-
+  
   tables_csv_list <- list.files(tables_dir, pattern = "csv", full.names = T, recursive = T)
   tables_zip_list <- gsub("csv", "zip", tables_csv_list)
   

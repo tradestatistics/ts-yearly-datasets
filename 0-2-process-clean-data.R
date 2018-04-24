@@ -1,7 +1,6 @@
 # Open oec-yearly-data.Rproj before running this function
 
 clean <- function(compress_output = T) {
-
   # user parameters ---------------------------------------------------------
 
   message(
@@ -246,7 +245,6 @@ clean <- function(compress_output = T) {
   
   unlink(raw_csv_dir, recursive = T)
   rm(raw_zip_list, raw_csv_list, clean_feather_list, clean_zip_list)
-  
 }
 
 clean()
