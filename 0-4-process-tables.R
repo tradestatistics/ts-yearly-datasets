@@ -34,7 +34,7 @@ tables <- function() {
   # multicore parameters ----------------------------------------------------
   
   #n_cores <- 4
-  n_cores <- 2
+  n_cores <- floor(detectCores() / 2)
   
   # years by classification -------------------------------------------------
   
@@ -374,7 +374,7 @@ tables <- function() {
             import_val = sum(import_val, na.rm = T)
           ) %>%
           ungroup() %>%
-          mutate(prod_id_len = 4) %>%
+          mutate(prod_id_len = 6) %>%
           select(year, pairs, prod_id_len, export_val, import_val)
         
         yodp_6_t1 <- read_feather(clean_feather_list[[t]]) %>%
@@ -390,7 +390,7 @@ tables <- function() {
             dest_id = id.y
           ) %>%
           unite(pairs, origin_id, dest_id, prod_id) %>%
-          mutate(prod_id_len = 6) %>%
+          mutate(prod_id_len = 8) %>%
           select(year, pairs, prod_id_len, export_val, import_val)
         
         yodp_t1 <- bind_rows(yodp_4_t1, yodp_6_t1)
@@ -409,7 +409,7 @@ tables <- function() {
             dest_id = id.y
           ) %>%
           unite(pairs, origin_id, dest_id, prod_id) %>%
-          mutate(prod_id_len = 4) %>%
+          mutate(prod_id_len = 6) %>%
           select(year, pairs, prod_id_len, export_val, import_val)
       }
       
@@ -547,45 +547,50 @@ tables <- function() {
       
       yodp_t1 <- yodp_t1 %>% 
         mutate(
-          export_val = if_else(export_val == 0, as.numeric(NA), export_val),
-          import_val = if_else(import_val == 0, as.numeric(NA), import_val)
+          export_val = ifelse(export_val == 0, NA, export_val),
+          import_val = ifelse(import_val == 0, NA, import_val)
         )
       
       if (class(yodp_t2$export_val_t2) != "logical") {
         yodp_t2 <- yodp_t2 %>% 
           mutate(
-            export_val_t2 = if_else(export_val_t2 == 0, as.numeric(NA), export_val_t2),
-            import_val_t2 = if_else(import_val_t2 == 0, as.numeric(NA), import_val_t2)
+            export_val_t2 = ifelse(export_val_t2 == 0, NA, export_val_t2),
+            import_val_t2 = ifelse(import_val_t2 == 0, NA, import_val_t2)
           )
       }
       
       if (class(yodp_t3$export_val_t3) != "logical") {
         yodp_t3 <- yodp_t3 %>% 
           mutate(
-            export_val_t3 = if_else(export_val_t3 == 0, as.numeric(NA), export_val_t3),
-            import_val_t3 = if_else(import_val_t3 == 0, as.numeric(NA), import_val_t3)
+            export_val_t3 = ifelse(export_val_t3 == 0, NA, export_val_t3),
+            import_val_t3 = ifelse(import_val_t3 == 0, NA, import_val_t3)
           )
       }
       
       yodp <- yodp_t1 %>%
         left_join(yodp_t2) %>%
         left_join(yodp_t3) %>%
+        
         mutate(
           export_val_growth_val = export_val - export_val_t2,
           export_val_growth_val_5 = export_val - export_val_t3
         ) %>% 
+        
         mutate(
           export_val_growth_pct = export_val_growth_val / export_val_t2,
           export_val_growth_pct_5 = export_val_growth_val / export_val_t3
         ) %>% 
+        
         mutate(
           import_val_growth_val = import_val - import_val_t2,
           import_val_growth_val_5 = import_val - import_val_t3
         ) %>% 
+        
         mutate(
           import_val_growth_pct = import_val_growth_val / import_val_t2,
           import_val_growth_pct_5 = import_val_growth_val / import_val_t3
         ) %>%
+        
         separate(pairs, c("origin_id", "dest_id", "prod_id"))
       
       if (class(yodp$export_val_t2) != "numeric") {
@@ -609,7 +614,7 @@ tables <- function() {
       # yod ------------------------------------------------------------------
       
       yod <- yodp %>%
-        filter(prod_id_len == 4) %>% 
+        filter(prod_id_len == 6) %>% 
         select(year, origin_id, dest_id, matches("export_val"), matches("import_val")) %>%
         group_by(year, origin_id, dest_id) %>%
         summarise(
@@ -624,33 +629,40 @@ tables <- function() {
       
       yod <- yod %>%
         mutate(
-          export_val = if_else(export_val == 0, as.numeric(NA), export_val),
-          import_val = if_else(import_val == 0, as.numeric(NA), import_val)
+          export_val = ifelse(export_val == 0, NA, export_val),
+          import_val = ifelse(import_val == 0, NA, import_val)
         ) %>% 
+        
         mutate(
-          export_val_t2 = if_else(export_val_t2 == 0, as.numeric(NA), export_val_t2),
-          import_val_t2 = if_else(import_val_t2 == 0, as.numeric(NA), import_val_t2)
+          export_val_t2 = ifelse(export_val_t2 == 0, NA, export_val_t2),
+          import_val_t2 = ifelse(import_val_t2 == 0, NA, import_val_t2)
         ) %>% 
+        
         mutate(
-          export_val_t3 = if_else(export_val_t3 == 0, as.numeric(NA), export_val_t3),
-          import_val_t3 = if_else(import_val_t3 == 0, as.numeric(NA), import_val_t3)
+          export_val_t3 = ifelse(export_val_t3 == 0, NA, export_val_t3),
+          import_val_t3 = ifelse(import_val_t3 == 0, NA, import_val_t3)
         ) %>%
+        
         mutate(
           export_val_growth_val = export_val - export_val_t2,
           export_val_growth_val_5 = export_val - export_val_t3
         ) %>% 
+        
         mutate(
           export_val_growth_pct = export_val_growth_val / export_val_t2,
           export_val_growth_pct_5 = export_val_growth_val / export_val_t3
         ) %>% 
+        
         mutate(
           import_val_growth_val = import_val - import_val_t2,
           import_val_growth_val_5 = import_val - import_val_t3
         ) %>% 
+        
         mutate(
           import_val_growth_pct = import_val_growth_val / import_val_t2,
           import_val_growth_pct_5 = import_val_growth_val / import_val_t3
         ) %>%
+        
         select(-c(matches("export_val_t"), matches("import_val_t")))
       
       fwrite(yod, yod_csv_list[[t]])
@@ -734,36 +746,45 @@ tables <- function() {
           import_val_t3 = sum(import_val_t3, na.rm = T)
         ) %>%
         ungroup() %>%
+        
         mutate(
-          export_val = if_else(export_val == 0, as.numeric(NA), export_val),
-          import_val = if_else(import_val == 0, as.numeric(NA), import_val)
+          export_val = ifelse(export_val == 0, NA, export_val),
+          import_val = ifelse(import_val == 0, NA, import_val)
         ) %>% 
+        
         mutate(
-          export_val_t2 = if_else(export_val_t2 == 0, as.numeric(NA), export_val_t2),
-          import_val_t2 = if_else(import_val_t2 == 0, as.numeric(NA), import_val_t2)
+          export_val_t2 = ifelse(export_val_t2 == 0, NA, export_val_t2),
+          import_val_t2 = ifelse(import_val_t2 == 0, NA, import_val_t2)
         ) %>% 
+        
         mutate(
-          export_val_t3 = if_else(export_val_t3 == 0, as.numeric(NA), export_val_t3),
-          import_val_t3 = if_else(import_val_t3 == 0, as.numeric(NA), import_val_t3)
+          export_val_t3 = ifelse(export_val_t3 == 0, NA, export_val_t3),
+          import_val_t3 = ifelse(import_val_t3 == 0, NA, import_val_t3)
         ) %>%
+        
         left_join(rca_exp) %>%
         left_join(rca_imp) %>%
+        
         mutate(
           export_val_growth_val = export_val - export_val_t2,
           export_val_growth_val_5 = export_val - export_val_t3
         ) %>% 
+        
         mutate(
           export_val_growth_pct = export_val_growth_val / export_val_t2,
           export_val_growth_pct_5 = export_val_growth_val / export_val_t3
         ) %>% 
+        
         mutate(
           import_val_growth_val = import_val - import_val_t2,
           import_val_growth_val_5 = import_val - import_val_t3
         ) %>% 
+        
         mutate(
           import_val_growth_pct = import_val_growth_val / import_val_t2,
           import_val_growth_pct_5 = import_val_growth_val / import_val_t3
         ) %>%
+        
         select(year, origin_id, prod_id, prod_id_len, everything()) %>%
         select(-c(matches("export_val_t"), matches("import_val_t")))
       
@@ -783,35 +804,43 @@ tables <- function() {
           export_val_t3 = sum(export_val_t3, na.rm = T),
           import_val_t3 = sum(import_val_t3, na.rm = T)
         ) %>%
+        
         ungroup() %>%
         mutate(
-          export_val = if_else(export_val == 0, as.numeric(NA), export_val),
-          import_val = if_else(import_val == 0, as.numeric(NA), import_val)
+          export_val = ifelse(export_val == 0, NA, export_val),
+          import_val = ifelse(import_val == 0, NA, import_val)
         ) %>% 
+        
         mutate(
-          export_val_t2 = if_else(export_val_t2 == 0, as.numeric(NA), export_val_t2),
-          import_val_t2 = if_else(import_val_t2 == 0, as.numeric(NA), import_val_t2)
+          export_val_t2 = ifelse(export_val_t2 == 0, NA, export_val_t2),
+          import_val_t2 = ifelse(import_val_t2 == 0, NA, import_val_t2)
         ) %>% 
+        
         mutate(
-          export_val_t3 = if_else(export_val_t3 == 0, as.numeric(NA), export_val_t3),
-          import_val_t3 = if_else(import_val_t3 == 0, as.numeric(NA), import_val_t3)
+          export_val_t3 = ifelse(export_val_t3 == 0, NA, export_val_t3),
+          import_val_t3 = ifelse(import_val_t3 == 0, NA, import_val_t3)
         ) %>%
+        
         mutate(
           export_val_growth_val = export_val - export_val_t2,
           export_val_growth_val_5 = export_val - export_val_t3
         ) %>% 
+        
         mutate(
           export_val_growth_pct = export_val_growth_val / export_val_t2,
           export_val_growth_pct_5 = export_val_growth_val / export_val_t3
         ) %>% 
+        
         mutate(
           import_val_growth_val = import_val - import_val_t2,
           import_val_growth_val_5 = import_val - import_val_t3
         ) %>% 
+        
         mutate(
           import_val_growth_pct = import_val_growth_val / import_val_t2,
           import_val_growth_pct_5 = import_val_growth_val / import_val_t3
         ) %>%
+        
         select(year, dest_id, prod_id, prod_id_len, everything()) %>%
         select(-c(matches("export_val_t"), matches("import_val_t")))
       
@@ -822,7 +851,7 @@ tables <- function() {
       
       if (classification == "sitc") {
         max_exp_4 <- yodp %>%
-          filter(prod_id_len == 4) %>% 
+          filter(prod_id_len == 6) %>% 
           group_by(origin_id, prod_id) %>%
           summarise(export_val = sum(export_val, na.rm = T)) %>%
           group_by(origin_id) %>%
@@ -833,7 +862,7 @@ tables <- function() {
           )
         
         max_imp_4 <- yodp %>%
-          filter(prod_id_len == 4) %>% 
+          filter(prod_id_len == 6) %>% 
           group_by(origin_id, prod_id) %>%
           summarise(import_val = sum(import_val, na.rm = T)) %>%
           group_by(origin_id) %>%
@@ -846,7 +875,7 @@ tables <- function() {
       
       if (classification == "hs") {
         max_exp_4 <- yodp %>%
-          filter(prod_id_len == 4) %>% 
+          filter(prod_id_len == 6) %>% 
           group_by(origin_id, prod_id) %>%
           summarise(export_val = sum(export_val, na.rm = T)) %>%
           group_by(origin_id) %>%
@@ -857,7 +886,7 @@ tables <- function() {
           )
         
         max_imp_4 <- yodp %>%
-          filter(prod_id_len == 4) %>% 
+          filter(prod_id_len == 6) %>% 
           group_by(origin_id, prod_id) %>%
           summarise(import_val = sum(import_val, na.rm = T)) %>%
           group_by(origin_id) %>%
@@ -868,7 +897,7 @@ tables <- function() {
           )
         
         max_exp_6 <- yodp %>%
-          filter(prod_id_len == 6) %>% 
+          filter(prod_id_len == 8) %>% 
           group_by(origin_id, prod_id) %>%
           summarise(export_val = sum(export_val, na.rm = T)) %>%
           group_by(origin_id) %>%
@@ -879,7 +908,7 @@ tables <- function() {
           )
         
         max_imp_6 <- yodp %>%
-          filter(prod_id_len == 6) %>% 
+          filter(prod_id_len == 8) %>% 
           group_by(origin_id, prod_id) %>%
           summarise(import_val = sum(import_val, na.rm = T)) %>%
           group_by(origin_id) %>%
@@ -917,33 +946,40 @@ tables <- function() {
       
       yo <- yo %>%
         mutate(
-          export_val = if_else(export_val == 0, as.numeric(NA), export_val),
-          import_val = if_else(import_val == 0, as.numeric(NA), import_val)
+          export_val = ifelse(export_val == 0, NA, export_val),
+          import_val = ifelse(import_val == 0, NA, import_val)
         ) %>% 
+        
         mutate(
-          export_val_t2 = if_else(export_val_t2 == 0, as.numeric(NA), export_val_t2),
-          import_val_t2 = if_else(import_val_t2 == 0, as.numeric(NA), import_val_t2)
+          export_val_t2 = ifelse(export_val_t2 == 0, NA, export_val_t2),
+          import_val_t2 = ifelse(import_val_t2 == 0, NA, import_val_t2)
         ) %>% 
+        
         mutate(
-          export_val_t3 = if_else(export_val_t3 == 0, as.numeric(NA), export_val_t3),
-          import_val_t3 = if_else(import_val_t3 == 0, as.numeric(NA), import_val_t3)
+          export_val_t3 = ifelse(export_val_t3 == 0, NA, export_val_t3),
+          import_val_t3 = ifelse(import_val_t3 == 0, NA, import_val_t3)
         ) %>%
+        
         mutate(
           export_val_growth_val = export_val - export_val_t2,
           export_val_growth_val_5 = export_val - export_val_t3
         ) %>% 
+        
         mutate(
           export_val_growth_pct = export_val_growth_val / export_val_t2,
           export_val_growth_pct_5 = export_val_growth_val / export_val_t3
         ) %>% 
+        
         mutate(
           import_val_growth_val = import_val - import_val_t2,
           import_val_growth_val_5 = import_val - import_val_t3
         ) %>% 
+        
         mutate(
           import_val_growth_pct = import_val_growth_val / import_val_t2,
           import_val_growth_pct_5 = import_val_growth_val / import_val_t3
         ) %>%
+        
         select(-c(matches("export_val_t"), matches("import_val_t")))
       
       fwrite(yo, yo_csv_list[[t]])
@@ -963,35 +999,43 @@ tables <- function() {
           export_val_t3 = sum(export_val_t3, na.rm = T),
           import_val_t3 = sum(import_val_t3, na.rm = T)
         ) %>%
+        
         ungroup() %>%
         mutate(
-          export_val = if_else(export_val == 0, as.numeric(NA), export_val),
-          import_val = if_else(import_val == 0, as.numeric(NA), import_val)
+          export_val = ifelse(export_val == 0, NA, export_val),
+          import_val = ifelse(import_val == 0, NA, import_val)
         ) %>% 
+        
         mutate(
-          export_val_t2 = if_else(export_val_t2 == 0, as.numeric(NA), export_val_t2),
-          import_val_t2 = if_else(import_val_t2 == 0, as.numeric(NA), import_val_t2)
+          export_val_t2 = ifelse(export_val_t2 == 0, NA, export_val_t2),
+          import_val_t2 = ifelse(import_val_t2 == 0, NA, import_val_t2)
         ) %>% 
+        
         mutate(
-          export_val_t3 = if_else(export_val_t3 == 0, as.numeric(NA), export_val_t3),
-          import_val_t3 = if_else(import_val_t3 == 0, as.numeric(NA), import_val_t3)
+          export_val_t3 = ifelse(export_val_t3 == 0, NA, export_val_t3),
+          import_val_t3 = ifelse(import_val_t3 == 0, NA, import_val_t3)
         ) %>%
+        
         mutate(
           export_val_growth_val = export_val - export_val_t2,
           export_val_growth_val_5 = export_val - export_val_t3
         ) %>% 
+        
         mutate(
           export_val_growth_pct = export_val_growth_val / export_val_t2,
           export_val_growth_pct_5 = export_val_growth_val / export_val_t3
         ) %>% 
+        
         mutate(
           import_val_growth_val = import_val - import_val_t2,
           import_val_growth_val_5 = import_val - import_val_t3
         ) %>% 
+        
         mutate(
           import_val_growth_pct = import_val_growth_val / import_val_t2,
           import_val_growth_pct_5 = import_val_growth_val / import_val_t3
         ) %>%
+        
         select(-c(matches("export_val_t"), matches("import_val_t")))
       
       fwrite(yd, yd_csv_list[[t]])
@@ -1019,7 +1063,7 @@ tables <- function() {
       
       if (classification == "hs") {
         max_exp_4 <- yodp %>%
-          filter(prod_id_len == 4) %>% 
+          filter(prod_id_len == 6) %>% 
           group_by(origin_id, prod_id) %>%
           summarise(export_val = sum(export_val, na.rm = T)) %>%
           group_by(prod_id) %>%
@@ -1028,7 +1072,7 @@ tables <- function() {
           select(-export_val)
         
         max_imp_4 <- yodp %>%
-          filter(prod_id_len == 4) %>% 
+          filter(prod_id_len == 6) %>% 
           group_by(origin_id, prod_id) %>%
           summarise(import_val = sum(import_val, na.rm = T)) %>%
           group_by(prod_id) %>%
@@ -1037,7 +1081,7 @@ tables <- function() {
           select(-import_val)
         
         max_exp_6 <- yodp %>%
-          filter(prod_id_len == 6) %>% 
+          filter(prod_id_len == 8) %>% 
           group_by(origin_id, prod_id) %>%
           summarise(export_val = sum(export_val, na.rm = T)) %>%
           group_by(prod_id) %>%
@@ -1046,7 +1090,7 @@ tables <- function() {
           select(-export_val)
         
         max_imp_6 <- yodp %>%
-          filter(prod_id_len == 6) %>% 
+          filter(prod_id_len == 8) %>% 
           group_by(origin_id, prod_id) %>%
           summarise(import_val = sum(import_val, na.rm = T)) %>%
           group_by(prod_id) %>%
@@ -1101,33 +1145,40 @@ tables <- function() {
       
       yp <- yp %>% 
         mutate(
-          export_val = if_else(export_val == 0, as.numeric(NA), export_val),
-          import_val = if_else(import_val == 0, as.numeric(NA), import_val)
+          export_val = ifelse(export_val == 0, NA, export_val),
+          import_val = ifelse(import_val == 0, NA, import_val)
         ) %>% 
+        
         mutate(
-          export_val_t2 = if_else(export_val_t2 == 0, as.numeric(NA), export_val_t2),
-          import_val_t2 = if_else(import_val_t2 == 0, as.numeric(NA), import_val_t2)
+          export_val_t2 = ifelse(export_val_t2 == 0, NA, export_val_t2),
+          import_val_t2 = ifelse(import_val_t2 == 0, NA, import_val_t2)
         ) %>% 
+        
         mutate(
-          export_val_t3 = if_else(export_val_t3 == 0, as.numeric(NA), export_val_t3),
-          import_val_t3 = if_else(import_val_t3 == 0, as.numeric(NA), import_val_t3)
+          export_val_t3 = ifelse(export_val_t3 == 0, NA, export_val_t3),
+          import_val_t3 = ifelse(import_val_t3 == 0, NA, import_val_t3)
         ) %>%
+        
         mutate(
           export_val_growth_val = export_val - export_val_t2,
           export_val_growth_val_5 = export_val - export_val_t3
         ) %>% 
+        
         mutate(
           export_val_growth_pct = export_val_growth_val / export_val_t2,
           export_val_growth_pct_5 = export_val_growth_val / export_val_t3
         ) %>% 
+        
         mutate(
           import_val_growth_val = import_val - import_val_t2,
           import_val_growth_val_5 = import_val - import_val_t3
         ) %>% 
+        
         mutate(
           import_val_growth_pct = import_val_growth_val / import_val_t2,
           import_val_growth_pct_5 = import_val_growth_val / import_val_t3
         ) %>%
+        
         select(-c(matches("export_val_t"), matches("import_val_t"))) %>%
         select(year, prod_id, prod_id_len, everything())
       
@@ -1147,6 +1198,14 @@ tables <- function() {
   mclapply(1:length(tables_csv_list), compress, mc.cores = n_cores)
   
   lapply(clean_feather_list, file.remove2)
+  
+  try(unlink(rca_exp_4_dir, recursive = T))
+  try(unlink(rca_imp_4_dir, recursive = T))
+  
+  if (classification == "hs") {
+    try(unlink(rca_exp_6_dir, recursive = T))
+    try(unlink(rca_imp_6_dir, recursive = T))
+  }
 }
 
 tables()
