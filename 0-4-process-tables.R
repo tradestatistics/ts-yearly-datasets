@@ -1,12 +1,17 @@
 # Open oec-yearly-data.Rproj before running this function
 
+# packages ----------------------------------------------------------------
+
+if (!require("pacman")) install.packages("pacman")
+p_load(Matrix, data.table, feather, dplyr, tidyr, stringr, doParallel)
+
 tables <- function() {
   # user parameters ---------------------------------------------------------
   
   message(
     "This function takes data obtained from UN Comtrade by using download functions in this project and creates tidy datasets ready to be added to the OEC"
   )
-  message("\nCopyright (c) 2017, Mauricio Pacha Vargas\n")
+  message("\nCopyright (c) 2018, Mauricio \"Pacha\" Vargas\n")
   readline(prompt = "Press [enter] to continue")
   message("\nThe MIT License\n")
   message(
@@ -25,11 +30,6 @@ tables <- function() {
     title = "Select dataset:",
     graphics = T
   )
-  
-  # packages ----------------------------------------------------------------
-  
-  if (!require("pacman")) install.packages("pacman")
-  p_load(Matrix, data.table, feather, dplyr, tidyr, stringr, doParallel)
   
   # multicore parameters ----------------------------------------------------
   
@@ -1136,8 +1136,9 @@ tables <- function() {
         left_join(pci_t1, by = "prod_id") %>%
         left_join(pci_t2, by = "prod_id") %>%
         mutate(pci_rank_delta = pci_rank.x - pci_rank.y) %>%
-        select(-c(pci_rank.x, pci_rank.y, pci.y)) %>% 
-        rename(pci = pci.x)
+        select(-c(pci_rank.y, pci.y)) %>% 
+        rename(pci = pci.x,
+               pci_rank = pci_rank.x)
         
       yp <- yp %>%
         left_join(max_exp, by = "prod_id") %>%

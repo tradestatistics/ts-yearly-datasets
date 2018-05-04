@@ -1,12 +1,17 @@
 # Open oec-yearly-data.Rproj before running this function
 
+# packages ----------------------------------------------------------------
+
+if (!require("pacman")) install.packages("pacman")
+p_load(Matrix, data.table, feather, dplyr, tidyr, stringr, doParallel)
+
 measures <- function() {
   # user parameters ---------------------------------------------------------
   
   message(
     "This function takes data obtained from UN Comtrade by using download functions in this project and creates tidy datasets ready to be added to the OEC"
   )
-  message("\nCopyright (c) 2017, Mauricio Pacha Vargas\n")
+  message("\nCopyright (c) 2018, Mauricio \"Pacha\" Vargas\n")
   readline(prompt = "Press [enter] to continue")
   message("\nThe MIT License\n")
   message(
@@ -40,11 +45,6 @@ measures <- function() {
     message("SITC has five digits depth but the OEC uses four. Switching to four digits.")
     J <- 4
   }
-  
-  # packages ----------------------------------------------------------------
-  
-  if (!require("pacman")) install.packages("pacman")
-  p_load(Matrix, data.table, feather, dplyr, tidyr, stringr, doParallel)
   
   # multicore parameters ----------------------------------------------------
   

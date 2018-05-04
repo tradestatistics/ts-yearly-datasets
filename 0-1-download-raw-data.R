@@ -1,12 +1,17 @@
 # Open oec-yearly-data.Rproj before running this function
 
+# packages ----------------------------------------------------------------
+
+if (!require("pacman")) install.packages("pacman")
+p_load(data.table, dplyr, jsonlite, doParallel)
+
 download <- function() {
   # user parameters ---------------------------------------------------------
 
   message(
     "This function eases downloading data from UN Comtrade\nPlease be wise and don't share your tokens or the API could block your access."
   )
-  message("\nCopyright (c) 2017, Datawheel\n")
+  message("\nCopyright (c) 2018, Mauricio \"Pacha\" Vargas\n")
   readline(prompt = "Press [enter] to continue")
   message("\nThe MIT License\n")
   message(
@@ -41,11 +46,6 @@ download <- function() {
   stopifnot(token == 1)
   
   token <- Sys.getenv("token")
-  
-  # packages ----------------------------------------------------------------
-
-  if (!require("pacman")) install.packages("pacman")
-  p_load(data.table, dplyr, jsonlite, doParallel)
   
   # multicore parameters ----------------------------------------------------
 

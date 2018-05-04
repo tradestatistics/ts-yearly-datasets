@@ -1,12 +1,17 @@
 # Open oec-yearly-data.Rproj before running this function
 
+# packages ----------------------------------------------------------------
+
+if (!require("pacman")) install.packages("pacman")
+p_load(data.table, feather, dplyr, tidyr, janitor, doParallel)
+
 clean <- function(compress_output = T) {
   # user parameters ---------------------------------------------------------
 
   message(
     "This function takes data obtained from UN Comtrade by using download functions in this project and creates tidy datasets ready to be added to the OEC"
   )
-  message("\nCopyright (c) 2017, Mauricio Pacha Vargas\n")
+  message("\nCopyright (c) 2018, Mauricio \"Pacha\" Vargas\n")
   readline(prompt = "Press [enter] to continue")
   message("\nThe MIT License\n")
   message(
@@ -25,11 +30,6 @@ clean <- function(compress_output = T) {
     title = "Select dataset:", 
     graphics = T
   )
-  
-  # packages ----------------------------------------------------------------
-  
-  if (!require("pacman")) install.packages("pacman")
-  p_load(data.table, feather, dplyr, tidyr, janitor, doParallel)
   
   # multicore parameters ----------------------------------------------------
 
@@ -186,8 +186,10 @@ clean <- function(compress_output = T) {
       
       exports_model <- exports %>% 
         full_join(exports_mirrored, by = c("pairs", "commodity_code")) %>% 
+        mutate(export_usd = round(export_usd, 0)) %>% 
+        mutate(export_usd_mirrored = round(export_usd_mirrored / cif_fob_rate, 0)) %>% 
         rowwise() %>% 
-        mutate(export_usd = max(export_usd, export_usd_mirrored / cif_fob_rate, na.rm = T)) %>% 
+        mutate(export_usd = max(export_usd, export_usd_mirrored, na.rm = T)) %>% 
         select(-matches("mirrored")) %>% 
         ungroup()
       
@@ -209,8 +211,10 @@ clean <- function(compress_output = T) {
       
       imports_model <- imports %>% 
         full_join(imports_mirrored, by = c("pairs", "commodity_code")) %>% 
+        mutate(import_usd = round(import_usd, 0)) %>% 
+        mutate(import_usd_mirrored = round(import_usd_mirrored / cif_fob_rate, 0)) %>% 
         rowwise() %>% 
-        mutate(import_usd = max(import_usd / cif_fob_rate, import_usd_mirrored, na.rm = T)) %>% 
+        mutate(import_usd = max(import_usd, import_usd_mirrored, na.rm = T)) %>% 
         select(pairs, commodity_code, import_usd) %>% 
         ungroup()
       
