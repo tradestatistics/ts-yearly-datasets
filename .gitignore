@@ -9,4 +9,4 @@ __MACOSX
 *.feather
 README_cache/
 .Renviron
-packrat/lib*/
+packrat/
