@@ -920,6 +920,7 @@ tables <- function() {
       }
       
       yo <- yodp %>%
+        filter(prod_id_len == 6) %>% 
         select(year, origin_id, matches("export_val"), matches("import_val")) %>%
         group_by(year, origin_id) %>%
         summarise(
@@ -989,7 +990,9 @@ tables <- function() {
       # yd -------------------------------------------------------------------
       
       yd <- yodp %>%
-        select(year, dest_id, matches("export_val"), matches("import_val")) %>%
+        filter(prod_id_len == 6) %>% 
+        select(year, origin_id, matches("export_val"), matches("import_val")) %>%
+        rename(dest_id = origin_id) %>% 
         group_by(year, dest_id) %>%
         summarise(
           export_val = sum(export_val, na.rm = T),
