@@ -149,9 +149,10 @@ tables <- function() {
   
   # output dirs -------------------------------------------------------------
   
-  tables_dir <- "1-4-tables"
+  base_dir <- "1-4-tables"
+  try(dir.create(base_dir))
   
-  tables_dir <- sprintf("%s/%s-rev%s", tables_dir, classification, rev)
+  tables_dir <- sprintf("%s/%s-rev%s", base_dir, classification, rev)
   try(dir.create(tables_dir))
   
   rca_exp_4_dir <- paste0(tables_dir, "/rca-exp-4")
