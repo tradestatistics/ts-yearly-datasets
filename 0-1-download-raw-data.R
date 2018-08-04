@@ -104,7 +104,7 @@ download <- function() {
   
   raw_dir <- "1-1-raw-data"
   
-  if (download_data_rev < 6) {
+  if (download_data_rev < 5) {
     classification_dir <- sprintf("%s/hs-rev%s", raw_dir, rev)
   } else {
     classification_dir <- sprintf("%s/sitc-rev%s", raw_dir, rev)
@@ -167,7 +167,7 @@ download <- function() {
     old_file <- list.files(classification_dir, pattern = "downloaded", full.names = T)
   )
   
-  if (length(old_file) > 0) (
+  if (length(old_file) > 0) {
     old_links <- as_tibble(fread(old_file)) %>%
       mutate(
         local_file_date = gsub(".*pub-", "", file),
@@ -175,7 +175,7 @@ download <- function() {
         local_file_date = as.Date(local_file_date, "%Y%m%d")
       ) %>%
       rename(old_file = file)
-  )
+  }
   
   links <- tibble(year = years, 
                   url = paste0(

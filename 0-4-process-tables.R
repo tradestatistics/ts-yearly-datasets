@@ -66,11 +66,11 @@ tables <- function() {
   
   # input data --------------------------------------------------------------
   
-  country_names <- as_tibble(fread("../oec-observatory-codes/1-country-data/country-names.tsv")) %>%
+  country_names <- as_tibble(fread("../oec-observatory-codes/01-1-country-data-raw/country-names.tsv")) %>%
     select(-name)
   
   if (dataset == 1) {
-    product_names <- as_tibble(fread("../oec-observatory-codes/2-product-data/hs-rev1992-product-names.tsv")) %>%
+    product_names <- as_tibble(fread("../oec-observatory-codes/02-1-product-data-raw/hs-rev1992-product-names.tsv")) %>%
       select(-name) %>%
       rename(
         commodity_code = hs92,
@@ -79,7 +79,7 @@ tables <- function() {
   }
   
   if (dataset == 2) {
-    product_names <- as_tibble(fread("../oec-observatory-codes/2-product-data/hs-rev1996-product-names.tsv")) %>%
+    product_names <- as_tibble(fread("../oec-observatory-codes/02-1-product-data-raw/hs-rev1996-product-names.tsv")) %>%
       select(-name) %>%
       rename(
         commodity_code = hs96,
@@ -88,7 +88,7 @@ tables <- function() {
   }
   
   if (dataset == 3) {
-    product_names <- as_tibble(fread("../oec-observatory-codes/2-product-data/hs-rev2002-product-names.tsv")) %>%
+    product_names <- as_tibble(fread("../oec-observatory-codes/02-1-product-data-raw/hs-rev2002-product-names.tsv")) %>%
       select(-name) %>%
       rename(
         commodity_code = hs02,
@@ -97,7 +97,7 @@ tables <- function() {
   }
   
   if (dataset == 4) {
-    product_names <- as_tibble(fread("../oec-observatory-codes/2-product-data/hs-rev2007-product-names.tsv")) %>%
+    product_names <- as_tibble(fread("../oec-observatory-codes/02-1-product-data-raw/hs-rev2007-product-names.tsv")) %>%
       select(-name) %>%
       rename(
         commodity_code = hs07,
@@ -106,7 +106,7 @@ tables <- function() {
   }
   
   if (dataset == 5) {
-    product_names <- as_tibble(fread("../oec-observatory-codes/2-product-data/sitc-rev2-product-names.tsv")) %>%
+    product_names <- as_tibble(fread("../oec-observatory-codes/02-1-product-data-raw/sitc-rev2-product-names.tsv")) %>%
       select(-name) %>%
       rename(
         commodity_code = sitc,

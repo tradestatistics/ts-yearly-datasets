@@ -62,6 +62,7 @@ clean <- function(compress_output = T) {
 
   clean_dir <- "1-2-clean-data"
   rev_dir <- sprintf("%s/%s-rev%s", clean_dir, classification, rev)
+  try(dir.create(clean_dir))
   try(dir.create(rev_dir))
   
   # helpers -----------------------------------------------------------------

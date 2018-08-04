@@ -87,6 +87,8 @@ measures <- function() {
   # output dirs -------------------------------------------------------------
   
   measures_dir <- "1-3-measures"
+  try(dir.create(measures_dir))
+  
   measures_dir <- sprintf("%s/%s-rev%s-%s", measures_dir, classification, rev, J)
   try(dir.create(measures_dir))
   

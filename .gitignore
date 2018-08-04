@@ -10,3 +10,4 @@ __MACOSX
 README_cache/
 .Renviron
 packrat/
+packrat/lib*/
