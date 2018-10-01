@@ -1,20 +1,20 @@
 # Open oec-yearly-data.Rproj before running this function
 
-# detect system -----------------------------------------------------------
-
-operating_system <- Sys.info()[['sysname']]
-
-# packages ----------------------------------------------------------------
-
-if (!require("pacman")) install.packages("pacman")
-
-if (operating_system != "Windows") {
-  p_load(data.table, dplyr, jsonlite, doParallel)
-} else {
-  p_load(data.table, dplyr, jsonlite)
-}
-
 download <- function(n_cores = 4) {
+  # detect system -----------------------------------------------------------
+  
+  operating_system <- Sys.info()[['sysname']]
+  
+  # packages ----------------------------------------------------------------
+  
+  if (!require("pacman")) install.packages("pacman")
+  
+  if (operating_system != "Windows") {
+    p_load(data.table, dplyr, jsonlite, doParallel)
+  } else {
+    p_load(data.table, dplyr, jsonlite)
+  }
+  
   # user parameters ---------------------------------------------------------
 
   message(
@@ -35,7 +35,7 @@ download <- function(n_cores = 4) {
   readline(prompt = "Press [enter] to continue")
 
   download_data_rev <- menu(
-    c("HS rev 1992", "HS rev 1996", "HS rev 2002", "HS rev 2007", "SITC rev 2"),
+    c("HS rev 1992", "HS rev 1996", "HS rev 2002", "HS rev 2007", "SITC rev 1", "SITC rev 2", "SITC rev 3", "SITC rev 4"),
     title = "Select dataset:",
     graphics = F
   )
@@ -56,33 +56,25 @@ download <- function(n_cores = 4) {
 
   token <- Sys.getenv("token")
 
-  # revisions ---------------------------------------------------------------
-
-  download_data_rev1992 <- ifelse(download_data_rev == 1, T, F)
-  download_data_rev1996 <- ifelse(download_data_rev == 2, T, F)
-  download_data_rev2002 <- ifelse(download_data_rev == 3, T, F)
-  download_data_rev2007 <- ifelse(download_data_rev == 4, T, F)
-  download_data_rev2 <- ifelse(download_data_rev == 5, T, F)
-
   # HS 1992 -----------------------------------------------------------------
 
-  if (download_data_rev1992 == T) {
-    years <- seq(1992, 2016, 1)
+  if (download_data_rev == 1) {
+    years <- seq(2001, 2016, 1)
     rev <- 1992
     classification <- "H0"
   }
 
   # HS 1996 -----------------------------------------------------------------
 
-  if (download_data_rev1996 == T) {
-    years <- 1996:2016
+  if (download_data_rev == 2) {
+    years <- 2001:2016
     rev <- 1996
     classification <- "H1"
   }
 
   # HS 2002 -----------------------------------------------------------------
 
-  if (download_data_rev2002 == T) {
+  if (download_data_rev == 3) {
     years <- 2002:2016
     rev <- 2002
     classification <- "H2"
@@ -90,36 +82,58 @@ download <- function(n_cores = 4) {
 
   # HS 2007 -----------------------------------------------------------------
 
-  if (download_data_rev2007 == T) {
+  if (download_data_rev == 4) {
     years <- 2007:2016
     rev <- 2007
     classification <- "H3"
   }
-
+  
+  # SITC rev 1 --------------------------------------------------------------
+  
+  if (download_data_rev == 5) {
+    years <- 1962:2016
+    rev <- 1
+    classification <- "S1"
+  }
+  
   # SITC rev 2 --------------------------------------------------------------
-
-  if (download_data_rev2 == T) {
-    years <- 1990:2016
+  
+  if (download_data_rev == 6) {
+    years <- 1976:2016
     rev <- 2
     classification <- "S2"
+  }
+  
+  # SITC rev 3 --------------------------------------------------------------
+  
+  if (download_data_rev == 7) {
+    years <- 1988:2016
+    rev <- 3
+    classification <- "S3"
+  }
+  
+  # SITC rev 4 --------------------------------------------------------------
+  
+  if (download_data_rev == 8) {
+    years <- 2007:2016
+    rev <- 4
+    classification <- "S4"
   }
 
   # output dirs -------------------------------------------------------------
 
-  raw_dir <- "1-1-raw-data"
+  raw_dir <- "01-raw-data-comtrade"
 
   if (download_data_rev < 5) {
     classification_dir <- sprintf("%s/hs-rev%s", raw_dir, rev)
-  } else {
+  }
+  
+  if (download_data_rev > 4) {
     classification_dir <- sprintf("%s/sitc-rev%s", raw_dir, rev)
   }
 
   try(dir.create(raw_dir))
   try(dir.create(classification_dir))
-
-  zip_dir <- paste0(classification_dir, "/zip/")
-
-  try(dir.create(zip_dir))
 
   # helpers -----------------------------------------------------------------
 
@@ -210,7 +224,7 @@ download <- function(n_cores = 4) {
 
   if (exists("old_links")) {
     links <- links %>%
-      mutate(file = paste0(zip_dir, files$name)) %>%
+      mutate(file = paste0(classification_dir, "/", files$name)) %>%
       mutate(
         server_file_date = gsub(".*pub-", "", file),
         server_file_date = gsub("_fmt.*", "", server_file_date),
@@ -230,7 +244,7 @@ download <- function(n_cores = 4) {
       )
   } else {
     links <- links %>%
-      mutate(file = paste0(zip_dir, files$name)) %>%
+      mutate(file = paste0(classification_dir, "/", files$name)) %>%
       mutate(
         server_file_date = gsub(".*pub-", "", file),
         server_file_date = gsub("_fmt.*", "", server_file_date),
@@ -243,9 +257,9 @@ download <- function(n_cores = 4) {
   }
 
   if (operating_system != "Windows") {
-    mclapply(1:length(years), data_downloading, mc.cores = n_cores)
+    mclapply(seq_along(years), data_downloading, mc.cores = n_cores)
   } else {
-    lapply(1:length(years), data_downloading)
+    lapply(seq_along(years), data_downloading)
   }
   
   links <- links %>%

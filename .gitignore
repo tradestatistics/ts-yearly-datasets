@@ -5,9 +5,6 @@
 .DS_Store
 __MACOSX
 *.zip
-*.csv
-*.feather
-README_cache/
+*.csv.gz
 .Renviron
 packrat/
-packrat/lib*/

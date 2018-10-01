@@ -1,0 +1,12 @@
+---
+title: "Trade Statistics Yearly Datasets"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Scripts to download and process data from UN Comtrade.
+
+Instructions and links to cross dependencies coming soon.
