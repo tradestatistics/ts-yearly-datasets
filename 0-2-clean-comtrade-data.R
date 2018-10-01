@@ -1,4 +1,4 @@
-# Open oec-yearly-data.Rproj before running this function
+# Open ts-yearly-data.Rproj before running this function
 
 clean <- function(process_six_digits = F, n_cores = 2) {
   # detect system -----------------------------------------------------------
@@ -21,9 +21,13 @@ clean <- function(process_six_digits = F, n_cores = 2) {
   
   # ISO-3 codes -------------------------------------------------------------
   
-  load("../oec-observatory-codes/01-2-country-data-tidy/country-names.RData")
+  load("../ts-comtrade-codes/01-2-tidy-country-data/country-codes.RData")
   
-  country_codes <- country_names %>% filter(country_code != "wld") %>% select(country_code) %>% as_vector()
+  country_codes <- country_codes %>% 
+    select(iso3_digit_alpha) %>% 
+    mutate(iso3_digit_alpha = str_to_lower(iso3_digit_alpha)) %>% 
+    filter(!iso3_digit_alpha %in% c("wld","null")) %>% 
+    as_vector()
   
   # user parameters ---------------------------------------------------------
 

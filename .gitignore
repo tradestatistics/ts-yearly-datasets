@@ -8,3 +8,4 @@ __MACOSX
 *.csv.gz
 .Renviron
 packrat/
+packrat/lib*/
