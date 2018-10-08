@@ -19,13 +19,29 @@ fread2 <- function(x) {
   messageline()
   message("function fread2")
   message("x: ", x)
-  as_tibble(fread(
+  fread(
     x,
     colClasses = list(
       character = c("Commodity Code"),
       numeric = c("Trade Value (US$)")
     )
-  )) %>% clean_names()
+  ) %>%
+    as_tibble() %>% 
+    clean_names()
+}
+
+fread3 <- function(x) {
+  messageline()
+  message("function fread3")
+  message("x: ", x)
+  fread(
+    paste("zcat", x),
+    colClasses = list(
+      character = c("commodity_code"),
+      numeric = c("trade_value_usd")
+    )
+  ) %>% 
+    as_tibble()
 }
 
 file_remove <- function(x) {

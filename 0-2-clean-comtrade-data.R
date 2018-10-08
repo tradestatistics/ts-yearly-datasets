@@ -1,6 +1,6 @@
 # Open ts-yearly-data.Rproj before running this function
 
-clean <- function(process_six_digits = F, n_cores = 2) {
+clean <- function(n_cores = 2) {
   # detect system -----------------------------------------------------------
   
   operating_system <- Sys.info()[['sysname']]
@@ -75,10 +75,11 @@ clean <- function(process_six_digits = F, n_cores = 2) {
 
   # number of digits --------------------------------------------------------
 
-  if (process_six_digits == TRUE & classification == "hs") {
-    J <- c(4,6)
+  if (classification == "hs") {
+    #J <- c(4,6)
+    J <- 6
   } else {
-    J <- 4
+    J<- 4
   }
   
   # input dirs --------------------------------------------------------------

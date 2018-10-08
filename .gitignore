@@ -9,3 +9,7 @@ __MACOSX
 .Renviron
 packrat/
 packrat/lib*/
+#remove this later
+03-hs-data/
+0-3-create-hs-data.R
+
