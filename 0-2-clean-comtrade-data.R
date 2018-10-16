@@ -1,6 +1,6 @@
 # Open ts-yearly-data.Rproj before running this function
 
-clean <- function(n_cores = 2) {
+clean <- function(n_cores = 4) {
   # detect system -----------------------------------------------------------
   
   operating_system <- Sys.info()[['sysname']]
@@ -168,13 +168,14 @@ clean <- function(n_cores = 2) {
 
       rm(clean_data)
       
-      exports_model <- bind_rows(exports, exports_mirrored) %>% 
-        group_by(pairs) %>% 
-        summarise(trade_value_usd = max(trade_value_usd, na.rm = T)) %>% 
+      exports_model <- exports %>% 
+        full_join(exports_mirrored, by = "pairs") %>% 
+        rowwise() %>% 
+        mutate(trade_value_usd = max(trade_value_usd.x, trade_value_usd.y, na.rm = T)) %>% 
         ungroup() %>% 
         separate(pairs, c("reporter_iso", "partner_iso", "commodity_code"), sep = "_") %>%
         mutate(year = years[[t]]) %>%
-        select(year, everything())
+        select(year, everything(), -ends_with("x"), -ends_with("y"))
         
       rm(exports, exports_mirrored)
 
