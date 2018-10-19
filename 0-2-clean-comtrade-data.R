@@ -32,7 +32,7 @@ clean <- function(n_cores = 4) {
   # user parameters ---------------------------------------------------------
 
   message(
-    "This function takes data obtained from UN Comtrade by using download functions in this project and creates tidy datasets ready to be added to the OEC"
+    "This function takes data obtained from UN Comtrade by using download functions in this project and creates tidy datasets"
   )
   message("\nCopyright (c) 2018, Mauricio \"Pacha\" Vargas\n")
   readline(prompt = "Press [enter] to continue")
@@ -75,12 +75,7 @@ clean <- function(n_cores = 4) {
 
   # number of digits --------------------------------------------------------
 
-  if (classification == "hs") {
-    #J <- c(4,6)
-    J <- 6
-  } else {
-    J<- 4
-  }
+  J <- 4
   
   # input dirs --------------------------------------------------------------
 
