@@ -23,9 +23,6 @@ convert <- function(n_cores = 4) {
   
   # user parameters ---------------------------------------------------------
 
-  message(
-    "This function takes data obtained from UN Comtrade by using download functions in this project and creates tidy datasets"
-  )
   message("\nCopyright (c) 2018, Mauricio \"Pacha\" Vargas\n")
   readline(prompt = "Press [enter] to continue")
   message("\nThe MIT License\n")
@@ -48,11 +45,11 @@ convert <- function(n_cores = 4) {
 
   # input dir ---------------------------------------------------------------
   
-  clean_dir <- "02-clean-data-comtrade"
+  clean_dir <- "02-clean-data"
   
   # output dir --------------------------------------------------------------
   
-  converted_dir <- "03-converted-data-comtrade"
+  converted_dir <- "03-converted-data"
   try(dir.create(converted_dir))
   
   # input files -------------------------------------------------------------

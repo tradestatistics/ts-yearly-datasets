@@ -31,9 +31,6 @@ clean <- function(n_cores = 4) {
   
   # user parameters ---------------------------------------------------------
 
-  message(
-    "This function takes data obtained from UN Comtrade by using download functions in this project and creates tidy datasets"
-  )
   message("\nCopyright (c) 2018, Mauricio \"Pacha\" Vargas\n")
   readline(prompt = "Press [enter] to continue")
   message("\nThe MIT License\n")
@@ -79,11 +76,11 @@ clean <- function(n_cores = 4) {
   
   # input dirs --------------------------------------------------------------
 
-  raw_dir <- sprintf("01-raw-data-comtrade/%s-rev%s", classification, rev)
+  raw_dir <- sprintf("01-raw-data/%s-rev%s", classification, rev)
   
   # output dirs -------------------------------------------------------------
 
-  clean_dir <- "02-clean-data-comtrade"
+  clean_dir <- "02-clean-data"
   rev_dir <- sprintf("%s/%s-rev%s", clean_dir, classification, rev)
   try(dir.create(clean_dir))
   try(dir.create(rev_dir))

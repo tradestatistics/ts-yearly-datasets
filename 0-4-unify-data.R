@@ -19,9 +19,6 @@ unify <- function(n_cores = 4) {
 
   # user parameters ---------------------------------------------------------
 
-  message(
-    "This function takes data obtained from UN Comtrade by using download functions in this project and creates tidy datasets"
-  )
   message("\nCopyright (c) 2018, Mauricio \"Pacha\" Vargas\n")
   readline(prompt = "Press [enter] to continue")
   message("\nThe MIT License\n")
@@ -38,13 +35,13 @@ unify <- function(n_cores = 4) {
 
   # input dir ---------------------------------------------------------------
 
-  clean_dir <- "02-clean-data-comtrade/hs-rev2007"
+  clean_dir <- "02-clean-data/hs-rev2007"
 
-  converted_dir <- "03-converted-data-comtrade"
+  converted_dir <- "03-converted-data"
 
   # output dir --------------------------------------------------------------
 
-  unified_dir <- "03-unified-data-comtrade"
+  unified_dir <- "03-unified-data"
   try(dir.create(unified_dir))
 
   # input files -------------------------------------------------------------
@@ -171,6 +168,10 @@ unify <- function(n_cores = 4) {
           arrange(reporter_iso, partner_iso, commodity_code)
         
         rm(data2) 
+      } else {
+        data <- data %>%
+          separate(pairs, c("reporter_iso", "partner_iso")) %>%
+          arrange(reporter_iso, partner_iso, commodity_code)
       }
 
       fwrite(data, y[[t]])

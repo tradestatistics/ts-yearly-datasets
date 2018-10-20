@@ -17,9 +17,6 @@ download <- function(n_cores = 4) {
   
   # user parameters ---------------------------------------------------------
 
-  message(
-    "This function eases downloading data from UN Comtrade\nPlease be wise and don't share your tokens or the API could block your access."
-  )
   message("\nCopyright (c) 2018, Mauricio \"Pacha\" Vargas\n")
   readline(prompt = "Press [enter] to continue")
   message("\nThe MIT License\n")
@@ -122,7 +119,7 @@ download <- function(n_cores = 4) {
 
   # output dirs -------------------------------------------------------------
 
-  raw_dir <- "01-raw-data-comtrade"
+  raw_dir <- "01-raw-data"
 
   if (download_data_rev < 5) {
     classification_dir <- sprintf("%s/hs-rev%s", raw_dir, rev)
