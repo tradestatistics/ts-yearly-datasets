@@ -1,20 +1,20 @@
 # Open ts-yearly-data.Rproj before running this function
 
+# detect system -----------------------------------------------------------
+
+operating_system <- Sys.info()[['sysname']]
+
+# packages ----------------------------------------------------------------
+
+if (!require("pacman")) install.packages("pacman")
+
+if (operating_system != "Windows") {
+  p_load(data.table, dplyr, jsonlite, doParallel)
+} else {
+  p_load(data.table, dplyr, jsonlite)
+}
+
 download <- function(n_cores = 4) {
-  # detect system -----------------------------------------------------------
-  
-  operating_system <- Sys.info()[['sysname']]
-  
-  # packages ----------------------------------------------------------------
-  
-  if (!require("pacman")) install.packages("pacman")
-  
-  if (operating_system != "Windows") {
-    p_load(data.table, dplyr, jsonlite, doParallel)
-  } else {
-    p_load(data.table, dplyr, jsonlite)
-  }
-  
   # user parameters ---------------------------------------------------------
 
   message("\nCopyright (c) 2018, Mauricio \"Pacha\" Vargas\n")
@@ -56,8 +56,8 @@ download <- function(n_cores = 4) {
   # HS 1992 -----------------------------------------------------------------
 
   if (download_data_rev == 1) {
-    years <- seq(2001, 2016, 1)
-    rev <- 1992
+    years <- 1992:2016
+    revision <- 1992
     classification <- "H0"
   }
 
@@ -65,7 +65,7 @@ download <- function(n_cores = 4) {
 
   if (download_data_rev == 2) {
     years <- 2001:2016
-    rev <- 1996
+    revision <- 1996
     classification <- "H1"
   }
 
@@ -73,7 +73,7 @@ download <- function(n_cores = 4) {
 
   if (download_data_rev == 3) {
     years <- 2002:2016
-    rev <- 2002
+    revision <- 2002
     classification <- "H2"
   }
 
@@ -81,7 +81,7 @@ download <- function(n_cores = 4) {
 
   if (download_data_rev == 4) {
     years <- 2007:2016
-    rev <- 2007
+    revision <- 2007
     classification <- "H3"
   }
   
@@ -89,7 +89,7 @@ download <- function(n_cores = 4) {
   
   if (download_data_rev == 5) {
     years <- 1962:2016
-    rev <- 1
+    revision <- 1
     classification <- "S1"
   }
   
@@ -97,7 +97,7 @@ download <- function(n_cores = 4) {
   
   if (download_data_rev == 6) {
     years <- 1976:2016
-    rev <- 2
+    revision <- 2
     classification <- "S2"
   }
   
@@ -105,7 +105,7 @@ download <- function(n_cores = 4) {
   
   if (download_data_rev == 7) {
     years <- 1988:2016
-    rev <- 3
+    revision <- 3
     classification <- "S3"
   }
   
@@ -113,7 +113,7 @@ download <- function(n_cores = 4) {
   
   if (download_data_rev == 8) {
     years <- 2007:2016
-    rev <- 4
+    revision <- 4
     classification <- "S4"
   }
 
@@ -122,11 +122,11 @@ download <- function(n_cores = 4) {
   raw_dir <- "01-raw-data"
 
   if (download_data_rev < 5) {
-    classification_dir <- sprintf("%s/hs-rev%s", raw_dir, rev)
+    classification_dir <- sprintf("%s/hs-rev%s", raw_dir, revision)
   }
   
   if (download_data_rev > 4) {
-    classification_dir <- sprintf("%s/sitc-rev%s", raw_dir, rev)
+    classification_dir <- sprintf("%s/sitc-rev%s", raw_dir, revision)
   }
 
   try(dir.create(raw_dir))

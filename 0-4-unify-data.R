@@ -1,22 +1,24 @@
+# Open ts-yearly-data.Rproj before running this function
+
+# detect system -----------------------------------------------------------
+
+operating_system <- Sys.info()[["sysname"]]
+
+# packages ----------------------------------------------------------------
+
+if (!require("pacman")) install.packages("pacman")
+
+if (operating_system != "Windows") {
+  pacman::p_load(data.table, dplyr, tidyr, stringr, doParallel)
+} else {
+  pacman::p_load(data.table, dplyr, tidyr, stringr)
+}
+
+# helpers -----------------------------------------------------------------
+
+source("0-0-helpers.R")
+
 unify <- function(n_cores = 4) {
-  # detect system -----------------------------------------------------------
-
-  operating_system <- Sys.info()[["sysname"]]
-
-  # packages ----------------------------------------------------------------
-
-  if (!require("pacman")) install.packages("pacman")
-
-  if (operating_system != "Windows") {
-    pacman::p_load(data.table, dplyr, tidyr, stringr, doParallel)
-  } else {
-    pacman::p_load(data.table, dplyr, tidyr, stringr)
-  }
-
-  # helpers -----------------------------------------------------------------
-
-  source("0-0-helpers.R")
-
   # user parameters ---------------------------------------------------------
 
   message("\nCopyright (c) 2018, Mauricio \"Pacha\" Vargas\n")
@@ -32,35 +34,8 @@ unify <- function(n_cores = 4) {
     "\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.\n"
   )
   readline(prompt = "Press [enter] to continue")
-
-  # input dir ---------------------------------------------------------------
-
-  clean_dir <- "02-clean-data/hs-rev2007"
-
-  converted_dir <- "03-converted-data"
-
-  # output dir --------------------------------------------------------------
-
-  unified_dir <- "03-unified-data"
-  try(dir.create(unified_dir))
-
-  # input files -------------------------------------------------------------
-
-  clean_files <- list.files(clean_dir, pattern = "gz", recursive = T, full.names = T)
-
-  converted_files <- list.files(converted_dir, pattern = "gz", recursive = T, full.names = T)
-
-  all_files <- c(clean_files, converted_files)
-
-  years <- 1962:2016
-
+  
   # convert data ------------------------------------------------------------
-
-  try(dir.create(paste0(unified_dir, "/hs-rev2007")))
-
-  unified_gz_files <- paste0(unified_dir, "/hs-rev2007/hs-rev2007-", years, ".csv.gz")
-
-  unified_csv_files <- str_replace(unified_gz_files, ".gz", "")
 
   fill_gaps <- function(x, y, z, t) {
     if (!file.exists(grep(paste(years[[t]], ".csv.gz", sep = ""), z, value = T))) {
@@ -182,11 +157,11 @@ unify <- function(n_cores = 4) {
   if (operating_system != "Windows") {
     mclapply(seq_along(years), fill_gaps,
       mc.cores = n_cores,
-      x = all_files, y = unified_csv_files, z = unified_gz_files
+      x = clean_and_coverted, y = unified_csv, z = unified_gz
     )
   } else {
     lapply(seq_along(years), fill_gaps,
-      x = all_files, y = unified_csv_files, z = unified_gz_files
+      x = clean_and_coverted, y = unified_csv, z = unified_gz
     )
   }
 }

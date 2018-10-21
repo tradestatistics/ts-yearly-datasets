@@ -1,24 +1,24 @@
 # Open ts-yearly-data.Rproj before running this function
 
+# detect system -----------------------------------------------------------
+
+operating_system <- Sys.info()[['sysname']]
+
+# packages ----------------------------------------------------------------
+
+if (!require("pacman")) install.packages("pacman")
+
+if (operating_system != "Windows") {
+  pacman::p_load(data.table, dplyr, tidyr, stringr, janitor, purrr, doParallel)
+} else {
+  pacman::p_load(data.table, dplyr, tidyr, stringr, janitor, purrr)
+}
+
+# helpers -----------------------------------------------------------------
+
+source("0-0-helpers.R")
+
 clean <- function(n_cores = 4) {
-  # detect system -----------------------------------------------------------
-  
-  operating_system <- Sys.info()[['sysname']]
-  
-  # packages ----------------------------------------------------------------
-  
-  if (!require("pacman")) install.packages("pacman")
-  
-  if (operating_system != "Windows") {
-    pacman::p_load(data.table, dplyr, tidyr, stringr, janitor, purrr, doParallel)
-  } else {
-    pacman::p_load(data.table, dplyr, tidyr, stringr, janitor, purrr)
-  }
-  
-  # helpers -----------------------------------------------------------------
-  
-  source("0-0-helpers.R")
-  
   # ISO-3 codes -------------------------------------------------------------
   
   load("../ts-comtrade-codes/01-2-tidy-country-data/country-codes.RData")
@@ -59,52 +59,24 @@ clean <- function(n_cores = 4) {
     classification <- "sitc"
   }
   
-  if (dataset == 1) { rev <- 1992; rev2 <- rev }
-  if (dataset == 2) { rev <- 1996; rev2 <- rev }
-  if (dataset == 3) { rev <- 2002; rev2 <- rev }
-  if (dataset == 4) { rev <- 2007; rev2 <- rev }
-  if (dataset == 5) { rev <- 1; rev2 <- 1962 }
-  if (dataset == 6) { rev <- 2; rev2 <- 1976 }
-  if (dataset == 7) { rev <- 3; rev2 <- 1988 }
-  if (dataset == 8) { rev <- 4; rev2 <- 2007 }
+  if (dataset == 1) { revision <- 1992; revision2 <- revision }
+  if (dataset == 2) { revision <- 1996; revision2 <- revision }
+  if (dataset == 3) { revision <- 2002; revision2 <- revision }
+  if (dataset == 4) { revision <- 2007; revision2 <- revision }
+  if (dataset == 5) { revision <- 1; revision2 <- 1962 }
+  if (dataset == 6) { revision <- 2; revision2 <- 1976 }
+  if (dataset == 7) { revision <- 3; revision2 <- 1988 }
+  if (dataset == 8) { revision <- 4; revision2 <- 2007 }
   
-  years <- rev2:2016
+  years <- revision2:2016
 
   # number of digits --------------------------------------------------------
 
   J <- 4
   
-  # input dirs --------------------------------------------------------------
-
-  raw_dir <- sprintf("01-raw-data/%s-rev%s", classification, rev)
-  
-  # output dirs -------------------------------------------------------------
-
-  clean_dir <- "02-clean-data"
-  rev_dir <- sprintf("%s/%s-rev%s", clean_dir, classification, rev)
-  try(dir.create(clean_dir))
-  try(dir.create(rev_dir))
-
-  # list input files --------------------------------------------------------
-
-  raw_zip_list <-
-    list.files(
-      path = raw_dir,
-      pattern = "\\.zip",
-      full.names = T
-    ) %>%
-    grep(paste(paste0("ps-", years), collapse = "|"), ., value = TRUE)
-
-  raw_csv_list <- raw_zip_list %>% gsub("zip", "csv", .)
-
-  # list output files -------------------------------------------------------
-
-  clean_csv_list <- sprintf("%s/%s-rev%s-%s.csv", rev_dir, classification, rev, years)
-  clean_gz_list <- sprintf("%s/%s-rev%s-%s.csv.gz", rev_dir, classification, rev, years)
-
   # uncompress input --------------------------------------------------------
 
-  lapply(seq_along(raw_csv_list), extract, x = raw_zip_list, y = raw_csv_list, z = raw_dir)
+  lapply(seq_along(raw_csv), extract, x = raw_zip, y = raw_csv, z = raw_dir)
   
   # create tidy datasets ----------------------------------------------------
 
@@ -115,13 +87,13 @@ clean <- function(n_cores = 4) {
   cif_fob_rate <- 1.08
 
   compute_tidy_data <- function(t) {
-    if (!file.exists(clean_gz_list[[t]])) {
+    if (!file.exists(clean_gz[[t]])) {
       messageline()
       message(paste("Cleaning", years[[t]], "data..."))
 
       # clean data --------------------------------------------------------------
 
-      clean_data <- fread2(raw_csv_list[[t]]) %>%
+      clean_data <- fread2(raw_csv[[t]]) %>%
         rename(trade_value_usd = trade_value_us) %>%
         select(trade_flow, reporter_iso, partner_iso, aggregate_level, commodity_code, trade_value_usd) %>%
         
@@ -171,8 +143,8 @@ clean <- function(n_cores = 4) {
         
       rm(exports, exports_mirrored)
 
-      fwrite(exports_model, clean_csv_list[[t]])
-      compress_gz(clean_csv_list[[t]])
+      fwrite(exports_model, clean_csv[[t]])
+      compress_gz(clean_csv[[t]])
     } else {
       messageline()
       message(paste("Skipping year", years[[t]], "Files exist."))
@@ -180,12 +152,12 @@ clean <- function(n_cores = 4) {
   }
 
   if (operating_system != "Windows") {
-    mclapply(seq_along(raw_csv_list), compute_tidy_data, mc.cores = n_cores)
+    mclapply(seq_along(raw_csv), compute_tidy_data, mc.cores = n_cores)
   } else {
-    lapply(seq_along(raw_csv_list), compute_tidy_data)
+    lapply(seq_along(raw_csv), compute_tidy_data)
   }
   
-  lapply(raw_csv_list, file_remove)
+  lapply(raw_csv, file_remove)
 }
 
 clean()
