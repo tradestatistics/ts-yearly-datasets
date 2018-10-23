@@ -200,56 +200,43 @@ extract <- function(x, y, z, t) {
   }
 }
 
-fread2 <- function(x) {
+fread2 <- function(x, char = NULL, num = NULL) {
   messageline()
   message("function fread2")
   message("x: ", x)
-  fread(
-    x,
-    colClasses = list(
-      character = c("Commodity Code"),
-      numeric = c("Trade Value (US$)")
-    )
-  ) %>%
-    as_tibble() %>%
-    clean_names()
-}
-
-fread3 <- function(x) {
-  messageline()
-  message("function fread3")
-  message("x: ", x)
-  fread(
-    paste("zcat", x),
-    colClasses = list(
-      character = c("commodity_code"),
-      numeric = c("trade_value_usd")
-    )
-  ) %>%
-    as_tibble()
-}
-
-fread4 <- function(x) {
-  messageline()
-  message("function fread4")
-  message("x: ", x)
-  fread(
-    paste("zcat", x),
-    colClasses = list(
-      character = c("commodity_code")
-    )
-  ) %>%
-    as_tibble()
-}
-
-fread5 <- function(x) {
-  messageline()
-  message("function fread5")
-  message("x: ", x)
-  fread(
-    paste("zcat", x)
-  ) %>%
-    as_tibble()
+  
+  if (is.null(char) & is.null(num)) {
+    d <- fread(
+      paste("zcat", x)
+    ) %>%
+      as_tibble() %>% 
+      clean_names()
+  }
+  
+  if (!is.null(char) & is.null(num)) {
+    d <- fread(
+      paste("zcat", x),
+      colClasses = list(
+        character = char
+      )
+    ) %>%
+      as_tibble() %>% 
+      clean_names()
+  }
+  
+  if (!is.null(char) & !is.null(num)) {
+    d <- fread(
+      paste("zcat", x),
+      colClasses = list(
+        character = char,
+        numeric = num
+      )
+    ) %>%
+      as_tibble() %>% 
+      clean_names()
+  }
+  
+  return(d)
 }
 
 file_remove <- function(x) {
@@ -258,6 +245,215 @@ file_remove <- function(x) {
 
 compress_gz <- function(x) {
   system(paste("gzip", x))
+}
+
+compute_tidy_data <- function(t) {
+  if (!file.exists(clean_gz[[t]])) {
+    messageline()
+    message(paste("Cleaning", years[[t]], "data..."))
+    
+    # clean data --------------------------------------------------------------
+    
+    clean_data <- fread2(raw_csv[[t]], char = c("Commodity Code"), num = c("Trade Value (US$)")) %>%
+      rename(trade_value_usd = trade_value_us) %>%
+      select(trade_flow, reporter_iso, partner_iso, aggregate_level, commodity_code, trade_value_usd) %>%
+      
+      filter(aggregate_level %in% J) %>%
+      filter(trade_flow %in% c("Export","Import")) %>%
+      
+      filter(
+        !is.na(commodity_code),
+        commodity_code != "",
+        commodity_code != " "
+      ) %>%
+      
+      mutate(
+        reporter_iso = str_to_lower(reporter_iso),
+        partner_iso = str_to_lower(partner_iso)
+      ) %>%
+      
+      filter(
+        reporter_iso %in% country_codes,
+        partner_iso %in% country_codes
+      )
+    
+    # exports data ------------------------------------------------------------
+    
+    exports <- clean_data %>%
+      filter(trade_flow == "Export") %>%
+      unite(pairs, reporter_iso, partner_iso, commodity_code, sep = "_", remove = F) %>%
+      select(pairs, trade_value_usd) %>% 
+      mutate(trade_value_usd = ceiling(trade_value_usd))
+    
+    exports_mirrored <- clean_data %>%
+      filter(trade_flow == "Import") %>%
+      unite(pairs, partner_iso, reporter_iso, commodity_code, sep = "_", remove = F) %>%
+      select(pairs, trade_value_usd) %>% 
+      mutate(trade_value_usd = ceiling(trade_value_usd / cif_fob_rate))
+    
+    rm(clean_data)
+    
+    exports_model <- exports %>% 
+      full_join(exports_mirrored, by = "pairs") %>% 
+      rowwise() %>% 
+      mutate(trade_value_usd = max(trade_value_usd.x, trade_value_usd.y, na.rm = T)) %>% 
+      ungroup() %>% 
+      separate(pairs, c("reporter_iso", "partner_iso", "commodity_code"), sep = "_") %>%
+      mutate(year = years[[t]]) %>%
+      select(year, everything(), -ends_with("x"), -ends_with("y"))
+    
+    rm(exports, exports_mirrored)
+    
+    fwrite(exports_model, clean_csv[[t]])
+    compress_gz(clean_csv[[t]])
+  } else {
+    messageline()
+    message(paste("Skipping year", years[[t]], "Files exist."))
+  }
+}
+
+convert_codes <- function(t, x, y, z) {
+  equivalent_codes <- product_correspondence %>% 
+    select(!!sym(c2[[dataset]]), hs07) %>% 
+    filter(
+      !(!!sym(c2[[dataset]]) %in% c("NULL")),
+      !(hs07 %in% c("NULL"))
+    ) %>% 
+    mutate_if(is.character, str_sub, start = 1, end = 4) %>% 
+    distinct(!!sym(c2[[dataset]]), hs07)
+  
+  if (!file.exists(z[[t]])) {
+    data <- fread2(x[[t]], char = c("commodity_code"), num = c("trade_value_usd")) %>%
+      left_join(equivalent_codes, by = c("commodity_code" = c2[[dataset]])) %>%
+      distinct(reporter_iso, partner_iso, commodity_code, .keep_all = TRUE) %>% 
+      mutate(
+        hs07 = ifelse(is.na(hs07), 9999, hs07),
+        commodity_code = hs07
+      ) %>%
+      select(-hs07) %>% 
+      group_by(year, reporter_iso, partner_iso, commodity_code) %>% 
+      summarise(trade_value_usd = sum(trade_value_usd, na.rm = TRUE))
+    
+    fwrite(data, y[[t]])
+    compress_gz(y[[t]])
+  }
+}
+
+fill_gaps <- function(x, y, z, t) {
+  if (!file.exists(grep(paste(years[[t]], ".csv.gz", sep = ""), z, value = T))) {
+    if (years[[t]] < 1976) {
+      d1 <- grep(paste(years[[t]], ".csv.gz", sep = ""), x, value = T)
+      d2 <- NULL
+      d3 <- NULL
+      d4 <- NULL
+      d5 <- NULL
+    }
+    
+    if (years[[t]] >= 1976 & years[[t]] < 1992) {
+      d1 <- grep(paste("sitc-rev2-", years[[t]], ".csv.gz", sep = ""), x, value = T)
+      d2 <- grep(paste("sitc-rev1-", years[[t]], ".csv.gz", sep = ""), x, value = T)
+      d3 <- NULL
+      d4 <- NULL
+      d5 <- NULL
+    }
+    
+    if (years[[t]] >= 1992 & years[[t]] < 1996) {
+      d1 <- grep(paste("hs-rev1992-", years[[t]], ".csv.gz", sep = ""), x, value = T)
+      d2 <- grep(paste("sitc-rev2-", years[[t]], ".csv.gz", sep = ""), x, value = T)
+      d3 <- NULL
+      d4 <- NULL
+      d5 <- NULL
+    }
+    
+    if (years[[t]] >= 1996 & years[[t]] < 2002) {
+      d1 <- grep(paste("hs-rev1996-", years[[t]], ".csv.gz", sep = ""), x, value = T)
+      d2 <- grep(paste("hs-rev1992-", years[[t]], ".csv.gz", sep = ""), x, value = T)
+      d3 <- grep(paste("sitc-rev2-", years[[t]], ".csv.gz", sep = ""), x, value = T)
+      d4 <- NULL
+      d5 <- NULL
+    }
+    
+    if (years[[t]] >= 2002 & years[[t]] < 2007) {
+      d1 <- grep(paste("hs-rev2002-", years[[t]], ".csv.gz", sep = ""), x, value = T)
+      d2 <- grep(paste("hs-rev1996-", years[[t]], ".csv.gz", sep = ""), x, value = T)
+      d3 <- grep(paste("hs-rev1992-", years[[t]], ".csv.gz", sep = ""), x, value = T)
+      d4 <- grep(paste("sitc-rev2-", years[[t]], ".csv.gz", sep = ""), x, value = T)
+      d5 <- NULL
+    }
+    
+    if (years[[t]] >= 2007) {
+      d1 <- grep(paste("hs-rev2007-", years[[t]], ".csv.gz", sep = ""), x, value = T)
+      d2 <- grep(paste("hs-rev2002-", years[[t]], ".csv.gz", sep = ""), x, value = T)
+      d3 <- grep(paste("hs-rev1996-", years[[t]], ".csv.gz", sep = ""), x, value = T)
+      d4 <- grep(paste("hs-rev1992-", years[[t]], ".csv.gz", sep = ""), x, value = T)
+      d5 <- grep(paste("sitc-rev2-", years[[t]], ".csv.gz", sep = ""), x, value = T)
+    }
+    
+    data <- fread2(d1, char = c("commodity_code"), num = c("trade_value_usd")) %>%
+      unite(pairs, reporter_iso, partner_iso)
+    
+    if (!is.null(d2)) {
+      data2 <- fread2(d2, char = c("commodity_code"), num = c("trade_value_usd")) %>%
+        unite(pairs, reporter_iso, partner_iso) %>%
+        anti_join(data, by = "pairs")
+    } else {
+      data2 <- NULL
+    }
+    
+    if (!is.null(d3)) {
+      data3 <- fread2(d3, char = c("commodity_code"), num = c("trade_value_usd")) %>%
+        unite(pairs, reporter_iso, partner_iso) %>%
+        anti_join(data, by = "pairs") %>%
+        anti_join(data2, by = "pairs")
+    }
+    
+    if (!is.null(d4)) {
+      data4 <- fread2(d4, char = c("commodity_code"), num = c("trade_value_usd")) %>%
+        unite(pairs, reporter_iso, partner_iso) %>%
+        anti_join(data, by = "pairs") %>%
+        anti_join(data2, by = "pairs") %>%
+        anti_join(data3, by = "pairs")
+    }
+    
+    if (!is.null(d5)) {
+      data5 <- fread2(d5, char = c("commodity_code"), num = c("trade_value_usd")) %>%
+        unite(pairs, reporter_iso, partner_iso) %>%
+        anti_join(data, by = "pairs") %>%
+        anti_join(data2, by = "pairs") %>%
+        anti_join(data3, by = "pairs") %>%
+        anti_join(data4, by = "pairs")
+    }
+    
+    if (!is.null(d2) & !is.null(d3) & is.null(d4) & is.null(d5)) {
+      data2 <- bind_rows(data2, data3)
+      rm(data3)
+    }
+    
+    if (!is.null(d2) & !is.null(d3) & !is.null(d4) & is.null(d5)) {
+      data2 <- bind_rows(data2, data3, data4)
+      rm(data3, data4)
+    }
+    
+    if (!is.null(d2) & !is.null(d3) & !is.null(d4) & !is.null(d5)) {
+      data2 <- bind_rows(data2, data3, data4, data5)
+      rm(data3, data4, data5)
+    }
+    
+    if (!is.null(d2)) {
+      data <- bind_rows(data, data2) %>%
+        separate(pairs, c("reporter_iso", "partner_iso")) %>%
+        arrange(reporter_iso, partner_iso, commodity_code)
+      
+      rm(data2) 
+    } else {
+      data <- data %>%
+        separate(pairs, c("reporter_iso", "partner_iso")) %>%
+        arrange(reporter_iso, partner_iso, commodity_code)
+    }
+    
+    fwrite(data, y[[t]])
+    compress_gz(y[[t]])
+  }
 }
 
 compute_rca <- function(x, y, z, keep, discard, t) {
@@ -680,7 +876,7 @@ compute_tables <- function(t) {
     
     fwrite(
       yrpc %>%
-        select(-c(matches("export_val_t"), matches("import_val_t"))),
+        select(-c(ends_with("_t2"), ends_with("_t3"))),
       yrpc_csv[[t]]
     )
     
@@ -713,9 +909,9 @@ compute_tables <- function(t) {
       group_by(year, reporter_iso, commodity_code) %>%
       summarise_trade() %>%
       ungroup() %>%
-      compute_changes() %>% 
       left_join(rca_exp, by = c("reporter_iso" = "country_iso", "commodity_code")) %>%
       left_join(rca_imp, by = c("reporter_iso" = "country_iso", "commodity_code")) %>%
+      compute_changes() %>% 
       select(year, reporter_iso, commodity_code, everything()) %>%
       select(-c(ends_with("_t2"), ends_with("_t3")))
     
@@ -765,9 +961,9 @@ compute_tables <- function(t) {
       group_by(year, reporter_iso) %>%
       summarise_trade() %>%
       ungroup() %>% 
-      compute_changes() %>% 
       left_join(max_exp, by = "reporter_iso") %>%
       left_join(max_imp, by = "reporter_iso") %>%
+      compute_changes() %>% 
       select(-c(ends_with("_t2"), ends_with("_t3")))
     
     fwrite(yr, yr_csv[[t]])

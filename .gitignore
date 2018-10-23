@@ -2,11 +2,15 @@
 .Rbuildignore
 .Rhistory
 .Ruserdata
+.Renviron
 .DS_Store
 __MACOSX
 *.zip
 *.csv.gz
-.Renviron
 packrat/
 packrat/lib*/
 03-converted-data/hs-rev2007
+07-create-schema.R
+07-create-schema.sql
+08-copy-attributes.R
+09-copy-data.R

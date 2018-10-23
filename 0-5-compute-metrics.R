@@ -71,9 +71,9 @@ metrics <- function(n_cores = 4) {
   # join ECI rankings -------------------------------------------------------
 
   joined_eci_rankings <- if (operating_system != "Windows") {
-    mclapply(eci_rankings_gz, fread5, mc.cores = n_cores)
+    mclapply(eci_rankings_gz, fread2, mc.cores = n_cores)
   } else {
-    lapply(eci_rankings_gz, fread5)
+    lapply(eci_rankings_gz, fread2)
   }
 
   joined_eci_rankings <- if (operating_system != "Windows") {
@@ -104,9 +104,9 @@ metrics <- function(n_cores = 4) {
   # join PCI rankings -------------------------------------------------------
 
   joined_pci_rankings <- if (operating_system != "Windows") {
-    mclapply(pci_rankings_gz, fread4, mc.cores = n_cores)
+    mclapply(pci_rankings_gz, fread2, mc.cores = n_cores, char = c("commodity_code"))
   } else {
-    lapply(pci_rankings_gz, fread5)
+    lapply(pci_rankings_gz, fread2, char = c("commodity_code"))
   }
 
   joined_pci_rankings <- if (operating_system != "Windows") {

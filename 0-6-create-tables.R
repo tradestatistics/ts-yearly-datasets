@@ -14,15 +14,19 @@ if (operating_system != "Windows") {
   p_load(Matrix, data.table, feather, dplyr, tidyr, stringr)
 }
 
+# helpers -----------------------------------------------------------------
+
+source("0-0-helpers.R")
+
 # codes -------------------------------------------------------------------
 
 load("../ts-comtrade-codes/01-2-tidy-country-data/country-codes.RData")
 load("../ts-comtrade-codes/02-2-tidy-product-data/product-codes.RData")
 load("../ts-observatory-codes/02-2-product-data-tidy/hs-rev2007-product-names.RData")
 
-# helpers -----------------------------------------------------------------
+# pci data ----------------------------------------------------------------
 
-source("0-0-helpers.R")
+pci <- fread2("04-metrics/hs-rev2007-pci/pci-joined-ranking.csv.gz", char = c("commodity_code"))
 
 tables <- function(n_cores = 4) {
   # user parameters ---------------------------------------------------------
@@ -46,7 +50,7 @@ tables <- function(n_cores = 4) {
   
   # input data --------------------------------------------------------------
   
-  country_names <- country_codes %>% 
+  attributes_countries <- country_codes %>% 
     select(iso3_digit_alpha, contains("name"), country_abbrevation) %>% 
     rename(
       country_iso = iso3_digit_alpha,
@@ -55,6 +59,11 @@ tables <- function(n_cores = 4) {
     mutate(country_iso = str_to_lower(country_iso)) %>% 
     filter(country_iso != "null") %>% 
     distinct(country_iso, .keep_all = T)
+  
+  if (!file.exists(paste0(tables_dir, "/attributes_countries.csv.gz"))) {
+    fwrite(attributes_countries, paste0(tables_dir, "/attributes_countries.csv"))
+    compress_gz(paste0(tables_dir, "/attributes_countries.csv"))
+  }
   
   product_names <- product_codes %>%
     filter(classification == "H3", str_length(code) == 4) %>% 
@@ -66,25 +75,27 @@ tables <- function(n_cores = 4) {
   
   product_names_2 <- hs_product_names %>% 
     filter(str_length(hs) == 4) %>% 
-    rename(
-      commodity_code = hs,
-      product_abbreviation = product_name
-    )
+    rename(commodity_code = hs) %>% 
+    select(-product_name)
   
-  product_names <- product_names %>% 
+  attributes_products <- product_names %>% 
     left_join(product_names_2) %>% 
-    select(commodity_code, matches("product"), group_id, group_name, color)
+    rename(group_code = group_id) %>% 
+    select(commodity_code, product_fullname_english, group_code, group_name, color)
+  
+  if (!file.exists(paste0(tables_dir, "/attributes_products.csv.gz"))) {
+    fwrite(attributes_products, paste0(tables_dir, "/attributes_products.csv"))
+    compress_gz(paste0(tables_dir, "/attributes_products.csv"))
+  }
   
   rm(product_names_2)
-  
-  pci <- as_tibble(fread4("04-metrics/hs-rev2007-pci/pci-joined-ranking.csv.gz"))
   
   # tables ------------------------------------------------------------------
   
   if (operating_system != "Windows") {
-    mclapply(1:length(years), compute_tables, mc.cores = n_cores)
+    mclapply(seq_along(years), compute_tables, mc.cores = n_cores)
   } else {
-    lapply(1:length(years), compute_tables)
+    lapply(seq_along(years), compute_tables)
   }
 }
 

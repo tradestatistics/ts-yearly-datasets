@@ -60,33 +60,6 @@ convert <- function(n_cores = 4) {
   
   converted_csv_2 <- str_replace(converted_gz_2, ".gz", "")
   
-  convert_codes <- function(t, x, y, z) {
-    equivalent_codes <- product_correspondence %>% 
-      select(!!sym(c2[[dataset]]), hs07) %>% 
-      filter(
-        !(!!sym(c2[[dataset]]) %in% c("NULL")),
-        !(hs07 %in% c("NULL"))
-      ) %>% 
-      mutate_if(is.character, str_sub, start = 1, end = 4) %>% 
-      distinct(!!sym(c2[[dataset]]), hs07)
-    
-    if (!file.exists(z[[t]])) {
-      data <- fread3(x[[t]]) %>%
-        left_join(equivalent_codes, by = c("commodity_code" = c2[[dataset]])) %>%
-        distinct(reporter_iso, partner_iso, commodity_code, .keep_all = TRUE) %>% 
-        mutate(
-          hs07 = ifelse(is.na(hs07), 9999, hs07),
-          commodity_code = hs07
-        ) %>%
-        select(-hs07) %>% 
-        group_by(year, reporter_iso, partner_iso, commodity_code) %>% 
-        summarise(trade_value_usd = sum(trade_value_usd, na.rm = TRUE))
-      
-      fwrite(data, y[[t]])
-      compress_gz(y[[t]])
-    }
-  }
-  
   if (operating_system != "Windows") {
     mclapply(seq_along(converted_gz_2), convert_codes, mc.cores = n_cores, 
              x = clean_gz_2, y = converted_csv_2, z = converted_gz_2)
