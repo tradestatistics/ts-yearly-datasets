@@ -1,23 +1,5 @@
 # Open ts-yearly-data.Rproj before running this function
 
-# detect system -----------------------------------------------------------
-
-operating_system <- Sys.info()[["sysname"]]
-
-# packages ----------------------------------------------------------------
-
-if (!require("pacman")) install.packages("pacman")
-
-if (operating_system != "Windows") {
-  pacman::p_load(data.table, dplyr, tidyr, stringr, doParallel)
-} else {
-  pacman::p_load(data.table, dplyr, tidyr, stringr)
-}
-
-# helpers -----------------------------------------------------------------
-
-source("0-0-helpers.R")
-
 unify <- function(n_cores = 4) {
   # user parameters ---------------------------------------------------------
 
@@ -34,6 +16,10 @@ unify <- function(n_cores = 4) {
     "\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.\n"
   )
   readline(prompt = "Press [enter] to continue")
+  
+  # helpers -----------------------------------------------------------------
+  
+  source("0-0-helpers.R")
   
   # convert data ------------------------------------------------------------
   

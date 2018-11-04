@@ -1,8 +1,46 @@
 # Open ts-yearly-data.Rproj before running this function
 
-# years -------------------------------------------------------------------
+# user input --------------------------------------------------------------
 
-years <- 1962:2016
+dataset <- menu(
+  c("HS rev 1992", "HS rev 1996", "HS rev 2002", "HS rev 2007", "SITC rev 1", "SITC rev 2", "SITC rev 3", "SITC rev 4"),
+  title = "Select dataset:",
+  graphics = F
+)
+
+# detect system -----------------------------------------------------------
+
+operating_system <- Sys.info()[['sysname']]
+
+# packages ----------------------------------------------------------------
+
+if (!require("pacman")) install.packages("pacman")
+
+if (operating_system != "Windows") {
+  pacman::p_load(data.table, jsonlite, dplyr, tidyr, stringr, janitor, purrr, rlang, Matrix, RPostgreSQL, doParallel)
+} else {
+  pacman::p_load(data.table, jsonlite, dplyr, tidyr, stringr, janitor, purrr, rlang, Matrix, RPostgreSQL)
+}
+
+# years by classification -------------------------------------------------
+
+if (dataset < 5) {
+  classification <- "hs"
+} else {
+  classification <- "sitc"
+}
+
+if (dataset == 1) { revision <- 1992; revision2 <- revision; classification2 <- "H0" }
+if (dataset == 2) { revision <- 1996; revision2 <- revision; classification2 <- "H1" }
+if (dataset == 3) { revision <- 2002; revision2 <- revision; classification2 <- "H2" }
+if (dataset == 4) { revision <- 2007; revision2 <- revision; classification2 <- "H3" }
+if (dataset == 5) { revision <- 1; revision2 <- 1962; classification2 <- "S1" }
+if (dataset == 6) { revision <- 2; revision2 <- 1976; classification2 <- "S2" }
+if (dataset == 7) { revision <- 3; revision2 <- 1988; classification2 <- "S3" }
+if (dataset == 8) { revision <- 4; revision2 <- 2007; classification2 <- "S4" }
+
+years <- revision2:2016
+
 years_missing_t_minus_1 <- 1962
 years_missing_t_minus_2 <- 1963
 years_missing_t_minus_5 <- 1963:1966
@@ -10,14 +48,25 @@ years_full <- 1967:2016
 
 years_sitc_rev1 <- 1962:1991 # because SITC rev1 is used just to complete SITC rev2 data
 
+# number of digits --------------------------------------------------------
+
+if (classification == "sitc") {
+  J <- c(4,5) 
+} else {
+  J <- c(4,6)
+}
+
 # dirs/files --------------------------------------------------------
 
+# 0-1-download-data.R
+
+raw_dir <- "01-raw-data"
+try(dir.create(raw_dir))
+
+raw_dir <- sprintf("%s/%s-rev%s", raw_dir, classification, revision)
+try(dir.create(raw_dir))
+
 # 0-2-clean-data.R
-
-if (!exists("classification")) { classification <- "hs"}
-if (!exists("revision")) { revision <- 2007 }
-
-raw_dir <- sprintf("01-raw-data/%s-rev%s", classification, revision)
 
 raw_zip <- list.files(
   path = raw_dir,
@@ -33,14 +82,14 @@ rev_dir <- sprintf("%s/%s-rev%s", clean_dir, classification, revision)
 try(dir.create(clean_dir))
 try(dir.create(rev_dir))
 
-clean_gz <- list.files(clean_dir, full.names = T, recursive = T)
+clean_gz <- sprintf("02-clean-data/%s-rev%s/%s-rev%s-%s.csv.gz", classification, revision, classification, revision, years)
 clean_csv <- gsub(".gz", "", clean_gz)
 
 # 0-3-convert-data.R
 
-c1 <- c("hs-rev1992", "hs-rev1996", "hs-rev2002", "sitc-rev1", "sitc-rev2", "hs-rev2007")
+c1 <- c("hs-rev1992", "hs-rev1996", "hs-rev2002", "hs-rev2007", "sitc-rev1", "sitc-rev2")
 
-c2 <- c("hs92", "hs96", "hs02", "sitc1", "sitc2", "hs07")
+c2 <- c("hs92", "hs96", "hs02", "hs07", "sitc1", "sitc2")
 
 converted_dir <- "03-converted-data"
 try(dir.create(converted_dir))
@@ -67,7 +116,7 @@ unified_csv <- str_replace(unified_gz, ".gz", "")
 metrics_dir <- "04-metrics"
 try(dir.create(metrics_dir))
 
-unified_gz <- list.files(path = unified_dir, full.names = T, recursive = T)
+#unified_gz <- list.files(path = unified_dir, full.names = T, recursive = T)
 
 rca_exports_dir <- sprintf("%s/hs-rev2007-rca-exports", metrics_dir)
 try(dir.create(rca_exports_dir))
@@ -247,6 +296,58 @@ compress_gz <- function(x) {
   system(paste("gzip", x))
 }
 
+data_downloading <- function(t) {
+  if (remove_old_files == 1 &
+      (links$local_file_date[[t]] < links$server_file_date[[t]]) &
+      !is.na(links$old_file[[t]])) {
+    try(file.remove(links$old_file[[t]]))
+  }
+  if (!file.exists(links$new_file[[t]])) {
+    message(paste("Downloading", links$new_file[[t]]))
+    if (links$local_file_date[[t]] < links$server_file_date[[t]]) {
+      Sys.sleep(sample(seq(5, 10, by = 1), 1))
+      try(
+        download.file(links$url[[t]],
+                      links$new_file[[t]],
+                      method = "wget",
+                      quiet = T,
+                      extra = "--no-check-certificate"
+        )
+      )
+      
+      if (file.size(links$new_file[[t]]) == 0) {
+        fs <- 1
+      } else {
+        fs <- 0
+      }
+      
+      while (fs > 0) {
+        try(
+          download.file(links$url[[t]],
+                        links$new_file[[t]],
+                        method = "wget",
+                        quiet = T,
+                        extra = "--no-check-certificate"
+          )
+        )
+        
+        if (file.size(links$new_file[[t]]) == 0) {
+          fs <- fs + 1
+        } else {
+          fs <- 0
+        }
+      }
+    } else {
+      message(paste(
+        "Existing data is not older than server data. Skipping",
+        links$new_file[[t]]
+      ))
+    }
+  } else {
+    message(paste(links$new_file[[t]], "exists. Skiping."))
+  }
+}
+
 compute_tidy_data <- function(t) {
   if (!file.exists(clean_gz[[t]])) {
     messageline()
@@ -254,7 +355,13 @@ compute_tidy_data <- function(t) {
     
     # clean data --------------------------------------------------------------
     
-    clean_data <- fread2(raw_csv[[t]], char = c("Commodity Code"), num = c("Trade Value (US$)")) %>%
+    clean_data <- fread(raw_csv[[t]], 
+        colClasses = list(character = c("Commodity Code"), numeric = c("Trade Value (US$)"))
+      ) %>%
+      
+      as_tibble() %>% 
+      clean_names() %>%
+      
       rename(trade_value_usd = trade_value_us) %>%
       select(trade_flow, reporter_iso, partner_iso, aggregate_level, commodity_code, trade_value_usd) %>%
       
@@ -281,13 +388,13 @@ compute_tidy_data <- function(t) {
     
     exports <- clean_data %>%
       filter(trade_flow == "Export") %>%
-      unite(pairs, reporter_iso, partner_iso, commodity_code, sep = "_", remove = F) %>%
+      unite(pairs, reporter_iso, partner_iso, commodity_code, sep = "_") %>%
       select(pairs, trade_value_usd) %>% 
       mutate(trade_value_usd = ceiling(trade_value_usd))
     
     exports_mirrored <- clean_data %>%
       filter(trade_flow == "Import") %>%
-      unite(pairs, partner_iso, reporter_iso, commodity_code, sep = "_", remove = F) %>%
+      unite(pairs, partner_iso, reporter_iso, commodity_code, sep = "_") %>%
       select(pairs, trade_value_usd) %>% 
       mutate(trade_value_usd = ceiling(trade_value_usd / cif_fob_rate))
     
@@ -299,10 +406,40 @@ compute_tidy_data <- function(t) {
       mutate(trade_value_usd = max(trade_value_usd.x, trade_value_usd.y, na.rm = T)) %>% 
       ungroup() %>% 
       separate(pairs, c("reporter_iso", "partner_iso", "commodity_code"), sep = "_") %>%
-      mutate(year = years[[t]]) %>%
-      select(year, everything(), -ends_with("x"), -ends_with("y"))
+      select(reporter_iso, partner_iso, commodity_code, trade_value_usd)
     
     rm(exports, exports_mirrored)
+    
+    exports_model_low_granularity <- exports_model %>% 
+      filter(str_length(commodity_code) == 4)
+    
+    exports_model_high_granularity <- exports_model %>% 
+      filter(str_length(commodity_code) %in% c(5,6))
+    
+    rm(exports_model)
+    
+    exports_model_low_granularity_2 <- exports_model_high_granularity %>% 
+      mutate(commodity_code = str_sub(commodity_code, 1, 4)) %>% 
+      group_by(reporter_iso, partner_iso, commodity_code) %>% 
+      summarise(trade_value_usd = sum(trade_value_usd, na.rm = T))
+      
+    exports_model_low_granularity <- exports_model_low_granularity %>% 
+      left_join(exports_model_low_granularity_2, c("reporter_iso", "partner_iso", "commodity_code")) %>% 
+      rowwise() %>% 
+      mutate(trade_value_usd = max(trade_value_usd.x, trade_value_usd.y, na.rm = T)) %>% 
+      ungroup() %>% 
+      select(reporter_iso, partner_iso, commodity_code, trade_value_usd)
+    
+    rm(exports_model_low_granularity_2)
+    
+    exports_model <- exports_model_low_granularity %>% 
+      bind_rows(exports_model_high_granularity) %>% 
+      mutate(
+        year = years[[t]],
+        commodity_code_length = str_length(commodity_code)
+      ) %>% 
+      arrange(reporter_iso, partner_iso, commodity_code, commodity_code_length) %>% 
+      select(year, reporter_iso, partner_iso, commodity_code, commodity_code_length, trade_value_usd)
     
     fwrite(exports_model, clean_csv[[t]])
     compress_gz(clean_csv[[t]])

@@ -1,27 +1,5 @@
 # Open ts-yearly-data.Rproj before running this function
 
-# detect system -----------------------------------------------------------
-
-operating_system <- Sys.info()[['sysname']]
-
-# packages ----------------------------------------------------------------
-
-if (!require("pacman")) install.packages("pacman")
-
-if (operating_system != "Windows") {
-  pacman::p_load(data.table, dplyr, stringr, rlang, doParallel)
-} else {
-  pacman::p_load(data.table, dplyr, stringr, rlang)
-}
-
-# helpers -----------------------------------------------------------------
-
-source("0-0-helpers.R")
-
-# product codes -----------------------------------------------------------
-
-load("../ts-comtrade-codes/02-2-tidy-product-data/product-correspondence.RData")
-
 convert <- function(n_cores = 4) {
   # user parameters ---------------------------------------------------------
 
@@ -39,15 +17,17 @@ convert <- function(n_cores = 4) {
   )
   readline(prompt = "Press [enter] to continue")
   
-  dataset <- menu(
-    c("HS rev 1992", "HS rev 1996", "HS rev 2002", "SITC rev 1", "SITC rev 2"),
-    title = "Select dataset:",
-    graphics = F
-  )
+  # helpers -----------------------------------------------------------------
+  
+  source("0-0-helpers.R")
+  
+  # product codes -----------------------------------------------------------
+  
+  load("../ts-comtrade-codes/02-2-tidy-product-data/product-correspondence.RData")
   
   # convert data ------------------------------------------------------------
   
-  if (dataset == 4) {
+  if (dataset == 5) {
     clean_gz_2 <- grep(paste(c1[[dataset]], years_sitc_rev1, sep = "-", collapse = "|"), clean_gz, value = TRUE)
   } else {
     clean_gz_2 <- grep(c1[[dataset]], clean_gz, value = TRUE) 

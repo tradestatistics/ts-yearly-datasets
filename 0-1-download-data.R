@@ -1,19 +1,5 @@
 # Open ts-yearly-data.Rproj before running this function
 
-# detect system -----------------------------------------------------------
-
-operating_system <- Sys.info()[['sysname']]
-
-# packages ----------------------------------------------------------------
-
-if (!require("pacman")) install.packages("pacman")
-
-if (operating_system != "Windows") {
-  p_load(data.table, dplyr, jsonlite, doParallel)
-} else {
-  p_load(data.table, dplyr, jsonlite)
-}
-
 download <- function(n_cores = 4) {
   # user parameters ---------------------------------------------------------
 
@@ -30,166 +16,31 @@ download <- function(n_cores = 4) {
     "\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.\n"
   )
   readline(prompt = "Press [enter] to continue")
-
-  download_data_rev <- menu(
-    c("HS rev 1992", "HS rev 1996", "HS rev 2002", "HS rev 2007", "SITC rev 1", "SITC rev 2", "SITC rev 3", "SITC rev 4"),
-    title = "Select dataset:",
-    graphics = F
-  )
-
+  
   remove_old_files <- menu(
     c("yes", "no"),
     title = "Remove old files (y/n):",
     graphics = F
   )
-
+  
   token <- menu(
     c("yes", "no"),
     title = "Have you stored your token safely in your .Renviron file?",
     graphics = F
   )
-
+  
   stopifnot(token == 1)
-
+  
   token <- Sys.getenv("token")
-
-  # HS 1992 -----------------------------------------------------------------
-
-  if (download_data_rev == 1) {
-    years <- 1992:2016
-    revision <- 1992
-    classification <- "H0"
-  }
-
-  # HS 1996 -----------------------------------------------------------------
-
-  if (download_data_rev == 2) {
-    years <- 2001:2016
-    revision <- 1996
-    classification <- "H1"
-  }
-
-  # HS 2002 -----------------------------------------------------------------
-
-  if (download_data_rev == 3) {
-    years <- 2002:2016
-    revision <- 2002
-    classification <- "H2"
-  }
-
-  # HS 2007 -----------------------------------------------------------------
-
-  if (download_data_rev == 4) {
-    years <- 2007:2016
-    revision <- 2007
-    classification <- "H3"
-  }
   
-  # SITC rev 1 --------------------------------------------------------------
-  
-  if (download_data_rev == 5) {
-    years <- 1962:2016
-    revision <- 1
-    classification <- "S1"
-  }
-  
-  # SITC rev 2 --------------------------------------------------------------
-  
-  if (download_data_rev == 6) {
-    years <- 1976:2016
-    revision <- 2
-    classification <- "S2"
-  }
-  
-  # SITC rev 3 --------------------------------------------------------------
-  
-  if (download_data_rev == 7) {
-    years <- 1988:2016
-    revision <- 3
-    classification <- "S3"
-  }
-  
-  # SITC rev 4 --------------------------------------------------------------
-  
-  if (download_data_rev == 8) {
-    years <- 2007:2016
-    revision <- 4
-    classification <- "S4"
-  }
-
-  # output dirs -------------------------------------------------------------
-
-  raw_dir <- "01-raw-data"
-
-  if (download_data_rev < 5) {
-    classification_dir <- sprintf("%s/hs-rev%s", raw_dir, revision)
-  }
-  
-  if (download_data_rev > 4) {
-    classification_dir <- sprintf("%s/sitc-rev%s", raw_dir, revision)
-  }
-
-  try(dir.create(raw_dir))
-  try(dir.create(classification_dir))
-
   # helpers -----------------------------------------------------------------
-
-  data_downloading <- function(t) {
-    if (remove_old_files == 1 &
-      (links$local_file_date[[t]] < links$server_file_date[[t]]) &
-      !is.na(links$old_file[[t]])) {
-      try(file.remove(links$old_file[[t]]))
-    }
-    if (!file.exists(links$new_file[[t]])) {
-      message(paste("Downloading", links$new_file[[t]]))
-      if (links$local_file_date[[t]] < links$server_file_date[[t]]) {
-        Sys.sleep(sample(seq(5, 10, by = 1), 1))
-        try(
-          download.file(links$url[[t]],
-            links$new_file[[t]],
-            method = "wget",
-            quiet = T,
-            extra = "--no-check-certificate"
-          )
-        )
-
-        if (file.size(links$new_file[[t]]) == 0) {
-          fs <- 1
-        } else {
-          fs <- 0
-        }
-
-        while (fs > 0) {
-          try(
-            download.file(links$url[[t]],
-              links$new_file[[t]],
-              method = "wget",
-              quiet = T,
-              extra = "--no-check-certificate"
-            )
-          )
-
-          if (file.size(links$new_file[[t]]) == 0) {
-            fs <- fs + 1
-          } else {
-            fs <- 0
-          }
-        }
-      } else {
-        message(paste(
-          "Existing data is not older than server data. Skipping",
-          links$new_file[[t]]
-        ))
-      }
-    } else {
-      message(paste(links$new_file[[t]], "exists. Skiping."))
-    }
-  }
+  
+  source("0-0-helpers.R")
 
   # download data -----------------------------------------------------------
 
   try(
-    old_file <- list.files(classification_dir, pattern = "downloaded", full.names = T)
+    old_file <- list.files(raw_dir, pattern = "downloaded", full.names = T)
   )
 
   if (length(old_file) > 0) {
@@ -208,20 +59,20 @@ download <- function(n_cores = 4) {
       "https://comtrade.un.org/api/get/bulk/C/A/",
       year,
       "/ALL/",
-      classification,
+      classification2,
       "?token=",
       token
     ),
     file = NA
   )
 
-  files <- fromJSON(sprintf("https://comtrade.un.org/api/refs/da/bulk?freq=A&r=ALL&px=%s&token=%s", classification, token)) %>%
+  files <- fromJSON(sprintf("https://comtrade.un.org/api/refs/da/bulk?freq=A&r=ALL&px=%s&token=%s", classification2, token)) %>%
     filter(ps %in% years) %>%
     arrange(ps)
 
   if (exists("old_links")) {
     links <- links %>%
-      mutate(file = paste0(classification_dir, "/", files$name)) %>%
+      mutate(file = paste0(raw_dir, "/", files$name)) %>%
       mutate(
         server_file_date = gsub(".*pub-", "", file),
         server_file_date = gsub("_fmt.*", "", server_file_date),
@@ -241,7 +92,7 @@ download <- function(n_cores = 4) {
       )
   } else {
     links <- links %>%
-      mutate(file = paste0(classification_dir, "/", files$name)) %>%
+      mutate(file = paste0(raw_dir, "/", files$name)) %>%
       mutate(
         server_file_date = gsub(".*pub-", "", file),
         server_file_date = gsub("_fmt.*", "", server_file_date),
@@ -265,7 +116,7 @@ download <- function(n_cores = 4) {
     rename(file = new_file)
 
   try(file.remove(old_file))
-  fwrite(links, paste0(classification_dir, "/downloaded-files-", Sys.Date(), ".csv"))
+  fwrite(links, paste0(raw_dir, "/downloaded-files-", Sys.Date(), ".csv"))
 }
 
 download()
