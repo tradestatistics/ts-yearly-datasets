@@ -22,16 +22,6 @@ clean <- function(n_cores = 4) {
   
   source("0-0-helpers.R")
   
-  # ISO-3 codes -------------------------------------------------------------
-  
-  load("../ts-comtrade-codes/01-2-tidy-country-data/country-codes.RData")
-  
-  country_codes <- country_codes %>% 
-    select(iso3_digit_alpha) %>% 
-    mutate(iso3_digit_alpha = str_to_lower(iso3_digit_alpha)) %>% 
-    filter(!iso3_digit_alpha %in% c("wld","null")) %>% 
-    as_vector()
-  
   # uncompress input --------------------------------------------------------
   
   lapply(seq_along(raw_csv), extract, x = raw_zip, y = raw_csv, z = raw_dir)
@@ -40,9 +30,6 @@ clean <- function(n_cores = 4) {
   
   messageline()
   message("Rearranging files. Please wait...")
-  
-  # See Anderson & van Wincoop, 2004, Hummels, 2006 and Gaulier & Zignago, 2010 about 8% rate consistency
-  cif_fob_rate <- 1.08
   
   if (operating_system != "Windows") {
     mclapply(seq_along(raw_csv), compute_tidy_data, mc.cores = n_cores)

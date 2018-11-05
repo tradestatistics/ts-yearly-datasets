@@ -21,25 +21,6 @@ convert <- function(n_cores = 4) {
   
   source("0-0-helpers.R")
   
-  # product codes -----------------------------------------------------------
-  
-  load("../ts-comtrade-codes/02-2-tidy-product-data/product-correspondence.RData")
-  
-  # convert data ------------------------------------------------------------
-  
-  if (dataset == 5) {
-    clean_gz_2 <- grep(paste(c1[[dataset]], years_sitc_rev1, sep = "-", collapse = "|"), clean_gz, value = TRUE)
-  } else {
-    clean_gz_2 <- grep(c1[[dataset]], clean_gz, value = TRUE) 
-  }
-  
-  try(dir.create(paste(converted_dir, c1[[dataset]], sep = "/")))
-  
-  converted_gz_2 <- clean_gz_2 %>% 
-    str_replace(., clean_dir, converted_dir)
-  
-  converted_csv_2 <- str_replace(converted_gz_2, ".gz", "")
-  
   if (operating_system != "Windows") {
     mclapply(seq_along(converted_gz_2), convert_codes, mc.cores = n_cores, 
              x = clean_gz_2, y = converted_csv_2, z = converted_gz_2)

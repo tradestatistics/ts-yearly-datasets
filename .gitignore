@@ -8,10 +8,14 @@ __MACOSX
 *.zip
 *.csv
 *.csv.gz
+01-raw-data/
+02-clean-data/
+03-converted-data/
+04-metrics/
+05-tables/
 packrat/
-packrat/lib*/
-03-converted-data/hs-rev2007
 0-7-create-schema.R
 0-7-create-schema.sql
 0-8-copy-attributes.R
 0-9-copy-data.R
+packrat/lib*/

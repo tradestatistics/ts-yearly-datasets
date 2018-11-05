@@ -353,6 +353,21 @@ compute_tidy_data <- function(t) {
     messageline()
     message(paste("Cleaning", years[[t]], "data..."))
     
+    # CIF-FOB rate ------------------------------------------------------------
+
+    # See Anderson & van Wincoop, 2004, Hummels, 2006 and Gaulier & Zignago, 2010 about 8% rate consistency
+    cif_fob_rate <- 1.08
+    
+    # ISO-3 codes -------------------------------------------------------------
+    
+    load("../ts-comtrade-codes/01-2-tidy-country-data/country-codes.RData")
+    
+    country_codes <- country_codes %>% 
+      select(iso3_digit_alpha) %>% 
+      mutate(iso3_digit_alpha = str_to_lower(iso3_digit_alpha)) %>% 
+      filter(!iso3_digit_alpha %in% c("wld","null")) %>% 
+      as_vector()
+    
     # clean data --------------------------------------------------------------
     
     clean_data <- fread(raw_csv[[t]], 
@@ -388,24 +403,21 @@ compute_tidy_data <- function(t) {
     
     exports <- clean_data %>%
       filter(trade_flow == "Export") %>%
-      unite(pairs, reporter_iso, partner_iso, commodity_code, sep = "_") %>%
-      select(pairs, trade_value_usd) %>% 
+      select(reporter_iso, partner_iso, commodity_code, trade_value_usd) %>% 
       mutate(trade_value_usd = ceiling(trade_value_usd))
     
     exports_mirrored <- clean_data %>%
       filter(trade_flow == "Import") %>%
-      unite(pairs, partner_iso, reporter_iso, commodity_code, sep = "_") %>%
-      select(pairs, trade_value_usd) %>% 
+      select(reporter_iso, partner_iso, commodity_code, trade_value_usd) %>% 
       mutate(trade_value_usd = ceiling(trade_value_usd / cif_fob_rate))
     
     rm(clean_data)
     
     exports_model <- exports %>% 
-      full_join(exports_mirrored, by = "pairs") %>% 
+      full_join(exports_mirrored, by = c("reporter_iso", "partner_iso", "commodity_code")) %>% 
       rowwise() %>% 
       mutate(trade_value_usd = max(trade_value_usd.x, trade_value_usd.y, na.rm = T)) %>% 
       ungroup() %>% 
-      separate(pairs, c("reporter_iso", "partner_iso", "commodity_code"), sep = "_") %>%
       select(reporter_iso, partner_iso, commodity_code, trade_value_usd)
     
     rm(exports, exports_mirrored)
@@ -438,8 +450,9 @@ compute_tidy_data <- function(t) {
         year = years[[t]],
         commodity_code_length = str_length(commodity_code)
       ) %>% 
-      arrange(reporter_iso, partner_iso, commodity_code, commodity_code_length) %>% 
-      select(year, reporter_iso, partner_iso, commodity_code, commodity_code_length, trade_value_usd)
+      select(year, reporter_iso, partner_iso, commodity_code, commodity_code_length, trade_value_usd) %>% 
+      filter(trade_value_usd > 0) %>% 
+      arrange(reporter_iso, partner_iso, commodity_code, commodity_code_length)
     
     fwrite(exports_model, clean_csv[[t]])
     compress_gz(clean_csv[[t]])
@@ -450,19 +463,38 @@ compute_tidy_data <- function(t) {
 }
 
 convert_codes <- function(t, x, y, z) {
+  # product codes -----------------------------------------------------------
+  
+  load("../ts-comtrade-codes/02-2-tidy-product-data/product-correspondence.RData")
+  
+  # convert data ------------------------------------------------------------
+  
+  if (dataset == 5) {
+    clean_gz_2 <- grep(paste(c1[[dataset]], years_sitc_rev1, sep = "-", collapse = "|"), clean_gz, value = TRUE)
+  } else {
+    clean_gz_2 <- grep(c1[[dataset]], clean_gz, value = TRUE) 
+  }
+  
+  try(dir.create(paste(converted_dir, c1[[dataset]], sep = "/")))
+  
+  converted_gz_2 <- clean_gz_2 %>% 
+    str_replace(., clean_dir, converted_dir)
+  
+  converted_csv_2 <- str_replace(converted_gz_2, ".gz", "")
+  
+  # TODO: find a decent map 
+  
   equivalent_codes <- product_correspondence %>% 
     select(!!sym(c2[[dataset]]), hs07) %>% 
     filter(
       !(!!sym(c2[[dataset]]) %in% c("NULL")),
       !(hs07 %in% c("NULL"))
     ) %>% 
-    mutate_if(is.character, str_sub, start = 1, end = 4) %>% 
-    distinct(!!sym(c2[[dataset]]), hs07)
+    distinct(hs07, .keep_all = T)
   
   if (!file.exists(z[[t]])) {
     data <- fread2(x[[t]], char = c("commodity_code"), num = c("trade_value_usd")) %>%
       left_join(equivalent_codes, by = c("commodity_code" = c2[[dataset]])) %>%
-      distinct(reporter_iso, partner_iso, commodity_code, .keep_all = TRUE) %>% 
       mutate(
         hs07 = ifelse(is.na(hs07), 9999, hs07),
         commodity_code = hs07
