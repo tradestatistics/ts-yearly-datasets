@@ -20,13 +20,16 @@ convert <- function(n_cores = 4) {
   # helpers -----------------------------------------------------------------
   
   source("0-0-helpers.R")
+  x = clean_gz
+  y = converted_csv
+  z = converted_gz
   
   if (operating_system != "Windows") {
-    mclapply(seq_along(converted_gz_2), convert_codes, mc.cores = n_cores, 
-             x = clean_gz_2, y = converted_csv_2, z = converted_gz_2)
+    mclapply(seq_along(converted_gz), convert_codes, mc.cores = n_cores, 
+             x = clean_gz, y = converted_csv, z = converted_gz)
   } else {
-    lapply(seq_along(converted_gz_2), convert_codes, 
-           x = clean_gz_2, y = converted_csv_2, z = converted_gz_2)
+    lapply(seq_along(converted_gz), convert_codes, 
+           x = clean_gz, y = converted_csv, z = converted_gz)
   }
 }
 

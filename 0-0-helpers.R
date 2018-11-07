@@ -94,14 +94,32 @@ c2 <- c("hs92", "hs96", "hs02", "hs07", "sitc1", "sitc2")
 converted_dir <- "03-converted-data"
 try(dir.create(converted_dir))
 
+try(dir.create(paste(converted_dir, c1[[dataset]], sep = "/")))
+
+converted_gz <- grep(c1[[dataset]], clean_gz, value = TRUE) %>% 
+  str_replace(clean_dir, converted_dir)
+
+converted_csv <- converted_gz %>% str_replace(".gz", "")
+
+# if (dataset == 5) {
+#   clean_gz_2 <- grep(paste(c1[[dataset]], years_sitc_rev1, sep = "-", collapse = "|"), clean_gz, value = TRUE)
+# } else {
+#   clean_gz_2 <- grep(c1[[dataset]], clean_gz, value = TRUE) 
+# }
+# 
+# converted_gz_2 <- clean_gz_2 %>% 
+#   str_replace(., clean_dir, converted_dir)
+# 
+# converted_csv_2 <- str_replace(converted_gz_2, ".gz", "")
+
 # 0-4-unify-data.R
 
 unified_dir <- "03-unified-data"
 try(dir.create(unified_dir))
 
-converted_gz <- list.files(converted_dir, pattern = "gz", recursive = T, full.names = T)
+#converted_gz <- list.files(converted_dir, pattern = "gz", recursive = T, full.names = T)
 
-converted_csv <- str_replace(converted_gz, ".gz", "")
+#converted_csv <- str_replace(converted_gz, ".gz", "")
 
 clean_and_coverted <- c(clean_gz, converted_gz)
 
@@ -418,41 +436,37 @@ compute_tidy_data <- function(t) {
       rowwise() %>% 
       mutate(trade_value_usd = max(trade_value_usd.x, trade_value_usd.y, na.rm = T)) %>% 
       ungroup() %>% 
-      select(reporter_iso, partner_iso, commodity_code, trade_value_usd)
-    
-    rm(exports, exports_mirrored)
-    
-    exports_model_low_granularity <- exports_model %>% 
-      filter(str_length(commodity_code) == 4)
-    
-    exports_model_high_granularity <- exports_model %>% 
-      filter(str_length(commodity_code) %in% c(5,6))
-    
-    rm(exports_model)
-    
-    exports_model_low_granularity_2 <- exports_model_high_granularity %>% 
-      mutate(commodity_code = str_sub(commodity_code, 1, 4)) %>% 
-      group_by(reporter_iso, partner_iso, commodity_code) %>% 
-      summarise(trade_value_usd = sum(trade_value_usd, na.rm = T))
-      
-    exports_model_low_granularity <- exports_model_low_granularity %>% 
-      left_join(exports_model_low_granularity_2, c("reporter_iso", "partner_iso", "commodity_code")) %>% 
-      rowwise() %>% 
-      mutate(trade_value_usd = max(trade_value_usd.x, trade_value_usd.y, na.rm = T)) %>% 
+      mutate(commodity_code_parent = str_sub(commodity_code, 1, 4)) %>% 
+      group_by(reporter_iso, partner_iso, commodity_code_parent) %>% 
+      mutate(parent_count = n()) %>% 
       ungroup() %>% 
-      select(reporter_iso, partner_iso, commodity_code, trade_value_usd)
+      select(reporter_iso, partner_iso, commodity_code, commodity_code_parent, parent_count, trade_value_usd)
     
-    rm(exports_model_low_granularity_2)
+    exports_model_unrepeated_parent <- exports_model %>% 
+      filter(parent_count == 1)
     
-    exports_model <- exports_model_low_granularity %>% 
-      bind_rows(exports_model_high_granularity) %>% 
+    exports_model_repeated_parent <- exports_model %>% 
+      filter(
+        parent_count > 1,
+        str_length(commodity_code) %in% c(5,6)
+      )
+    
+    exports_model_repeated_parent_summary <- exports_model_repeated_parent %>% 
+      group_by(reporter_iso, partner_iso, commodity_code_parent) %>% 
+      summarise(trade_value_usd = sum(trade_value_usd, na.rm = T)) %>% 
+      ungroup() %>% 
+      rename(commodity_code = commodity_code_parent)
+    
+    exports_model <- exports_model_unrepeated_parent %>% 
+      bind_rows(exports_model_repeated_parent) %>% 
+      bind_rows(exports_model_repeated_parent_summary) %>% 
+      arrange(reporter_iso, partner_iso, commodity_code) %>% 
       mutate(
         year = years[[t]],
         commodity_code_length = str_length(commodity_code)
       ) %>% 
       select(year, reporter_iso, partner_iso, commodity_code, commodity_code_length, trade_value_usd) %>% 
-      filter(trade_value_usd > 0) %>% 
-      arrange(reporter_iso, partner_iso, commodity_code, commodity_code_length)
+      filter(trade_value_usd > 0)
     
     fwrite(exports_model, clean_csv[[t]])
     compress_gz(clean_csv[[t]])
@@ -462,45 +476,44 @@ compute_tidy_data <- function(t) {
   }
 }
 
-convert_codes <- function(t, x, y, z) {
+convert_codes <- function(t, x, y, z, convert_to = "hs07") {
   # product codes -----------------------------------------------------------
   
   load("../ts-comtrade-codes/02-2-tidy-product-data/product-correspondence.RData")
   
   # convert data ------------------------------------------------------------
   
-  if (dataset == 5) {
-    clean_gz_2 <- grep(paste(c1[[dataset]], years_sitc_rev1, sep = "-", collapse = "|"), clean_gz, value = TRUE)
-  } else {
-    clean_gz_2 <- grep(c1[[dataset]], clean_gz, value = TRUE) 
-  }
-  
-  try(dir.create(paste(converted_dir, c1[[dataset]], sep = "/")))
-  
-  converted_gz_2 <- clean_gz_2 %>% 
-    str_replace(., clean_dir, converted_dir)
-  
-  converted_csv_2 <- str_replace(converted_gz_2, ".gz", "")
-  
-  # TODO: find a decent map 
-  
-  equivalent_codes <- product_correspondence %>% 
-    select(!!sym(c2[[dataset]]), hs07) %>% 
+  equivalent_codes_low_granularity <- product_correspondence %>% 
+    select(!!sym(c2[[dataset]]), !!sym(convert_to)) %>% 
     filter(
       !(!!sym(c2[[dataset]]) %in% c("NULL")),
-      !(hs07 %in% c("NULL"))
+      !(!!sym(convert_to) %in% c("NULL"))
     ) %>% 
-    distinct(hs07, .keep_all = T)
+    mutate_if(is.character, str_sub, 1, 4) %>% 
+    distinct(!!sym(c2[[dataset]]), .keep_all = T)
   
+  equivalent_codes_high_granularity <- product_correspondence %>% 
+    select(!!sym(c2[[dataset]]), !!sym(convert_to)) %>% 
+    filter(
+      !(!!sym(c2[[dataset]]) %in% c("NULL")),
+      !(!!sym(convert_to) %in% c("NULL"))
+    ) %>% 
+    distinct(!!sym(c2[[dataset]]), .keep_all = T)
+  
+  equivalent_codes <- equivalent_codes_low_granularity %>% 
+    bind_rows(equivalent_codes_high_granularity) %>% 
+    arrange(hs07)
+
   if (!file.exists(z[[t]])) {
-    data <- fread2(x[[t]], char = c("commodity_code"), num = c("trade_value_usd")) %>%
+    data <- fread2(x[[t]], char = c("commodity_code"), num = c("trade_value_usd")) %>% 
+      #filter(commodity_code_length == 4) %>% 
       left_join(equivalent_codes, by = c("commodity_code" = c2[[dataset]])) %>%
       mutate(
-        hs07 = ifelse(is.na(hs07), 9999, hs07),
-        commodity_code = hs07
+        sitc2 = ifelse(is.na(sitc2), 9999, sitc2),
+        commodity_code = sitc2
       ) %>%
-      select(-hs07) %>% 
-      group_by(year, reporter_iso, partner_iso, commodity_code) %>% 
+      select(-sitc2) %>% 
+      group_by(year, reporter_iso, partner_iso, commodity_code, commodity_code_length) %>% 
       summarise(trade_value_usd = sum(trade_value_usd, na.rm = TRUE))
     
     fwrite(data, y[[t]])
