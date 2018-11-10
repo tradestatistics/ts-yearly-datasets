@@ -1,12 +1,37 @@
 # Open ts-yearly-data.Rproj before running this function
 
+# Copyright (c) 2018, Mauricio \"Pacha\" Vargas
+# This file is part of Open Trade Statistics project
+# The scripts within this project are released under GNU General Public License 3.0
+# See https://github.com/tradestatistics/ts-yearly-datasets/LICENSE for the details
+
 # user input --------------------------------------------------------------
+
+if (exists("ask_for_token")) {
+  token <- menu(
+    c("yes", "no"),
+    title = "Have you safely stored your token in your .Renviron file?",
+    graphics = F
+  )
+  
+  stopifnot(token == 1)
+  
+  token <- Sys.getenv("token")
+}
 
 dataset <- menu(
   c("HS rev 1992", "HS rev 1996", "HS rev 2002", "HS rev 2007", "SITC rev 1", "SITC rev 2", "SITC rev 3", "SITC rev 4"),
   title = "Select dataset:",
   graphics = F
 )
+
+if (exists("ask_to_remove_old_files")) {
+  remove_old_files <- menu(
+    c("yes", "no"),
+    title = "Remove old files (y/n):",
+    graphics = F
+  )
+}
 
 if (exists("ask_for_convertion_codes")) {
   dataset2 <- menu(

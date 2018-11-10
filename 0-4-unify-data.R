@@ -5,23 +5,17 @@
 ask_for_converted_codes <- 1
 
 unify <- function(n_cores = 4) {
-  # user parameters ---------------------------------------------------------
-
-  message("\nCopyright (c) 2018, Mauricio \"Pacha\" Vargas\n")
-  readline(prompt = "Press [enter] to continue")
-  message("\nThe MIT License\n")
-  message(
-    "Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the \"Software\"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:"
-  )
-  message(
-    "\nThe above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software."
-  )
-  message(
-    "\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.\n"
-  )
-  readline(prompt = "Press [enter] to continue")
+  # messages ----------------------------------------------------------------
   
-  # functions ---------------------------------------------------------------
+  message("\nCopyright (C) 2018, Mauricio \"Pacha\" Vargas\n")
+  message("This file is part of Open Trade Statistics project")
+  message("\nThe scripts within this project are released under GNU General Public License 3.0")
+  message("This program comes with ABSOLUTELY NO WARRANTY.")
+  message("This is free software, and you are welcome to redistribute it under certain conditions.\n")
+  message("See https://github.com/tradestatistics/ts-yearly-datasets/LICENSE for the details\n")
+  readline(prompt = "Press [enter] to continue if and only if you agree to the license terms")
+  
+  # scripts -----------------------------------------------------------------
   
   source("00-scripts/00-user-input-and-derived-classification-digits-years.R")
   source("00-scripts/01-packages.R")
@@ -40,13 +34,13 @@ unify <- function(n_cores = 4) {
   # convert data ------------------------------------------------------------
   
   if (operating_system != "Windows") {
-    mclapply(seq_along(years), join_datasets,
+    mclapply(seq_along(years_all_classifications), join_datasets,
       mc.cores = n_cores,
-      x = clean_gz, y = converted_csv, z = converted_gz
+      x = clean_gz_all, y = converted_gz_all, z = unified_gz
     )
   } else {
     lapply(seq_along(years_all_classifications), join_datasets,
-      x = clean_gz_2, y = converted_csv_2, z = converted_gz_2
+      x = clean_gz_all, y = converted_gz_all, z = unified_gz
     )
   }
 }

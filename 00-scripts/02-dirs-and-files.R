@@ -1,3 +1,10 @@
+# Open ts-yearly-data.Rproj before running this function
+
+# Copyright (c) 2018, Mauricio \"Pacha\" Vargas
+# This file is part of Open Trade Statistics project
+# The scripts within this project are released under GNU General Public License 3.0
+# See https://github.com/tradestatistics/ts-yearly-datasets/LICENSE for the details
+
 # dirs/files --------------------------------------------------------
 
 # 0-1-download-data.R
@@ -17,15 +24,12 @@ raw_zip <- list.files(
 ) %>%
   grep(paste(paste0("ps-", years), collapse = "|"), ., value = TRUE)
 
-raw_csv <- raw_zip %>% gsub("zip", "csv", .)
-
 clean_dir <- "02-clean-data"
 rev_dir <- sprintf("%s/%s-rev%s", clean_dir, classification, revision)
 try(dir.create(clean_dir))
 try(dir.create(rev_dir))
 
 clean_gz <- sprintf("02-clean-data/%s-rev%s/%s-rev%s-%s.csv.gz", classification, revision, classification, revision, years)
-clean_csv <- gsub(".gz", "", clean_gz)
 
 # 0-3-convert-data.R
 
@@ -36,29 +40,22 @@ c2 <- c("hs92", "hs96", "hs02", "hs07", "sitc1", "sitc2")
 converted_dir <- "03-converted-data"
 try(dir.create(converted_dir))
 
-try(dir.create(paste(converted_dir, c1[[dataset]], sep = "/")))
+try(dir.create(paste(converted_dir, c1[dataset], sep = "/")))
 
-converted_gz <- grep(c1[[dataset]], clean_gz, value = TRUE) %>% 
+converted_gz <- grep(c1[dataset], clean_gz, value = TRUE) %>% 
   str_replace(clean_dir, converted_dir)
-
-converted_csv <- converted_gz %>% str_replace(".gz", "")
 
 # 0-4-unify-data.R
 
-converted_dir <- "03-converted-data"
-try(dir.create(converted_dir))
-try(dir.create(paste0(converted_dir, "/", c1[[dataset]])))
+unified_dir <- "04-unified-data"
+try(dir.create(unified_dir))
+try(dir.create(paste0(unified_dir, "/", c1[dataset])))
 
-clean_gz_2 <- list.files(clean_dir, recursive = T, full.names = T)
+clean_gz_all <- list.files(clean_dir, recursive = T, full.names = T)
 
-converted_gz_2 <- paste0(converted_dir, "/", c1, "/", c1, "-")
+converted_gz_all <- list.files(converted_dir, recursive = T, full.names = T)
 
-converted_gz_2 <- expand.grid(converted_gz_2, years_all_classifications, ".csv.gz") %>% 
-  mutate(files = paste0(Var1, Var2, Var3)) %>% 
-  select(files) %>% 
-  as_vector()
-
-converted_csv_2 <- converted_gz_2 %>% str_replace(".gz", "")
+unified_gz <- paste0(unified_dir, "/", c1[dataset], "/", c1[dataset], "-", years_all_classifications, ".csv.gz")
 
 # 0-5-compute-metrics.R
 

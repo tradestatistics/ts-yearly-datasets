@@ -1,38 +1,43 @@
 # Open ts-yearly-data.Rproj before running this function
 
-convert_codes <- function(t, x, y, z) {
+# Copyright (c) 2018, Mauricio \"Pacha\" Vargas
+# This file is part of Open Trade Statistics project
+# The scripts within this project are released under GNU General Public License 3.0
+# See https://github.com/tradestatistics/ts-yearly-datasets/LICENSE for the details
+
+convert_codes <- function(t, x, y) {
   # product codes -----------------------------------------------------------
   
   load("../ts-comtrade-codes/02-2-tidy-product-data/product-correspondence.RData")
   
   # convert data ------------------------------------------------------------
   
-  convert_to <- c2[[dataset2]]
+  convert_to <- c2[dataset2]
   
   equivalent_codes_high_granularity <- product_correspondence %>% 
-    select(!!sym(c2[[dataset]]), !!sym(convert_to)) %>% 
-    arrange(!!sym(c2[[dataset]]), !!sym(convert_to)) %>% 
+    select(!!sym(c2[dataset]), !!sym(convert_to)) %>% 
+    arrange(!!sym(c2[dataset]), !!sym(convert_to)) %>% 
     filter(
-      !(!!sym(c2[[dataset]]) %in% c("NULL")),
+      !(!!sym(c2[dataset]) %in% c("NULL")),
       !(!!sym(convert_to) %in% c("NULL"))
     ) %>% 
-    distinct(!!sym(c2[[dataset]]), .keep_all = T)
+    distinct(!!sym(c2[dataset]), .keep_all = T)
   
   equivalent_codes_low_granularity <- equivalent_codes_high_granularity %>% 
     mutate_if(is.character, str_sub, 1, 4) %>% 
-    distinct(!!sym(c2[[dataset]]), .keep_all = T)
+    distinct(!!sym(c2[dataset]), .keep_all = T)
   
   equivalent_codes <- equivalent_codes_low_granularity %>% 
     bind_rows(equivalent_codes_high_granularity) %>% 
-    arrange(!!sym(c2[[dataset]]), !!sym(convert_to))
+    arrange(!!sym(c2[dataset]), !!sym(convert_to))
   
   rm(equivalent_codes_high_granularity, equivalent_codes_low_granularity)
   
-  if (!file.exists(z[[t]])) {
-    data <- fread2(x[[t]], char = c("commodity_code"), num = c("trade_value_usd")) %>% 
+  if (!file.exists(y[t])) {
+    data <- fread2(x[t], char = c("commodity_code"), num = c("trade_value_usd")) %>% 
       mutate(commodity_code_parent = str_sub(commodity_code, 1, 4)) %>% 
-      left_join(equivalent_codes, by = c("commodity_code" = c2[[dataset]])) %>%
-      left_join(equivalent_codes, by = c("commodity_code_parent" = c2[[dataset]]))
+      left_join(equivalent_codes, by = c("commodity_code" = c2[dataset])) %>%
+      left_join(equivalent_codes, by = c("commodity_code_parent" = c2[dataset]))
     
     na_equivalents <- data %>% 
       select(!!!syms(paste0(convert_to, c(".x", ".y")))) %>% 
@@ -92,7 +97,7 @@ convert_codes <- function(t, x, y, z) {
       bind_rows(data_repeated_parent_summary) %>% 
       arrange(reporter_iso, partner_iso, commodity_code) %>% 
       mutate(
-        year = years[[t]],
+        year = years[t],
         commodity_code_length = str_length(commodity_code)
       ) %>% 
       select(year, reporter_iso, partner_iso, commodity_code, commodity_code_length, trade_value_usd) %>% 
@@ -100,7 +105,7 @@ convert_codes <- function(t, x, y, z) {
     
     rm(data_unrepeated_parent, data_repeated_parent, data_repeated_parent_summary)
     
-    fwrite(data, y[[t]])
-    compress_gz(y[[t]])
+    fwrite(data, str_replace(y[t], ".gz", ""))
+    compress_gz(str_replace(y[t], ".gz", ""))
   }
 }
