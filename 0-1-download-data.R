@@ -33,9 +33,21 @@ download <- function(n_cores = 4) {
   
   token <- Sys.getenv("token")
   
-  # helpers -----------------------------------------------------------------
-  
-  source("0-0-helpers.R")
+  # functions ---------------------------------------------------------------
+
+  source("00-scripts/00-user-input-and-derived-classification-digits-years.R")
+  source("00-scripts/01-packages.R")
+  source("00-scripts/02-dirs-and-files.R")
+  source("00-scripts/03-misc.R")
+  source("00-scripts/04-download-raw-data.R")
+  # source("00-scripts/05-read-extract-remove-compress.R")
+  # source("00-scripts/06-tidy-downloaded-data.R")
+  # source("00-scripts/07-convert-tidy-data-codes.R")
+  # source("00-scripts/08-join-converted-datasets.R")
+  # Rcpp::sourceCpp("00-scripts/09-proximity-countries-denominator.cpp")
+  # Rcpp::sourceCpp("00-scripts/10-proximity-products-denominator.cpp")
+  # source("00-scripts/11-compute-rca-and-related-metrics.R")
+  # source("00-scripts/12-create-final-tables.R")
 
   # download data -----------------------------------------------------------
 

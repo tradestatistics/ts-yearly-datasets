@@ -1,3 +1,5 @@
+// Open ts-yearly-data.Rproj before running this function
+
 #include <omp.h>
 #include <RcppArmadillo.h>
 
