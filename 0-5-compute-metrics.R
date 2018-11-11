@@ -19,9 +19,19 @@ metrics <- function(n_cores = 4) {
   
   # helpers -----------------------------------------------------------------
   
-  source("0-0-helpers.R")
-  Rcpp::sourceCpp("0-0-helpers-1.cpp")
-  Rcpp::sourceCpp("0-0-helpers-2.cpp")
+  source("00-scripts/00-user-input-and-derived-classification-digits-years.R")
+  source("00-scripts/01-packages.R")
+  source("00-scripts/02-dirs-and-files.R")
+  source("00-scripts/03-misc.R")
+  # source("00-scripts/04-download-raw-data.R")
+  source("00-scripts/05-read-extract-remove-compress.R")
+  # source("00-scripts/06-tidy-downloaded-data.R")
+  # source("00-scripts/07-convert-tidy-data-codes.R")
+  #source("00-scripts/08-join-converted-datasets.R")
+  Rcpp::sourceCpp("00-scripts/09-proximity-countries-denominator.cpp")
+  Rcpp::sourceCpp("00-scripts/10-proximity-products-denominator.cpp")
+  source("00-scripts/11-compute-rca-and-related-metrics.R")
+  # source("00-scripts/12-create-final-tables.R")
 
   # RCA -------------------------------------------------------------------
 
@@ -41,19 +51,19 @@ metrics <- function(n_cores = 4) {
   ranking_1 <- as_tibble(fread("../ts-atlas-data/2-scraped-tables/ranking-1-economic-complexity-index.csv")) %>%
     mutate(iso_code = tolower(iso_code)) %>%
     rename(reporter_iso = iso_code)
-
+  
   if (operating_system != "Windows") {
-    mclapply(seq_along(years), compute_rca_metrics,
-      x = rca_exports_gz, y = eci_rankings_csv, z = pci_rankings_csv,
-      w = proximity_countries_csv, q = proximity_products_csv, r = density_countries_csv, s = density_products_csv, mc.cores = n_cores
+    mclapply(seq_along(years_full), compute_rca_metrics,
+             x = rca_exports_gz, y = eci_rankings_gz, z = pci_rankings_gz,
+             q = proximity_countries_gz, w = proximity_products_gz, e = density_countries_gz, r = density_products_gz, mc.cores = n_cores
     )
   } else {
-    lapply(seq_along(years), compute_rca_metrics,
-      x = rca_exports_gz, y = eci_rankings_csv, z = pci_rankings_csv,
-      w = proximity_countries_csv, q = proximity_products_csv, r = density_countries_csv, s = density_products_csv
+    lapply(seq_along(years_full), compute_rca_metrics,
+           x = rca_exports_gz, y = eci_rankings_gz, z = pci_rankings_gz,
+           q = proximity_countries_gz, w = proximity_products_gz, e = density_countries_gz, r = density_products_gz
     )
   }
-
+  
   # join ECI rankings -------------------------------------------------------
 
   joined_eci_rankings <- if (operating_system != "Windows") {

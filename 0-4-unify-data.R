@@ -34,12 +34,12 @@ unify <- function(n_cores = 4) {
   # convert data ------------------------------------------------------------
   
   if (operating_system != "Windows") {
-    mclapply(seq_along(years_all_classifications), join_datasets,
+    mclapply(seq_along(years_full), join_datasets,
       mc.cores = n_cores,
       x = clean_gz_all, y = converted_gz_all, z = unified_gz
     )
   } else {
-    lapply(seq_along(years_all_classifications), join_datasets,
+    lapply(seq_along(years_full), join_datasets,
       x = clean_gz_all, y = converted_gz_all, z = unified_gz
     )
   }

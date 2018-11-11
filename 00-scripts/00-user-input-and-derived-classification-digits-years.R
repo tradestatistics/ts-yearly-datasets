@@ -77,11 +77,11 @@ if (dataset == 7) { revision <- 3; revision2 <- 1988; classification2 <- "S3" }
 if (dataset == 8) { revision <- 4; revision2 <- 2007; classification2 <- "S4" }
 
 years <- revision2:2016
-years_all_classifications <- 1962:2016
+years_full <- 1962:2016
 
 years_missing_t_minus_1 <- 1962
 years_missing_t_minus_2 <- 1963
 years_missing_t_minus_5 <- 1963:1966
-years_full <- 1967:2016
+years_with_two_previous_recordings <- 1967:2016
 
 #years_sitc_rev1 <- 1962:1991 # because SITC rev1 is used just to complete SITC rev2 data

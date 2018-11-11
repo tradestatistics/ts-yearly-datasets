@@ -9,120 +9,120 @@ join_datasets <- function(x, y, z, t) {
   converted_codes <- c1[dataset2]
   
   if (!file.exists(z[t])) {
-    if (years_all_classifications[t] < 1976) {
+    if (years_full[t] < 1976) {
       f1 <- NULL
       f2 <- NULL
       f3 <- NULL
       f4 <- NULL
       f5 <- ifelse(converted_codes == c1[5], 
-                   grep(paste0(c1[5], "-", years_all_classifications[t], ".csv.gz"), x, value = T),
-                   grep(paste0(c1[5], "-", years_all_classifications[t], ".csv.gz"), y, value = T)
+                   grep(paste0(c1[5], "-", years_full[t], ".csv.gz"), x, value = T),
+                   grep(paste0(c1[5], "-", years_full[t], ".csv.gz"), y, value = T)
       )
       f6 <- NULL
     }
     
-    if (years_all_classifications[t] >= 1976 & years_all_classifications[t] < 1992) {
+    if (years_full[t] >= 1976 & years_full[t] < 1992) {
       f1 <- NULL
       f2 <- NULL
       f3 <- NULL
       f4 <- NULL
       f5 <- ifelse(converted_codes == c1[5], 
-                   grep(paste0(c1[5], "-", years_all_classifications[t], ".csv.gz"), x, value = T),
-                   grep(paste0(c1[5], "-", years_all_classifications[t], ".csv.gz"), y, value = T)
+                   grep(paste0(c1[5], "-", years_full[t], ".csv.gz"), x, value = T),
+                   grep(paste0(c1[5], "-", years_full[t], ".csv.gz"), y, value = T)
       )
       f6 <- ifelse(converted_codes == c1[6], 
-                   grep(paste0(c1[6], "-", years_all_classifications[t], ".csv.gz"), x, value = T),
-                   grep(paste0(c1[6], "-", years_all_classifications[t], ".csv.gz"), y, value = T)
+                   grep(paste0(c1[6], "-", years_full[t], ".csv.gz"), x, value = T),
+                   grep(paste0(c1[6], "-", years_full[t], ".csv.gz"), y, value = T)
       )
     }
     
-    if (years_all_classifications[t] >= 1992 & years_all_classifications[t] < 1996) {
+    if (years_full[t] >= 1992 & years_full[t] < 1996) {
       f1 <- ifelse(converted_codes == c1[1], 
-                   grep(paste0(c1[1], "-", years_all_classifications[t], ".csv.gz"), x, value = T),
-                   grep(paste0(c1[1], "-", years_all_classifications[t], ".csv.gz"), y, value = T)
+                   grep(paste0(c1[1], "-", years_full[t], ".csv.gz"), x, value = T),
+                   grep(paste0(c1[1], "-", years_full[t], ".csv.gz"), y, value = T)
       )
       f2 <- NULL
       f3 <- NULL
       f4 <- NULL
       f5 <- ifelse(converted_codes == c1[5], 
-                   grep(paste0(c1[5], "-", years_all_classifications[t], ".csv.gz"), x, value = T),
-                   grep(paste0(c1[5], "-", years_all_classifications[t], ".csv.gz"), y, value = T)
+                   grep(paste0(c1[5], "-", years_full[t], ".csv.gz"), x, value = T),
+                   grep(paste0(c1[5], "-", years_full[t], ".csv.gz"), y, value = T)
       )
       f6 <- ifelse(converted_codes == c1[6], 
-                   grep(paste0(c1[6], "-", years_all_classifications[t], ".csv.gz"), x, value = T),
-                   grep(paste0(c1[6], "-", years_all_classifications[t], ".csv.gz"), y, value = T)
+                   grep(paste0(c1[6], "-", years_full[t], ".csv.gz"), x, value = T),
+                   grep(paste0(c1[6], "-", years_full[t], ".csv.gz"), y, value = T)
       )
     }
     
-    if (years_all_classifications[t] >= 1996 & years_all_classifications[t] < 2002) {
+    if (years_full[t] >= 1996 & years_full[t] < 2002) {
       f1 <- ifelse(converted_codes == c1[1], 
-                   grep(paste0(c1[1], "-", years_all_classifications[t], ".csv.gz"), x, value = T),
-                   grep(paste0(c1[1], "-", years_all_classifications[t], ".csv.gz"), y, value = T)
+                   grep(paste0(c1[1], "-", years_full[t], ".csv.gz"), x, value = T),
+                   grep(paste0(c1[1], "-", years_full[t], ".csv.gz"), y, value = T)
       )
       f2 <- ifelse(converted_codes == c1[2], 
-                   grep(paste0(c1[2], "-", years_all_classifications[t], ".csv.gz"), x, value = T),
-                   grep(paste0(c1[2], "-", years_all_classifications[t], ".csv.gz"), y, value = T)
+                   grep(paste0(c1[2], "-", years_full[t], ".csv.gz"), x, value = T),
+                   grep(paste0(c1[2], "-", years_full[t], ".csv.gz"), y, value = T)
       )
       f3 <- NULL
       f4 <- NULL
       f5 <- ifelse(converted_codes == c1[5], 
-                   grep(paste0(c1[5], "-", years_all_classifications[t], ".csv.gz"), x, value = T),
-                   grep(paste0(c1[5], "-", years_all_classifications[t], ".csv.gz"), y, value = T)
+                   grep(paste0(c1[5], "-", years_full[t], ".csv.gz"), x, value = T),
+                   grep(paste0(c1[5], "-", years_full[t], ".csv.gz"), y, value = T)
       )
       f6 <- ifelse(converted_codes == c1[6], 
-                   grep(paste0(c1[6], "-", years_all_classifications[t], ".csv.gz"), x, value = T),
-                   grep(paste0(c1[6], "-", years_all_classifications[t], ".csv.gz"), y, value = T)
+                   grep(paste0(c1[6], "-", years_full[t], ".csv.gz"), x, value = T),
+                   grep(paste0(c1[6], "-", years_full[t], ".csv.gz"), y, value = T)
       )
     }
     
-    if (years_all_classifications[t] >= 2002 & years_all_classifications[t] < 2007) {
+    if (years_full[t] >= 2002 & years_full[t] < 2007) {
       f1 <- ifelse(converted_codes == c1[1], 
-                   grep(paste0(c1[1], "-", years_all_classifications[t], ".csv.gz"), x, value = T),
-                   grep(paste0(c1[1], "-", years_all_classifications[t], ".csv.gz"), y, value = T)
+                   grep(paste0(c1[1], "-", years_full[t], ".csv.gz"), x, value = T),
+                   grep(paste0(c1[1], "-", years_full[t], ".csv.gz"), y, value = T)
       )
       f2 <- ifelse(converted_codes == c1[2], 
-                   grep(paste0(c1[2], "-", years_all_classifications[t], ".csv.gz"), x, value = T),
-                   grep(paste0(c1[2], "-", years_all_classifications[t], ".csv.gz"), y, value = T)
+                   grep(paste0(c1[2], "-", years_full[t], ".csv.gz"), x, value = T),
+                   grep(paste0(c1[2], "-", years_full[t], ".csv.gz"), y, value = T)
       )
       f3 <- ifelse(converted_codes == c1[3], 
-                   grep(paste0(c1[3], "-", years_all_classifications[t], ".csv.gz"), x, value = T),
-                   grep(paste0(c1[3], "-", years_all_classifications[t], ".csv.gz"), y, value = T)
+                   grep(paste0(c1[3], "-", years_full[t], ".csv.gz"), x, value = T),
+                   grep(paste0(c1[3], "-", years_full[t], ".csv.gz"), y, value = T)
       )
       f4 <- NULL
       f5 <- ifelse(converted_codes == c1[5], 
-                   grep(paste0(c1[5], "-", years_all_classifications[t], ".csv.gz"), x, value = T),
-                   grep(paste0(c1[5], "-", years_all_classifications[t], ".csv.gz"), y, value = T)
+                   grep(paste0(c1[5], "-", years_full[t], ".csv.gz"), x, value = T),
+                   grep(paste0(c1[5], "-", years_full[t], ".csv.gz"), y, value = T)
       )
       f6 <- ifelse(converted_codes == c1[6], 
-                   grep(paste0(c1[6], "-", years_all_classifications[t], ".csv.gz"), x, value = T),
-                   grep(paste0(c1[6], "-", years_all_classifications[t], ".csv.gz"), y, value = T)
+                   grep(paste0(c1[6], "-", years_full[t], ".csv.gz"), x, value = T),
+                   grep(paste0(c1[6], "-", years_full[t], ".csv.gz"), y, value = T)
       )
     }
     
-    if (years_all_classifications[t] >= 2007) {
+    if (years_full[t] >= 2007) {
       f1 <- ifelse(converted_codes == c1[1], 
-                   grep(paste0(c1[1], "-", years_all_classifications[t], ".csv.gz"), x, value = T),
-                   grep(paste0(c1[1], "-", years_all_classifications[t], ".csv.gz"), y, value = T)
+                   grep(paste0(c1[1], "-", years_full[t], ".csv.gz"), x, value = T),
+                   grep(paste0(c1[1], "-", years_full[t], ".csv.gz"), y, value = T)
       )
       f2 <- ifelse(converted_codes == c1[2], 
-                   grep(paste0(c1[2], "-", years_all_classifications[t], ".csv.gz"), x, value = T),
-                   grep(paste0(c1[2], "-", years_all_classifications[t], ".csv.gz"), y, value = T)
+                   grep(paste0(c1[2], "-", years_full[t], ".csv.gz"), x, value = T),
+                   grep(paste0(c1[2], "-", years_full[t], ".csv.gz"), y, value = T)
       )
       f3 <- ifelse(converted_codes == c1[3], 
-                   grep(paste0(c1[3], "-", years_all_classifications[t], ".csv.gz"), x, value = T),
-                   grep(paste0(c1[3], "-", years_all_classifications[t], ".csv.gz"), y, value = T)
+                   grep(paste0(c1[3], "-", years_full[t], ".csv.gz"), x, value = T),
+                   grep(paste0(c1[3], "-", years_full[t], ".csv.gz"), y, value = T)
       )
       f4 <- ifelse(converted_codes == c1[4], 
-                   grep(paste0(c1[4], "-", years_all_classifications[t], ".csv.gz"), x, value = T),
-                   grep(paste0(c1[4], "-", years_all_classifications[t], ".csv.gz"), y, value = T)
+                   grep(paste0(c1[4], "-", years_full[t], ".csv.gz"), x, value = T),
+                   grep(paste0(c1[4], "-", years_full[t], ".csv.gz"), y, value = T)
       )
       f5 <- ifelse(converted_codes == c1[5], 
-                   grep(paste0(c1[5], "-", years_all_classifications[t], ".csv.gz"), x, value = T),
-                   grep(paste0(c1[5], "-", years_all_classifications[t], ".csv.gz"), y, value = T)
+                   grep(paste0(c1[5], "-", years_full[t], ".csv.gz"), x, value = T),
+                   grep(paste0(c1[5], "-", years_full[t], ".csv.gz"), y, value = T)
       )
       f6 <- ifelse(converted_codes == c1[6], 
-                   grep(paste0(c1[6], "-", years_all_classifications[t], ".csv.gz"), x, value = T),
-                   grep(paste0(c1[6], "-", years_all_classifications[t], ".csv.gz"), y, value = T)
+                   grep(paste0(c1[6], "-", years_full[t], ".csv.gz"), x, value = T),
+                   grep(paste0(c1[6], "-", years_full[t], ".csv.gz"), y, value = T)
       )
     }
     
