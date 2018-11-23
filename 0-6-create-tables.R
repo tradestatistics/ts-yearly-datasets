@@ -22,7 +22,19 @@ tables <- function(n_cores = 4) {
   
   # helpers -----------------------------------------------------------------
   
-  source("0-0-helpers.R")
+  source("00-scripts/00-user-input-and-derived-classification-digits-years.R")
+  source("00-scripts/01-packages.R")
+  source("00-scripts/02-dirs-and-files.R")
+  source("00-scripts/03-misc.R")
+  # source("00-scripts/04-download-raw-data.R")
+  source("00-scripts/05-read-extract-remove-compress.R")
+  # source("00-scripts/06-tidy-downloaded-data.R")
+  # source("00-scripts/07-convert-tidy-data-codes.R")
+  #source("00-scripts/08-join-converted-datasets.R")
+  #Rcpp::sourceCpp("00-scripts/09-proximity-countries-denominator.cpp")
+  #Rcpp::sourceCpp("00-scripts/10-proximity-products-denominator.cpp")
+  #source("00-scripts/11-compute-rca-and-related-metrics.R")
+  source("00-scripts/12-create-final-tables.R")
   
   # codes -------------------------------------------------------------------
   
@@ -30,9 +42,13 @@ tables <- function(n_cores = 4) {
   load("../ts-comtrade-codes/02-2-tidy-product-data/product-codes.RData")
   load("../ts-observatory-codes/02-2-product-data-tidy/hs-rev2007-product-names.RData")
   
-  # pci data ----------------------------------------------------------------
+  # pci/eci data ------------------------------------------------------------
   
-  pci <- fread2("04-metrics/hs-rev2007-pci/pci-joined-ranking.csv.gz", char = c("commodity_code"))
+  eci <- fread2("05-metrics/hs-rev2007-eci/eci-joined-ranking.csv.gz")
+  pci <- fread2("05-metrics/hs-rev2007-pci/pci-joined-ranking.csv.gz", char = c("commodity_code"))
+  
+  pci_4 <- pci %>% filter(commodity_code_length == 4)
+  pci_6 <- pci %>% filter(commodity_code_length == 6)
   
   # input data --------------------------------------------------------------
   
@@ -52,7 +68,7 @@ tables <- function(n_cores = 4) {
   }
   
   product_names <- product_codes %>%
-    filter(classification == "H3", str_length(code) == 4) %>% 
+    filter(classification == "H3", str_length(code) %in% c(4,6)) %>% 
     select(code, description) %>% 
     rename(
       commodity_code = code,
@@ -60,9 +76,12 @@ tables <- function(n_cores = 4) {
     )
   
   product_names_2 <- hs_product_names %>% 
-    filter(str_length(hs) == 4) %>% 
     rename(commodity_code = hs) %>% 
-    select(-product_name)
+    select(-c(product_name,color))
+  
+  colours <- product_names_2 %>% 
+    select(group_id) %>% 
+    distinct()
   
   attributes_products <- product_names %>% 
     left_join(product_names_2) %>% 

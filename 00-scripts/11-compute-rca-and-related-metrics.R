@@ -153,81 +153,124 @@ compute_rca_imports <- function() {
   )
 }
 
-compute_rca_metrics <- function(x, y, z, q, w, e, r, t) {
-  if (!file.exists(str_replace(r[t], ".gz", ""))) {
+compute_rca_metrics <- function(x, y, z, q, w, n_cores, t) {
+  if (!file.exists(w[t])) {
     # RCA matrix (Mcp) ---------------------------------------------------------
     
-    rca_tibble <- fread2(x[t], char = c("commodity_code")) %>%
+    rca_data <- fread2(x[t], char = c("commodity_code"))
+    
+    rca_tibble_4 <- rca_data %>%
       select(-year) %>%
       filter(str_length(commodity_code) == 4) %>% 
       inner_join(select(ranking_1, reporter_iso), by = c("country_iso" = "reporter_iso")) %>%
       mutate(export_rca = ifelse(export_rca > 1, 1, 0)) %>%
       spread(commodity_code, export_rca)
     
-    diversity <- rca_tibble %>% select(country_iso)
-    ubiquity <- tibble(product = colnames(rca_tibble)) %>% filter(row_number() > 1)
+    rca_tibble_6 <- rca_data %>%
+      select(-year) %>%
+      filter(str_length(commodity_code) == 6) %>% 
+      inner_join(select(ranking_1, reporter_iso), by = c("country_iso" = "reporter_iso")) %>%
+      mutate(export_rca = ifelse(export_rca > 1, 1, 0)) %>%
+      spread(commodity_code, export_rca)
     
-    Mcp <- rca_tibble %>%
+    diversity_4 <- rca_tibble_4 %>% select(country_iso)
+    diversity_6 <- rca_tibble_6 %>% select(country_iso)
+    
+    ubiquity_4 <- tibble(product = colnames(rca_tibble_4)) %>% filter(row_number() > 1)
+    ubiquity_6 <- tibble(product = colnames(rca_tibble_6)) %>% filter(row_number() > 1)
+    
+    Mcp_4 <- rca_tibble_4 %>%
+      select(-country_iso) %>%
+      as.matrix()
+    
+    Mcp_6 <- rca_tibble_6 %>%
       select(-country_iso) %>%
       as.matrix()
     
     # convert to sparse class
-    Mcp[is.na(Mcp)] <- 0
-    Mcp <- Matrix(Mcp, sparse = T)
+    Mcp_4[is.na(Mcp_4)] <- 0
+    Mcp_4 <- Matrix(Mcp_4, sparse = T)
     
-    diversity <- diversity %>%
-      mutate(val = rowSums(Mcp, na.rm = TRUE))
-
-    ubiquity <- ubiquity %>%
-      mutate(val = colSums(Mcp, na.rm = TRUE))
-
-    rownames(Mcp) <- diversity$country_iso
+    Mcp_6[is.na(Mcp_6)] <- 0
+    Mcp_6 <- Matrix(Mcp_6, sparse = T)
+    
+    diversity_4 <- diversity_4 %>% mutate(val = rowSums(Mcp_4, na.rm = TRUE))
+    diversity_6 <- diversity_6 %>% mutate(val = rowSums(Mcp_6, na.rm = TRUE))
+    
+    ubiquity_4 <- ubiquity_4 %>% mutate(val = colSums(Mcp_4, na.rm = TRUE))
+    ubiquity_6 <- ubiquity_6 %>% mutate(val = colSums(Mcp_6, na.rm = TRUE))
+    
+    rownames(Mcp_4) <- diversity_4$country_iso
+    rownames(Mcp_6) <- diversity_6$country_iso
     
     # remove null rows and cols
-    Mcp <- Mcp[rowSums(Mcp, na.rm = TRUE) != 0, colSums(Mcp, na.rm = TRUE) != 0]
+    Mcp_4 <- Mcp_4[rowSums(Mcp_4, na.rm = TRUE) != 0, colSums(Mcp_4, na.rm = TRUE) != 0]
+    Mcp_6 <- Mcp_6[rowSums(Mcp_6, na.rm = TRUE) != 0, colSums(Mcp_6, na.rm = TRUE) != 0]
     
-    diversity <- filter(diversity, country_iso %in% rownames(Mcp))
-    ubiquity <- filter(ubiquity, product %in% colnames(Mcp))
+    diversity_4 <- filter(diversity_4, country_iso %in% rownames(Mcp_4))
+    diversity_6 <- filter(diversity_6, country_iso %in% rownames(Mcp_6))
     
-    D <- as.matrix(diversity$val, ncol = 1)
-    U <- as.matrix(ubiquity$val, ncol = 1)
+    ubiquity_4 <- filter(ubiquity_4, product %in% colnames(Mcp_4))
+    ubiquity_6 <- filter(ubiquity_6, product %in% colnames(Mcp_6))
     
-    rm(rca_tibble)
+    D_4 <- as.matrix(diversity_4$val, ncol = 1)
+    D_6 <- as.matrix(diversity_6$val, ncol = 1)
+    
+    U_4 <- as.matrix(ubiquity_4$val, ncol = 1)
+    U_6 <- as.matrix(ubiquity_6$val, ncol = 1)
+    
+    rm(rca_data, rca_tibble_4, rca_tibble_6)
     
     # diversity and ubiquity following the Atlas notation
-    kc0 <- as.numeric(D)
-    kp0 <- as.numeric(U)
+    kc0_4 <- as.numeric(D_4)
+    kp0_4 <- as.numeric(U_4)
+    
+    kc0_6 <- as.numeric(D_6)
+    kp0_6 <- as.numeric(U_6)
     
     # reflections method ------------------------------------------------------
     
-    kcinv <- 1 / kc0
-    kpinv <- 1 / kp0
+    kcinv_4 <- 1 / kc0_4
+    kpinv_4 <- 1 / kp0_4
+    
+    kcinv_6 <- 1 / kc0_6
+    kpinv_6 <- 1 / kp0_6
     
     # create empty matrices
-    kc <- Matrix(0, nrow = length(kc0), ncol = 20, sparse = T)
-    kp <- Matrix(0, nrow = length(kp0), ncol = 20, sparse = T)
+    kc_4 <- Matrix(0, nrow = length(kc0_4), ncol = 20, sparse = T)
+    kp_4 <- Matrix(0, nrow = length(kp0_4), ncol = 20, sparse = T)
+    
+    kc_6 <- Matrix(0, nrow = length(kc0_6), ncol = 20, sparse = T)
+    kp_6 <- Matrix(0, nrow = length(kp0_6), ncol = 20, sparse = T)
     
     # fill the first column with kc0 and kp0 to start iterating
-    kc[, 1] <- kc0
-    kp[, 1] <- kp0
+    kc_4[, 1] <- kc0_4
+    kp_4[, 1] <- kp0_4
+    
+    kc_6[, 1] <- kc0_6
+    kp_6[, 1] <- kp0_6
     
     # compute cols 2 to 20 by iterating from col 1
-    for (c in 2:ncol(kc)) {
-      kc[, c] <- kcinv * (Mcp %*% kp[, (c - 1)])
-      kp[, c] <- kpinv * (t(Mcp) %*% kc[, (c - 1)])
+    for (c in 2:ncol(kc_4)) {
+      kc_4[, c] <- kcinv_4 * (Mcp_4 %*% kp_4[, (c - 1)])
+      kp_4[, c] <- kpinv_4 * (t(Mcp_4) %*% kc_4[, (c - 1)])
+    }
+    
+    for (c in 2:ncol(kc_6)) {
+      kc_6[, c] <- kcinv_6 * (Mcp_6 %*% kp_6[, (c - 1)])
+      kp_6[, c] <- kpinv_6 * (t(Mcp_6) %*% kc_6[, (c - 1)])
     }
     
     # ECI (reflections method) ------------------------------------------------
     
     eci_reflections <- as_tibble(
-        (kc[, 19] - mean(kc[, 19])) / sd(kc[, 19])
+        (kc_4[, 19] - mean(kc_4[, 19])) / sd(kc_4[, 19])
       ) %>%
       mutate(
-        country_iso = diversity$country_iso,
+        country_iso = diversity_4$country_iso,
         year = years_full[t]
       ) %>%
       select(year, country_iso, value) %>%
-      arrange(desc(value)) %>%
       rename(eci = value)
     
     fwrite(eci_reflections, str_replace(y[t], ".gz", ""))
@@ -235,35 +278,53 @@ compute_rca_metrics <- function(x, y, z, q, w, e, r, t) {
     
     # PCI (reflections method) ------------------------------------------------
     
-    pci_reflections <- as_tibble(
-        (kp[, 20] - mean(kp[, 20])) / sd(kp[, 20])
+    pci_reflections_4 <- as_tibble(
+        (kp_4[, 20] - mean(kp_4[, 20])) / sd(kp_4[, 20])
       ) %>%
       mutate(
-        commodity_code = ubiquity$product,
+        commodity_code = ubiquity_4$product,
         year = years_full[t]
       ) %>%
       select(year, commodity_code, value) %>%
-      arrange(desc(value)) %>%
       rename(pci = value)
+    
+    pci_reflections_6 <- as_tibble(
+      (kp_6[, 20] - mean(kp_6[, 20])) / sd(kp_6[, 20])
+    ) %>%
+      mutate(
+        commodity_code = ubiquity_6$product,
+        year = years_full[t]
+      ) %>%
+      select(year, commodity_code, value) %>%
+      rename(pci = value)
+    
+    pci_reflections <- bind_rows(pci_reflections_4, pci_reflections_6) %>% arrange(commodity_code)
     
     fwrite(pci_reflections, str_replace(z[t], ".gz", ""))
     compress_gz(str_replace(z[t], ".gz", ""))
     
     rm(
-      kc0,
-      kp0,
-      kcinv,
-      kpinv,
-      kc,
-      kp,
+      kc0_4,
+      kp0_4,
+      kcinv_4,
+      kpinv_4,
+      kc_4,
+      kp_4,
       eci_reflections,
-      pci_reflections,
+      pci_reflections_4,
+      pci_reflections_6,
+      kc0_6,
+      kp0_6,
+      kcinv_6,
+      kpinv_6,
+      kc_6,
+      kp_6,
       c
     )
     
     # proximity (countries) ---------------------------------------------------
     
-    Phi_cc <- (Mcp %*% t(Mcp)) / proximity_countries_denominator(Mcp, D, cores = min(1,n_cores))
+    Phi_cc <- (Mcp_4 %*% t(Mcp_4)) / proximity_countries_denominator(Mcp_4, D_4, cores = min(1,n_cores))
     
     Phi_cc_l <- Phi_cc
     Phi_cc_l[upper.tri(Phi_cc_l, diag = T)] <- NA
@@ -280,7 +341,7 @@ compute_rca_metrics <- function(x, y, z, q, w, e, r, t) {
     
     # proximity (products) ---------------------------------------------------
     
-    Phi_pp <- (t(Mcp) %*% Mcp) / proximity_products_denominator(Mcp, U, cores = min(1,n_cores))
+    Phi_pp <- (t(Mcp_4) %*% Mcp_4) / proximity_products_denominator(Mcp_4, U_4, cores = min(1,n_cores))
     
     Phi_pp_l <- Phi_pp
     Phi_pp_l[upper.tri(Phi_pp_l, diag = T)] <- NA
@@ -297,27 +358,27 @@ compute_rca_metrics <- function(x, y, z, q, w, e, r, t) {
     
     # density (countries) -----------------------------------------------------
     
-    Omega_countries_cp <- (Phi_cc %*% Mcp) / colSums(Phi_cc)
-    
-    Omega_countries_cp_long <- as_tibble(as.matrix(Omega_countries_cp)) %>%
-      mutate(country_iso = rownames(Omega_countries_cp)) %>%
-      gather(product, value, -country_iso) %>%
-      setNames(c("country_iso", "commodity_code", "value"))
-    
-    fwrite(Omega_countries_cp_long, str_replace(e[t], ".gz", ""))
-    compress_gz(str_replace(e[t], ".gz", ""))
-    rm(Omega_countries_cp, Omega_countries_cp_long)
+    # Omega_countries_cp <- (Phi_cc %*% Mcp) / colSums(Phi_cc)
+    # 
+    # Omega_countries_cp_long <- as_tibble(as.matrix(Omega_countries_cp)) %>%
+    #   mutate(country_iso = rownames(Omega_countries_cp)) %>%
+    #   gather(product, value, -country_iso) %>%
+    #   setNames(c("country_iso", "commodity_code", "value"))
+    # 
+    # fwrite(Omega_countries_cp_long, str_replace(e[t], ".gz", ""))
+    # compress_gz(str_replace(e[t], ".gz", ""))
+    # rm(Omega_countries_cp, Omega_countries_cp_long)
     
     # density (products) ------------------------------------------------------
     
-    Omega_products_cp <- t((Phi_pp %*% t(Mcp)) / colSums(Phi_pp))
-    
-    Omega_products_cp_long <- as_tibble(as.matrix(Omega_products_cp)) %>%
-      mutate(country_iso = rownames(Omega_products_cp)) %>%
-      gather(product, value, -country_iso) %>%
-      setNames(c("country_iso", "commodity_code", "value"))
-    
-    fwrite(Omega_products_cp_long, str_replace(r[t], ".gz", ""))
-    compress_gz(str_replace(r[t], ".gz", ""))
+    # Omega_products_cp <- t((Phi_pp %*% t(Mcp)) / colSums(Phi_pp))
+    # 
+    # Omega_products_cp_long <- as_tibble(as.matrix(Omega_products_cp)) %>%
+    #   mutate(country_iso = rownames(Omega_products_cp)) %>%
+    #   gather(product, value, -country_iso) %>%
+    #   setNames(c("country_iso", "commodity_code", "value"))
+    # 
+    # fwrite(Omega_products_cp_long, str_replace(r[t], ".gz", ""))
+    # compress_gz(str_replace(r[t], ".gz", ""))
   }
 }

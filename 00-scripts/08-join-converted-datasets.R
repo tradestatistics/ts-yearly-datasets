@@ -6,7 +6,7 @@
 # See https://github.com/tradestatistics/ts-yearly-datasets/LICENSE for the details
 
 join_datasets <- function(x, y, z, t) {
-  converted_codes <- c1[dataset2]
+  converted_codes <- c1[dataset]
   
   if (!file.exists(z[t])) {
     if (years_full[t] < 1976) {

@@ -23,7 +23,7 @@ fread2 <- function(x, char = NULL, num = NULL) {
   
   if (is.null(char) & is.null(num)) {
     d <- fread(
-      paste("zcat", x)
+      cmd = paste("zcat", x)
     ) %>%
       as_tibble() %>% 
       clean_names()
@@ -31,7 +31,7 @@ fread2 <- function(x, char = NULL, num = NULL) {
   
   if (!is.null(char) & is.null(num)) {
     d <- fread(
-      paste("zcat", x),
+      cmd = paste("zcat", x),
       colClasses = list(
         character = char
       )
@@ -42,7 +42,7 @@ fread2 <- function(x, char = NULL, num = NULL) {
   
   if (!is.null(char) & !is.null(num)) {
     d <- fread(
-      paste("zcat", x),
+      cmd = paste("zcat", x),
       colClasses = list(
         character = char,
         numeric = num
@@ -52,6 +52,7 @@ fread2 <- function(x, char = NULL, num = NULL) {
       clean_names()
   }
   
+  gc()
   return(d)
 }
 

@@ -68,6 +68,8 @@ compute_tidy_data <- function(t) {
       select(reporter_iso, partner_iso, commodity_code, trade_value_usd) %>% 
       mutate(trade_value_usd = ceiling(trade_value_usd / cif_fob_rate))
     
+    colnames(exports_mirrored) <- c("partner_iso", "reporter_iso", "commodity_code", "trade_value_usd")
+    
     rm(clean_data)
     
     exports_model <- exports %>% 
@@ -80,6 +82,8 @@ compute_tidy_data <- function(t) {
       mutate(parent_count = n()) %>% 
       ungroup() %>% 
       select(reporter_iso, partner_iso, commodity_code, commodity_code_parent, parent_count, trade_value_usd)
+    
+    rm(exports, exports_mirrored)
     
     exports_model_unrepeated_parent <- exports_model %>% 
       filter(parent_count == 1)

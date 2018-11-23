@@ -33,21 +33,21 @@ if (exists("ask_to_remove_old_files")) {
   )
 }
 
-if (exists("ask_for_convertion_codes")) {
-  dataset2 <- menu(
-    c("HS rev 1992", "HS rev 1996", "HS rev 2002", "HS rev 2007", "SITC rev 1", "SITC rev 2", "SITC rev 3", "SITC rev 4"),
-    title = "Convert codes to:",
-    graphics = F
-  )
-}
+# if (exists("ask_for_conversion_codes")) {
+#   dataset2 <- menu(
+#     c("HS rev 1992", "HS rev 1996", "HS rev 2002", "HS rev 2007", "SITC rev 1", "SITC rev 2", "SITC rev 3", "SITC rev 4"),
+#     title = "Convert codes to:",
+#     graphics = F
+#   )
+# }
 
-if (exists("ask_for_converted_codes")) {
-  dataset2 <- menu(
-    c("HS rev 1992", "HS rev 1996", "HS rev 2002", "HS rev 2007", "SITC rev 1", "SITC rev 2", "SITC rev 3", "SITC rev 4"),
-    title = "Converted codes:",
-    graphics = F
-  )  
-}
+# if (exists("ask_for_converted_codes")) {
+#   dataset2 <- menu(
+#     c("HS rev 1992", "HS rev 1996", "HS rev 2002", "HS rev 2007", "SITC rev 1", "SITC rev 2", "SITC rev 3", "SITC rev 4"),
+#     title = "Converted codes:",
+#     graphics = F
+#   )  
+# }
 
 # classification ----------------------------------------------------------
 

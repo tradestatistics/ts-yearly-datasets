@@ -1,6 +1,6 @@
 # Open ts-yearly-data.Rproj before running this function
 
-metrics <- function(n_cores = 4) {
+metrics <- function(n_cores = 2) {
   # user parameters ---------------------------------------------------------
 
   message("\nCopyright (c) 2018, Mauricio \"Pacha\" Vargas\n")
@@ -40,57 +40,36 @@ metrics <- function(n_cores = 4) {
       substitute(compute_rca_exports()), 
       substitute(compute_rca_imports())
     )
-    mclapply(rca_exp_and_imp, eval, mc.cores= 2)
+    mclapply(rca_exp_and_imp, eval, mc.cores = n_cores)
   } else {
     compute_rca_exports()
     compute_rca_imports()
   }
   
   # RCA based measures ----------------------------------------------------
-
+  
   ranking_1 <- as_tibble(fread("../ts-atlas-data/2-scraped-tables/ranking-1-economic-complexity-index.csv")) %>%
     mutate(iso_code = tolower(iso_code)) %>%
     rename(reporter_iso = iso_code)
-  
-  if (operating_system != "Windows") {
-    mclapply(seq_along(years_full), compute_rca_metrics,
-             x = rca_exports_gz, y = eci_rankings_gz, z = pci_rankings_gz,
-             q = proximity_countries_gz, w = proximity_products_gz, e = density_countries_gz, r = density_products_gz, mc.cores = n_cores
-    )
-  } else {
-    lapply(seq_along(years_full), compute_rca_metrics,
-           x = rca_exports_gz, y = eci_rankings_gz, z = pci_rankings_gz,
-           q = proximity_countries_gz, w = proximity_products_gz, e = density_countries_gz, r = density_products_gz
-    )
-  }
+
+  lapply(seq_along(years_full), compute_rca_metrics,
+         x = rca_exports_gz, y = eci_rankings_gz, z = pci_rankings_gz,
+         q = proximity_countries_gz, w = proximity_products_gz, n_cores = n_cores
+  )
   
   # join ECI rankings -------------------------------------------------------
 
-  joined_eci_rankings <- if (operating_system != "Windows") {
-    mclapply(eci_rankings_gz, fread2, mc.cores = n_cores)
-  } else {
-    lapply(eci_rankings_gz, fread2)
-  }
+  joined_eci_rankings <- lapply(eci_rankings_gz, fread2)
 
-  joined_eci_rankings <- if (operating_system != "Windows") {
-    mclapply(seq_along(years),
+  joined_eci_rankings <- lapply(
+      seq_along(years_full),
       function(t) {
         joined_eci_rankings[[t]] %>%
-          mutate(eci_rank = row_number()) %>%
-          select(year, everything())
-      },
-      mc.cores = n_cores
-    )
-  } else {
-    lapply(
-      seq_along(years),
-      function(t) {
-        joined_eci_rankings[[t]] %>%
+          arrange(-eci) %>% 
           mutate(eci_rank = row_number()) %>%
           select(year, everything())
       }
     )
-  }
 
   joined_eci_rankings <- bind_rows(joined_eci_rankings)
   fwrite(joined_eci_rankings, paste0(eci_dir, "/eci-joined-ranking.csv"))
@@ -99,31 +78,19 @@ metrics <- function(n_cores = 4) {
 
   # join PCI rankings -------------------------------------------------------
 
-  joined_pci_rankings <- if (operating_system != "Windows") {
-    mclapply(pci_rankings_gz, fread2, mc.cores = n_cores, char = c("commodity_code"))
-  } else {
-    lapply(pci_rankings_gz, fread2, char = c("commodity_code"))
-  }
-
-  joined_pci_rankings <- if (operating_system != "Windows") {
-    mclapply(seq_along(years),
-      function(t) {
-        joined_pci_rankings[[t]] %>%
-          mutate(pci_rank = row_number()) %>%
-          select(year, everything())
-      },
-      mc.cores = n_cores
-    )
-  } else {
-    lapply(
-      seq_along(years),
-      function(t) {
-        joined_pci_rankings[[t]] %>%
-          mutate(pci_rank = row_number()) %>%
-          select(year, everything())
-      }
-    )
-  }
+  joined_pci_rankings <- lapply(pci_rankings_gz, fread2, char = c("commodity_code"))
+  
+  joined_pci_rankings <-  lapply(
+    seq_along(years_full),
+    function(t) {
+      joined_pci_rankings[[t]] %>%
+        mutate(commodity_code_length = str_length(commodity_code)) %>% 
+        arrange(-pci, commodity_code_length) %>% 
+        group_by(commodity_code_length) %>% 
+        mutate(pci_rank = row_number()) %>%
+        ungroup()
+    }
+  )
 
   joined_pci_rankings <- bind_rows(joined_pci_rankings)
   fwrite(joined_pci_rankings, paste0(pci_dir, "/pci-joined-ranking.csv"))

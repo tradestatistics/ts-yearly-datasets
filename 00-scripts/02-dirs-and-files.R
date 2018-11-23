@@ -96,7 +96,7 @@ density_products_gz <- sprintf("%s/density-products-%s.csv.gz", density_products
 
 # 0-6-create-tables.R
 
-tables_dir <- "05-tables"
+tables_dir <- "06-tables"
 try(dir.create(tables_dir))
 
 tables_dir <- sprintf("%s/hs-rev2007", tables_dir)

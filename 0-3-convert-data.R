@@ -2,7 +2,7 @@
 
 # user input --------------------------------------------------------------
 
-ask_for_convertion_codes <- 1
+#ask_for_conversion_codes <- 1
 
 convert <- function(n_cores = 4) {
   # messages ----------------------------------------------------------------
