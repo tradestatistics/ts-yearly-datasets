@@ -1,4 +1,4 @@
-# Open ts-yearly-data.Rproj before running this function
+# Open ts-yearly-datasets.Rproj before running this function
 
 # Copyright (c) 2018, Mauricio \"Pacha\" Vargas
 # This file is part of Open Trade Statistics project
@@ -144,17 +144,17 @@ join_datasets <- function(x, y, z, t) {
       complementary_files = c(complementary_files, rep(0, 5 - length(complementary_files)))
     }
     
-    data <- fread2(leading_file, char = c("commodity_code"), num = c("trade_value_usd"))
+    data <- fread2(leading_file, character = "commodity_code",  numeric = "trade_value_usd")
     
     if (complementary_files[1] != 0) {
-      data2 <- fread2(complementary_files[1], char = c("commodity_code"), num = c("trade_value_usd")) %>%
+      data2 <- fread2(complementary_files[1], character = "commodity_code",  numeric = "trade_value_usd") %>%
         anti_join(data, by = c("reporter_iso", "partner_iso"))
     } else {
       data2 <- NULL
     }
     
     if (complementary_files[2] != 0) {
-      data3 <- fread2(complementary_files[2], char = c("commodity_code"), num = c("trade_value_usd")) %>%
+      data3 <- fread2(complementary_files[2], character = "commodity_code",  numeric = "trade_value_usd") %>%
         anti_join(data, by = c("reporter_iso", "partner_iso")) %>%
         anti_join(data2, by = c("reporter_iso", "partner_iso"))
     } else {
@@ -162,7 +162,7 @@ join_datasets <- function(x, y, z, t) {
     }
     
     if (complementary_files[3] != 0) {
-      data4 <- fread2(complementary_files[3], char = c("commodity_code"), num = c("trade_value_usd")) %>%
+      data4 <- fread2(complementary_files[3], character = "commodity_code",  numeric = "trade_value_usd") %>%
         anti_join(data, by = c("reporter_iso", "partner_iso")) %>%
         anti_join(data2, by = c("reporter_iso", "partner_iso")) %>%
         anti_join(data3, by = c("reporter_iso", "partner_iso"))
@@ -171,7 +171,7 @@ join_datasets <- function(x, y, z, t) {
     }
     
     if (complementary_files[4] != 0) {
-      data5 <- fread2(complementary_files[4], char = c("commodity_code"), num = c("trade_value_usd")) %>%
+      data5 <- fread2(complementary_files[4], character = "commodity_code",  numeric = "trade_value_usd") %>%
         anti_join(data, by = c("reporter_iso", "partner_iso")) %>%
         anti_join(data2, by = c("reporter_iso", "partner_iso")) %>%
         anti_join(data3, by = c("reporter_iso", "partner_iso")) %>%
@@ -181,7 +181,7 @@ join_datasets <- function(x, y, z, t) {
     }
     
     if (complementary_files[5] != 0) {
-      data6 <- fread2(complementary_files[5], char = c("commodity_code"), num = c("trade_value_usd")) %>%
+      data6 <- fread2(complementary_files[5], character = "commodity_code",  numeric = "trade_value_usd") %>%
         anti_join(data, by = c("reporter_iso", "partner_iso")) %>%
         anti_join(data2, by = c("reporter_iso", "partner_iso")) %>%
         anti_join(data3, by = c("reporter_iso", "partner_iso")) %>%

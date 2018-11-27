@@ -1,4 +1,4 @@
-# Open ts-yearly-data.Rproj before running this function
+# Open ts-yearly-datasets.Rproj before running this function
 
 # Copyright (c) 2018, Mauricio \"Pacha\" Vargas
 # This file is part of Open Trade Statistics project
@@ -16,39 +16,32 @@ extract <- function(x, y, t) {
   }
 }
 
-fread2 <- function(x, char = NULL, num = NULL) {
+fread2 <- function(file, select = NULL, character = NULL, numeric = NULL) {
   messageline()
   message("function fread2")
-  message("x: ", x)
+  message("file: ", file)
   
-  if (is.null(char) & is.null(num)) {
+  if(str_sub(file, start = -2) == "gz") {
     d <- fread(
-      cmd = paste("zcat", x)
-    ) %>%
-      as_tibble() %>% 
-      clean_names()
-  }
-  
-  if (!is.null(char) & is.null(num)) {
-    d <- fread(
-      cmd = paste("zcat", x),
+      cmd = paste("zcat", file),
+      select = select,
       colClasses = list(
-        character = char
+        character = character,
+        numeric = numeric
       )
     ) %>%
-      as_tibble() %>% 
+      as_tibble() %>%
       clean_names()
-  }
-  
-  if (!is.null(char) & !is.null(num)) {
+  } else {
     d <- fread(
-      cmd = paste("zcat", x),
+      input = file,
+      select = select,
       colClasses = list(
-        character = char,
-        numeric = num
+        character = character,
+        numeric = numeric
       )
     ) %>%
-      as_tibble() %>% 
+      as_tibble() %>%
       clean_names()
   }
   

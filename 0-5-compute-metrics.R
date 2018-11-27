@@ -1,4 +1,9 @@
-# Open ts-yearly-data.Rproj before running this function
+# Open ts-yearly-datasets.Rproj before running this function
+
+# Copyright (c) 2018, Mauricio \"Pacha\" Vargas
+# This file is part of Open Trade Statistics project
+# The scripts within this project are released under GNU General Public License 3.0
+# See https://github.com/tradestatistics/ts-yearly-datasets/LICENSE for the details
 
 metrics <- function(n_cores = 2) {
   # user parameters ---------------------------------------------------------
@@ -36,14 +41,21 @@ metrics <- function(n_cores = 2) {
   # RCA -------------------------------------------------------------------
 
   if (operating_system != "Windows") {
-    rca_exp_and_imp <- c(
-      substitute(compute_rca_exports()), 
-      substitute(compute_rca_imports())
+    mclapply(seq_along(years_full), compute_rca,
+           x = unified_gz, y = rca_exports_gz, keep = "reporter_iso", mc.cores = n_cores
     )
-    mclapply(rca_exp_and_imp, eval, mc.cores = n_cores)
+    
+    mclapply(seq_along(years_full), compute_rca,
+           x = unified_gz, y = rca_imports_gz, keep = "partner_iso", mc.cores = n_cores
+    )
   } else {
-    compute_rca_exports()
-    compute_rca_imports()
+    lapply(seq_along(years_full), compute_rca,
+           x = unified_gz, y = rca_exports_gz, keep = "reporter_iso"
+    )
+    
+    lapply(seq_along(years_full), compute_rca,
+           x = unified_gz, y = rca_imports_gz, keep = "partner_iso"
+    )
   }
   
   # RCA based measures ----------------------------------------------------
@@ -51,11 +63,18 @@ metrics <- function(n_cores = 2) {
   ranking_1 <- as_tibble(fread("../ts-atlas-data/2-scraped-tables/ranking-1-economic-complexity-index.csv")) %>%
     mutate(iso_code = tolower(iso_code)) %>%
     rename(reporter_iso = iso_code)
-
-  lapply(seq_along(years_full), compute_rca_metrics,
-         x = rca_exports_gz, y = eci_rankings_gz, z = pci_rankings_gz,
-         q = proximity_countries_gz, w = proximity_products_gz, n_cores = n_cores
-  )
+  
+  if (operating_system != "Windows") {
+    mclapply(seq_along(years_full), compute_rca_metrics,
+             x = rca_exports_gz, y = eci_rankings_gz, z = pci_rankings_gz,
+             q = proximity_countries_gz, w = proximity_products_gz, n_cores = n_cores
+    )
+  } else {
+    lapply(seq_along(years_full), compute_rca_metrics,
+           x = rca_exports_gz, y = eci_rankings_gz, z = pci_rankings_gz,
+           q = proximity_countries_gz, w = proximity_products_gz
+    ) 
+  }
   
   # join ECI rankings -------------------------------------------------------
 

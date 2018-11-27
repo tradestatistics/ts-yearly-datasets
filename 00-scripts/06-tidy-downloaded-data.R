@@ -1,4 +1,4 @@
-# Open ts-yearly-data.Rproj before running this function
+# Open ts-yearly-datasets.Rproj before running this function
 
 # Copyright (c) 2018, Mauricio \"Pacha\" Vargas
 # This file is part of Open Trade Statistics project
@@ -27,15 +27,13 @@ compute_tidy_data <- function(t) {
     
     # clean data --------------------------------------------------------------
     
-    clean_data <- fread(str_replace(raw_zip[t], "zip", "csv"), 
-                        colClasses = list(character = c("Commodity Code"), numeric = c("Trade Value (US$)"))
+    clean_data <- fread2(str_replace(raw_zip[t], "zip", "csv"),
+                         select = c("Year", "Aggregate Level", "Trade Flow", "Reporter ISO", "Partner ISO", "Commodity Code", "Trade Value (US$)"),
+                         character = "Commodity Code",
+                         numeric = "Trade Value (US$)"
     ) %>%
       
-      as_tibble() %>% 
-      clean_names() %>%
-      
       rename(trade_value_usd = trade_value_us) %>%
-      select(trade_flow, reporter_iso, partner_iso, aggregate_level, commodity_code, trade_value_usd) %>%
       
       filter(aggregate_level %in% J) %>%
       filter(trade_flow %in% c("Export","Import")) %>%

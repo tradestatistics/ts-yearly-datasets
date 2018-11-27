@@ -1,11 +1,11 @@
-# Open ts-yearly-data.Rproj before running this function
+# Open ts-yearly-datasets.Rproj before running this function
 
 # Copyright (c) 2018, Mauricio \"Pacha\" Vargas
 # This file is part of Open Trade Statistics project
 # The scripts within this project are released under GNU General Public License 3.0
 # See https://github.com/tradestatistics/ts-yearly-datasets/LICENSE for the details
 
-compute_rca <- function(x, y, keep, discard, t) {
+compute_rca <- function(x, y, keep, t) {
   if (file.exists(y[t])) {
     messageline()
     message(paste0("Skipping year ", years_full[t], ". The file already exist."))
@@ -15,8 +15,7 @@ compute_rca <- function(x, y, keep, discard, t) {
       "Creating smooth RCA file for the year ", years_full[t], ". Be patient..."
     ))
     
-    trade_t1 <- fread2(x[t], char = c("commodity_code"), num = c("trade_value_usd")) %>%
-      select(-!!sym(discard)) %>%
+    trade_t1 <- fread2(x[t], character = "commodity_code", numeric = "trade_value_usd") %>%
       group_by(year, !!sym(keep), commodity_code, commodity_code_length) %>%
       summarise(trade_value_usd_t1 = sum(trade_value_usd, na.rm = T)) %>% 
       ungroup()
@@ -26,49 +25,52 @@ compute_rca <- function(x, y, keep, discard, t) {
     rm(trade_t1)
     
     if (years_full[t] <= years_missing_t_minus_1) {
-      trade_t2_4 <- trade_t1_4 %>%
-        select(!!sym(keep), commodity_code) %>%
+      trade_t1_4 <- trade_t1_4 %>%
         mutate(trade_value_usd_t2 = NA)
       
-      trade_t2_6 <- trade_t1_6 %>%
-        select(!!sym(keep), commodity_code) %>%
+      trade_t1_6 <- trade_t1_6 %>%
         mutate(trade_value_usd_t2 = NA)
     } else {
-      trade_t2 <- fread2(x[t - 1], char = c("commodity_code"), num = c("trade_value_usd")) %>%
-        select(-!!sym(discard)) %>%
+      trade_t2 <- fread2(x[t - 1], character = "commodity_code", numeric = "trade_value_usd") %>%
         group_by(!!sym(keep), commodity_code, commodity_code_length) %>%
         summarise(trade_value_usd_t2 = sum(trade_value_usd, na.rm = T)) %>% 
         ungroup()
       
-      trade_t2_4 <- trade_t2 %>% filter(commodity_code_length == 4) %>% select(-commodity_code_length)
-      trade_t2_6 <- trade_t2 %>% filter(commodity_code_length == 6) %>% select(-commodity_code_length)
+      trade_t2_4 <- trade_t2 %>% filter(commodity_code_length == 4)
+      trade_t2_6 <- trade_t2 %>% filter(commodity_code_length == 6)
       rm(trade_t2)
+      
+      trade_t1_4 <- trade_t1_4 %>%
+        left_join(trade_t2_4, by = c(keep, "commodity_code"))
+      
+      trade_t1_6 <- trade_t1_6 %>%
+        left_join(trade_t2_6, by = c(keep, "commodity_code"))
     }
     
     if (years_full[t] <= years_missing_t_minus_2) {
-      trade_t3_4 <- trade_t1_4 %>%
-        select(!!sym(keep), commodity_code) %>%
+      trade_t1_4 <- trade_t1_4 %>%
         mutate(trade_value_usd_t3 = NA)
       
-      trade_t3_6 <- trade_t1_6 %>%
-        select(!!sym(keep), commodity_code) %>%
+      trade_t1_6 <- trade_t1_6 %>%
         mutate(trade_value_usd_t3 = NA)
     } else {
-      trade_t3 <- fread2(x[t - 2], char = c("commodity_code"), num = c("trade_value_usd")) %>%
-        select(-!!sym(discard)) %>%
+      trade_t3 <- fread2(x[t - 2], character = "commodity_code", numeric = "trade_value_usd") %>%
         group_by(!!sym(keep), commodity_code, commodity_code_length) %>%
         summarise(trade_value_usd_t3 = sum(trade_value_usd, na.rm = T)) %>% 
         ungroup()
       
-      trade_t3_4 <- trade_t3 %>% filter(commodity_code_length == 4) %>% select(-commodity_code_length)
-      trade_t3_6 <- trade_t3 %>% filter(commodity_code_length == 6) %>% select(-commodity_code_length)
+      trade_t3_4 <- trade_t3 %>% filter(commodity_code_length == 4)
+      trade_t3_6 <- trade_t3 %>% filter(commodity_code_length == 6)
       rm(trade_t3)
+      
+      trade_t1_4 <- trade_t1_4 %>%
+        left_join(trade_t3_4, by = c(keep, "commodity_code"))
+      
+      trade_t1_6 <- trade_t1_6 %>%
+        left_join(trade_t3_6, by = c(keep, "commodity_code"))
     }
     
     trade_t1_4 <- trade_t1_4 %>%
-      left_join(trade_t2_4, by = c(keep, "commodity_code")) %>%
-      left_join(trade_t3_4, by = c(keep, "commodity_code")) %>%
-      
       rowwise() %>% # To apply a weighted mean by rows with 1 weight = 1 column
       mutate(
         xcp = weighted.mean( # x = value, c = country, p = product
@@ -96,9 +98,6 @@ compute_rca <- function(x, y, keep, discard, t) {
       select(year, !!sym(keep), commodity_code, rca)
     
     trade_t1_6 <- trade_t1_6 %>%
-      left_join(trade_t2_6, by = c(keep, "commodity_code")) %>%
-      left_join(trade_t3_6, by = c(keep, "commodity_code")) %>%
-      
       rowwise() %>% # To apply a weighted mean by rows with 1 weight = 1 column
       mutate(
         xcp = weighted.mean( # x = value, c = country, p = product
@@ -137,20 +136,6 @@ compute_rca <- function(x, y, keep, discard, t) {
     fwrite(trade_t1, str_replace(y[t], ".gz", ""))
     compress_gz(str_replace(y[t], ".gz", ""))
   }
-}
-
-compute_rca_exports <- function() {
-  lapply(seq_along(years_full), compute_rca,
-         x = unified_gz, y = rca_exports_gz,
-         keep = "reporter_iso", discard = "partner_iso"
-  ) 
-}
-
-compute_rca_imports <- function() {
-  lapply(seq_along(years_full), compute_rca,
-         x = unified_gz, y = rca_imports_gz,
-         keep = "partner_iso", discard = "reporter_iso"
-  )
 }
 
 compute_rca_metrics <- function(x, y, z, q, w, n_cores, t) {
