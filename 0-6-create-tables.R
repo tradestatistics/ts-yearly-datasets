@@ -1,6 +1,6 @@
 # Open oec-yearly-data.Rproj before running this function
 
-tables <- function(n_cores = 4) {
+tables <- function(n_cores = 2) {
   # user parameters ---------------------------------------------------------
   
   message(
@@ -81,12 +81,16 @@ tables <- function(n_cores = 4) {
   
   colours <- product_names_2 %>% 
     select(group_id) %>% 
-    distinct()
+    distinct() %>% 
+    mutate(colour = c('#F2F3F4', '#222222', '#F3C300', '#875692', '#F38400', '#A1CAF1', '#BE0032', '#C2B280', '#848482', 
+                      '#008856', '#E68FAC', '#0067A5', '#F99379', '#604E97', '#F6A600', '#B3446C', '#DCD300', '#882D17', 
+                      '#8DB600', '#654522', '#E25822', '#2B3D26'))
   
   attributes_products <- product_names %>% 
     left_join(product_names_2) %>% 
+    left_join(colours) %>% 
     rename(group_code = group_id) %>% 
-    select(commodity_code, product_fullname_english, group_code, group_name, color)
+    select(commodity_code, product_fullname_english, group_code, group_name, colour)
   
   if (!file.exists(paste0(tables_dir, "/attributes_products.csv.gz"))) {
     fwrite(attributes_products, paste0(tables_dir, "/attributes_products.csv"))

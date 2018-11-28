@@ -56,27 +56,15 @@ compute_tables <- function(t) {
     
     # yrpc ------------------------------------------------------------------
     
-    exports_t1 <- fread2(unified_gz[t], char = "commodity_code") %>% 
-      rename(export_value_usd = trade_value_usd)
-    
-    exports_t1_4 <- exports_t1 %>% 
-      filter(commodity_code_length == 4) %>% 
+    exports_t1 <- fread2(unified_gz[t], character = "commodity_code") %>% 
+      rename(export_value_usd = trade_value_usd) %>% 
       select(-commodity_code_length)
     
-    exports_t1_6 <- exports_t1 %>% 
-      filter(commodity_code_length == 6) %>% 
-      select(-commodity_code_length)
+    imports_t1 <- exports_t1 %>% select(-year)
+    names(imports_t1) <- c("partner_iso", "reporter_iso", "commodity_code", "import_value_usd")
     
-    rm(exports_t1)
-    
-    imports_t1_4 <- exports_t1_4 %>% select(-year)
-    names(imports_t1_4) <- c("partner_iso", "reporter_iso", "commodity_code", "import_value_usd")
-    
-    imports_t1_6 <- exports_t1_6 %>% select(-year)
-    names(imports_t1_6) <- c("partner_iso", "reporter_iso", "commodity_code", "import_value_usd")
-    
-    yrpc_t1_4 <- full_join(exports_t1_4, imports_t1_4, by = c("reporter_iso", "partner_iso", "commodity_code"))
-    rm(exports_t1_4, imports_t1_4)
+    yrpc_t1 <- full_join(exports_t1, imports_t1, by = c("reporter_iso", "partner_iso", "commodity_code"))
+    rm(exports_t1, imports_t1)
     
     yrpc_t1_6 <- full_join(exports_t1_6, imports_t1_6, by = c("reporter_iso", "partner_iso", "commodity_code"))
     rm(exports_t1_6, imports_t1_6)
@@ -88,7 +76,7 @@ compute_tables <- function(t) {
           import_value_usd_t2 = NA
         )
     } else {
-      exports_t2 <- fread2(unified_gz[t - 1], char = "commodity_code") %>% 
+      exports_t2 <- fread2(unified_gz[t - 1], character = "commodity_code") %>% 
         rename(export_value_usd_t2 = trade_value_usd) %>% 
         select(-year)
 
