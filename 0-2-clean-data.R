@@ -32,10 +32,6 @@ clean <- function(n_cores = 2) {
   # source("00-scripts/11-compute-rca-and-related-metrics.R")
   # source("00-scripts/12-create-final-tables.R")
   
-  # uncompress input --------------------------------------------------------
-  
-  lapply(seq_along(raw_zip), extract, x = raw_zip, y = raw_dir)
-  
   # create tidy datasets ----------------------------------------------------
   
   messageline()

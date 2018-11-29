@@ -15,14 +15,26 @@ try(dir.create(raw_dir))
 raw_dir <- sprintf("%s/%s-rev%s", raw_dir, classification, revision)
 try(dir.create(raw_dir))
 
+raw_dir_zip <- sprintf("%s/%s", raw_dir, "zip")
+try(dir.create(raw_dir_zip))
+
+raw_dir_gz <- str_replace(raw_dir_zip, "zip", "gz")
+try(dir.create(raw_dir_gz))
+
 # 0-2-clean-data.R
 
 raw_zip <- list.files(
-  path = raw_dir,
+  path = raw_dir_zip,
   pattern = "\\.zip",
   full.names = T
 ) %>%
   grep(paste(paste0("ps-", years), collapse = "|"), ., value = TRUE)
+
+raw_gz <- list.files(
+  path = raw_dir_gz,
+  pattern = "\\.csv\\.gz",
+  full.names = T
+)
 
 clean_dir <- "02-clean-data"
 rev_dir <- sprintf("%s/%s-rev%s", clean_dir, classification, revision)

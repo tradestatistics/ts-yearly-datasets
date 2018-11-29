@@ -28,7 +28,7 @@ download <- function(n_cores = 4) {
   source("00-scripts/02-dirs-and-files.R")
   source("00-scripts/03-misc.R")
   source("00-scripts/04-download-raw-data.R")
-  # source("00-scripts/05-read-extract-remove-compress.R")
+  source("00-scripts/05-read-extract-remove-compress.R")
   # source("00-scripts/06-tidy-downloaded-data.R")
   # source("00-scripts/07-convert-tidy-data-codes.R")
   # source("00-scripts/08-join-converted-datasets.R")
@@ -72,7 +72,7 @@ download <- function(n_cores = 4) {
 
   if (exists("old_links")) {
     links <- links %>%
-      mutate(file = paste0(raw_dir, "/", files$name)) %>%
+      mutate(file = paste0(raw_dir_zip, "/", files$name)) %>%
       mutate(
         server_file_date = gsub(".*pub-", "", file),
         server_file_date = gsub("_fmt.*", "", server_file_date),
@@ -92,7 +92,7 @@ download <- function(n_cores = 4) {
       )
   } else {
     links <- links %>%
-      mutate(file = paste0(raw_dir, "/", files$name)) %>%
+      mutate(file = paste0(raw_dir_zip, "/", files$name)) %>%
       mutate(
         server_file_date = gsub(".*pub-", "", file),
         server_file_date = gsub("_fmt.*", "", server_file_date),
@@ -117,6 +117,31 @@ download <- function(n_cores = 4) {
 
   try(file.remove(old_file))
   fwrite(links, paste0(raw_dir, "/downloaded-files-", Sys.Date(), ".csv"))
+  
+  # re-compress -------------------------------------------------------------
+  
+  lapply(seq_along(raw_zip), 
+         function(t) {
+           gz <- raw_zip[t] %>% str_replace("/zip/", "/gz/") %>% str_replace("zip$", "csv.gz")
+
+           if (!file.exists(gz)) {
+             x <- raw_zip[t]
+             extract(x, y = raw_dir_gz)
+           }
+         }
+  )
+  
+  raw_csv <- list.files(path = raw_dir_gz, pattern = "csv$", full.names = T)
+  
+  lapply(seq_along(raw_csv), 
+         function (t) {
+           x <- raw_csv[t]
+           y <- str_replace(raw_csv[t], "csv$", "csv.gz")
+           if (!file.exists(y)) {
+             compress_gz(x) 
+           }
+         }
+  )
 }
 
 download()

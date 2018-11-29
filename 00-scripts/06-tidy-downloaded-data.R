@@ -27,7 +27,7 @@ compute_tidy_data <- function(t) {
     
     # clean data --------------------------------------------------------------
     
-    clean_data <- fread2(str_replace(raw_zip[t], "zip", "csv"),
+    clean_data <- fread2(raw_gz[t],
                          select = c("Year", "Aggregate Level", "Trade Flow", "Reporter ISO", "Partner ISO", "Commodity Code", "Trade Value (US$)"),
                          character = "Commodity Code",
                          numeric = "Trade Value (US$)"
