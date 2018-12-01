@@ -45,7 +45,7 @@ tables <- function(n_cores = 2) {
   # pci/eci data ------------------------------------------------------------
   
   eci <- fread2("05-metrics/hs-rev2007-eci/eci-joined-ranking.csv.gz")
-  pci <- fread2("05-metrics/hs-rev2007-pci/pci-joined-ranking.csv.gz", char = c("commodity_code"))
+  pci <- fread2("05-metrics/hs-rev2007-pci/pci-joined-ranking.csv.gz", character = c("commodity_code"))
   
   pci_4 <- pci %>% filter(commodity_code_length == 4)
   pci_6 <- pci %>% filter(commodity_code_length == 6)
@@ -102,9 +102,9 @@ tables <- function(n_cores = 2) {
   # tables ------------------------------------------------------------------
   
   if (operating_system != "Windows") {
-    mclapply(seq_along(years), compute_tables, mc.cores = n_cores)
+    mclapply(seq_along(years_full), compute_tables, mc.cores = n_cores)
   } else {
-    lapply(seq_along(years), compute_tables)
+    lapply(seq_along(years_full), compute_tables)
   }
 }
 

@@ -142,7 +142,7 @@ compute_rca_metrics <- function(x, y, z, q, w, n_cores, t) {
   if (!file.exists(w[t])) {
     # RCA matrix (Mcp) ---------------------------------------------------------
     
-    rca_data <- fread2(x[t], char = c("commodity_code"))
+    rca_data <- fread2(x[t], character = c("commodity_code"))
     
     rca_tibble_4 <- rca_data %>%
       select(-year) %>%

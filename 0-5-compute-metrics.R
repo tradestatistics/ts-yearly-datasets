@@ -40,23 +40,13 @@ metrics <- function(n_cores = 2) {
 
   # RCA -------------------------------------------------------------------
 
-  if (operating_system != "Windows") {
-    mclapply(seq_along(years_full), compute_rca,
-           x = unified_gz, y = rca_exports_gz, keep = "reporter_iso", mc.cores = n_cores
-    )
-    
-    mclapply(seq_along(years_full), compute_rca,
-           x = unified_gz, y = rca_imports_gz, keep = "partner_iso", mc.cores = n_cores
-    )
-  } else {
-    lapply(seq_along(years_full), compute_rca,
-           x = unified_gz, y = rca_exports_gz, keep = "reporter_iso"
-    )
-    
-    lapply(seq_along(years_full), compute_rca,
-           x = unified_gz, y = rca_imports_gz, keep = "partner_iso"
-    )
-  }
+  lapply(seq_along(years_full), compute_rca,
+         x = unified_gz, y = rca_exports_gz, keep = "reporter_iso"
+  )
+  
+  lapply(seq_along(years_full), compute_rca,
+         x = unified_gz, y = rca_imports_gz, keep = "partner_iso"
+  )
   
   # RCA based measures ----------------------------------------------------
   
@@ -97,7 +87,7 @@ metrics <- function(n_cores = 2) {
 
   # join PCI rankings -------------------------------------------------------
 
-  joined_pci_rankings <- lapply(pci_rankings_gz, fread2, char = c("commodity_code"))
+  joined_pci_rankings <- lapply(pci_rankings_gz, fread2, character = c("commodity_code"))
   
   joined_pci_rankings <-  lapply(
     seq_along(years_full),

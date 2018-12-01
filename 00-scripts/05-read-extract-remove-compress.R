@@ -45,7 +45,6 @@ fread2 <- function(file, select = NULL, character = NULL, numeric = NULL) {
       clean_names()
   }
   
-  gc()
   return(d)
 }
 

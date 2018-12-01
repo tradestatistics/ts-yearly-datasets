@@ -192,56 +192,8 @@ join_datasets <- function(x, y, z, t) {
     }
     
     data <- bind_rows(data, data2, data3, data4, data5, data6) %>%
-      mutate(commodity_code_parent = str_sub(commodity_code, 1, 4)) %>% 
-      group_by(reporter_iso, partner_iso, commodity_code_parent) %>% 
-      mutate(parent_count = n()) %>% 
-      ungroup()
+      arrange(reporter_iso, partner_iso, commodity_code)
     
-    rm(data2, data3, data4, data5, data6)
-    
-    data_unrepeated_parent <- data %>% 
-      filter(parent_count == 1) %>% 
-      select(reporter_iso, partner_iso, commodity_code, commodity_code_parent, trade_value_usd)
-    
-    data_repeated_parent <- data %>% 
-      filter(
-        parent_count > 1,
-        str_length(commodity_code == 6) | commodity_code == "9999"
-      ) %>% 
-      group_by(reporter_iso, partner_iso, commodity_code, commodity_code_parent) %>% 
-      summarise(trade_value_usd = sum(trade_value_usd, na.rm = T)) %>% 
-      ungroup() %>% 
-      select(reporter_iso, partner_iso, commodity_code, commodity_code_parent, trade_value_usd)
-    
-    rm(data)
-    
-    data_unrepeated_parent_summary <- data_unrepeated_parent %>% 
-      filter(str_length(commodity_code_parent) == 6) %>% 
-      group_by(reporter_iso, partner_iso, commodity_code_parent) %>% 
-      summarise(trade_value_usd = sum(trade_value_usd, na.rm = T)) %>% 
-      ungroup() %>% 
-      rename(commodity_code = commodity_code_parent)
-    
-    data_repeated_parent_summary <- data_repeated_parent %>% 
-      filter(commodity_code_parent != "9999") %>% 
-      group_by(reporter_iso, partner_iso, commodity_code_parent) %>% 
-      summarise(trade_value_usd = sum(trade_value_usd, na.rm = T)) %>% 
-      ungroup() %>% 
-      rename(commodity_code = commodity_code_parent)
-    
-    data <- data_unrepeated_parent %>% 
-      bind_rows(data_repeated_parent) %>% 
-      bind_rows(data_unrepeated_parent_summary) %>% 
-      bind_rows(data_repeated_parent_summary) %>% 
-      select(reporter_iso, partner_iso, commodity_code, trade_value_usd) %>% 
-      arrange(reporter_iso, partner_iso, commodity_code) %>% 
-      mutate(
-        year = years_full[t],
-        commodity_code_length = str_length(commodity_code)
-      ) %>% 
-      select(year, reporter_iso, partner_iso, commodity_code, commodity_code_length, trade_value_usd) %>% 
-      filter(trade_value_usd > 0)
-  
     fwrite(data, str_replace(z[t], ".gz", ""))
     compress_gz(str_replace(z[t], ".gz", ""))
   }

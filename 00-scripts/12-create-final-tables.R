@@ -66,10 +66,7 @@ compute_tables <- function(t) {
     yrpc_t1 <- full_join(exports_t1, imports_t1, by = c("reporter_iso", "partner_iso", "commodity_code"))
     rm(exports_t1, imports_t1)
     
-    yrpc_t1_6 <- full_join(exports_t1_6, imports_t1_6, by = c("reporter_iso", "partner_iso", "commodity_code"))
-    rm(exports_t1_6, imports_t1_6)
-    
-    if (t %in% match(years_missing_t_minus_1, years)) {
+    if (t %in% match(years_missing_t_minus_1, years_full)) {
       yrpc_t1 <- yrpc_t1 %>%
         mutate(
           export_value_usd_t2 = NA,
@@ -78,76 +75,41 @@ compute_tables <- function(t) {
     } else {
       exports_t2 <- fread2(unified_gz[t - 1], character = "commodity_code") %>% 
         rename(export_value_usd_t2 = trade_value_usd) %>% 
-        select(-year)
+        select(-c(year, commodity_code_length))
 
-      exports_t2_4 <- exports_t2 %>% 
-        filter(commodity_code_length == 4) %>% 
-        select(-commodity_code_length)
+      imports_t2 <- exports_t2
+      names(imports_t2) <- c("partner_iso", "reporter_iso", "commodity_code", "import_value_usd_t2")
       
-      exports_t2_6 <- exports_t2 %>% 
-        filter(commodity_code_length == 6) %>% 
-        select(-commodity_code_length)
+      yrpc_t2 <- full_join(exports_t2, imports_t2, by = c("reporter_iso", "partner_iso", "commodity_code"))
+      rm(exports_t2, imports_t2)
       
-      rm(exports_t2)
+      yrpc_t1 <- yrpc_t1 %>% 
+        left_join(yrpc_t2, by = c("reporter_iso", "partner_iso", "commodity_code"))
       
-      imports_t2_4 <- exports_t2_4
-      names(imports_t2_4) <- c("partner_iso", "reporter_iso", "commodity_code", "import_value_usd_t2")
-      
-      imports_t2_6 <- exports_t2_6
-      names(imports_t2_6) <- c("partner_iso", "reporter_iso", "commodity_code", "import_value_usd_t2")
-      
-      yrpc_t2_4 <- full_join(exports_t2_4, imports_t2_4, by = c("reporter_iso", "partner_iso", "commodity_code"))
-      rm(exports_t2_4, imports_t2_4)
-      
-      yrpc_t2_6 <- full_join(exports_t2_6, imports_t2_6, by = c("reporter_iso", "partner_iso", "commodity_code"))
-      rm(exports_t2_6, imports_t2_6)
-      
-      yrpc_t1_4 <- yrpc_t1_4 %>% 
-        left_join(yrpc_t2_4)
-      
-      rm(yrpc_t2_4)
-      
-      yrpc_t1_6 <- yrpc_t1_6 %>% 
-        left_join(yrpc_t2_6)
-      
-      rm(yrpc_t2_6)
+      rm(yrpc_t2)
     }
     
-    if (t %in% match(years_missing_t_minus_5, years) | t %in% match(years_missing_t_minus_1, years)) {
+    if (t %in% match(years_missing_t_minus_5, years_full) | t %in% match(years_missing_t_minus_1, years_full)) {
       yrpc_t1 <- yrpc_t1 %>%
         mutate(
           export_value_usd_t3 = NA,
           import_value_usd_t3 = NA
         )
     } else {
-      exports_t3 <- fread2(unified_gz[t - 5], char = "commodity_code") %>% 
-        rename(export_value_usd_t3 = trade_value_usd)
+      exports_t3 <- fread2(unified_gz[t - 5], character = "commodity_code") %>% 
+        rename(export_value_usd_t3 = trade_value_usd) %>% 
+        select(-c(year, commodity_code_length))
       
-      exports_t3_4 <- exports_t3 %>% 
-        filter(commodity_code_length == 4) %>% 
-        select(-commodity_code_length)
+      imports_t3 <- exports_t3
+      names(imports_t3) <- c("partner_iso", "reporter_iso", "commodity_code", "import_value_usd_t3")
       
-      exports_t3_6 <- exports_t3 %>% 
-        filter(commodity_code_length == 6) %>% 
-        select(-commodity_code_length)
+      yrpc_t3 <- full_join(exports_t3, imports_t3, by = c("reporter_iso", "partner_iso", "commodity_code"))
+      rm(exports_t3, imports_t3)
       
-      rm(exports_t3)
+      yrpc_t1 <- yrpc_t1 %>% 
+        left_join(yrpc_t3, by = c("reporter_iso", "partner_iso", "commodity_code"))
       
-      imports_t3_4 <- exports_t3_4 %>% select(-year)
-      names(imports_t3_4) <- c("partner_iso", "reporter_iso", "commodity_code", "import_value_usd_t3")
-      
-      imports_t3_6 <- exports_t3_6 %>% select(-year)
-      names(imports_t3_6) <- c("partner_iso", "reporter_iso", "commodity_code", "import_value_usd_t3")
-      
-      yrpc_t3_4 <- full_join(exports_t3_4, imports_t3_4, by = c("reporter_iso", "partner_iso", "commodity_code"))
-      rm(exports_t3_4, imports_t3_4)
-      
-      yrpc_t3_6 <- full_join(exports_t3_6, imports_t3_6, by = c("reporter_iso", "partner_iso", "commodity_code"))
-      rm(exports_t3_6, imports_t3_6)
-      
-      yrpc_t3_4 <- bind_rows(yrpc_t3_4, yrpc_t3_6)
-      yrpc_t3 <- yrpc_t3_4
-      rm(yrpc_t3_4, yrpc_t3_6)
+      rm(yrpc_t3)
     }
     
     yrpc_t1 <- yrpc_t1 %>%
@@ -156,7 +118,7 @@ compute_tables <- function(t) {
         import_value_usd = ifelse(import_value_usd == 0, NA, import_value_usd)
       )
     
-    if (class(yrpc_t2$export_value_usd_t2) != "logical") {
+    if (class(yrpc_t1$export_value_usd_t2) != "logical") {
       yrpc_t1 <- yrpc_t1 %>%
         mutate(
           export_value_usd_t2 = ifelse(export_value_usd_t2 == 0, NA, export_value_usd_t2),
@@ -164,7 +126,7 @@ compute_tables <- function(t) {
         )
     }
     
-    if (class(yrpc_t3$export_value_usd_t3) != "logical") {
+    if (class(yrpc_t1$export_value_usd_t3) != "logical") {
       yrpc_t1 <- yrpc_t1 %>%
         mutate(
           export_value_usd_t3 = ifelse(export_value_usd_t3 == 0, NA, export_value_usd_t3),
@@ -172,27 +134,21 @@ compute_tables <- function(t) {
         )
     }
     
-    yrpc_t1 <- yrpc_t1 %>%
-      mutate(commodity_code_length = str_length(commodity_code)) %>% 
-      compute_changes()
-
-    if (class(yrpc$export_value_usd_t2) != "numeric") {
-      yrpc <- yrpc %>%
+    if (class(yrpc_t1$export_value_usd_t2) != "numeric") {
+      yrpc_t1 <- yrpc_t1 %>%
         mutate(
-          export_value_usd_t2 = as.double(export_value_usd_t2),
-          export_value_usd_t3 = as.double(export_value_usd_t3),
-          import_value_usd_t2 = as.double(import_value_usd_t2),
-          import_value_usd_t3 = as.double(import_value_usd_t3)
+          export_value_usd_t2 = as.numeric(export_value_usd_t2),
+          export_value_usd_t3 = as.numeric(export_value_usd_t3),
+          import_value_usd_t2 = as.numeric(import_value_usd_t2),
+          import_value_usd_t3 = as.numeric(import_value_usd_t3)
         )
     }
     
-    rm(yrpc_t1, yrpc_t2, yrpc_t3)
+    yrpc_t1 <- yrpc_t1 %>%
+      mutate(commodity_code_length = str_length(commodity_code)) %>% 
+      compute_changes()
     
-    fwrite(
-      yrpc %>%
-        select(-c(ends_with("_t2"), ends_with("_t3"))),
-      yrpc_csv[[t]]
-    )
+    fwrite(yrpc_t1, yrpc_csv[[t]])
     
     compress_gz(yrpc_csv[[t]])
     

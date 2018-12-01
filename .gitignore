@@ -20,4 +20,5 @@ packrat/
 0-7-create-schema.sql
 0-8-copy-attributes.R
 0-9-copy-data.R
+tentative-schema.sql
 packrat/lib*/
