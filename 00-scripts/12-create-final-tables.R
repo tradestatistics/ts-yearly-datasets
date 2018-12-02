@@ -173,15 +173,37 @@ compute_tables <- function(t) {
     rca_exp <- fread2(rca_exports_gz[[t]], character = "commodity_code") %>%
       select(-year)
     
+    rca_exp_4 <- rca_exp %>% 
+      filter(str_length(commodity_code) == 4) %>% 
+      rename(export_rca_4_digits_commodity_code = export_rca)
+    
+    rca_exp_6 <- rca_exp %>% 
+      filter(str_length(commodity_code) == 6) %>% 
+      rename(export_rca_6_digits_commodity_code = export_rca)
+    
+    rm(rca_exp)
+    
     rca_imp <- fread2(rca_imports_gz[[t]], character = "commodity_code") %>%
       select(-year)
+    
+    rca_imp_4 <- rca_imp %>% 
+      filter(str_length(commodity_code) == 4) %>% 
+      rename(import_rca_4_digits_commodity_code = import_rca)
+    
+    rca_imp_6 <- rca_imp %>% 
+      filter(str_length(commodity_code) == 6) %>% 
+      rename(import_rca_6_digits_commodity_code = import_rca)
+    
+    rm(rca_imp)
     
     yrc <- yrpc_t1 %>%
       group_by(year, reporter_iso, commodity_code) %>%
       summarise_trade() %>%
       ungroup() %>%
-      left_join(rca_exp, by = c("reporter_iso" = "country_iso", "commodity_code")) %>%
-      left_join(rca_imp, by = c("reporter_iso" = "country_iso", "commodity_code")) %>%
+      left_join(rca_exp_4, by = c("reporter_iso" = "country_iso", "commodity_code")) %>%
+      left_join(rca_exp_6, by = c("reporter_iso" = "country_iso", "commodity_code")) %>%
+      left_join(rca_imp_4, by = c("reporter_iso" = "country_iso", "commodity_code")) %>%
+      left_join(rca_imp_6, by = c("reporter_iso" = "country_iso", "commodity_code")) %>%
       compute_changes() %>% 
       select(year, reporter_iso, commodity_code, everything()) %>%
       select(-c(ends_with("_t2"), ends_with("_t3")))
@@ -261,16 +283,16 @@ compute_tables <- function(t) {
     pci_4_t1 <- pci_t1 %>% 
       filter(commodity_code_length == 4) %>% 
       rename(
-        pci_4 = pci,
-        pci_rank_4 = pci_rank
+        pci_4_digits_commodity_code = pci,
+        pci_rank_4_digits_commodity_code = pci_rank
       ) %>% 
       select(-commodity_code_length)
 
     pci_6_t1 <- pci_t1 %>% 
       filter(commodity_code_length == 6) %>% 
       rename(
-        pci_6 = pci,
-        pci_rank_6 = pci_rank
+        pci_6_digits_commodity_code = pci,
+        pci_rank_6_digits_commodity_code = pci_rank
       ) %>% 
       select(-commodity_code_length)
     
@@ -289,16 +311,16 @@ compute_tables <- function(t) {
     pci_4_t2 <- pci_t2 %>% 
       filter(commodity_code_length == 4) %>% 
       rename(
-        pci_4_2 = pci,
-        pci_rank_4_2 = pci_rank
+        pci_4_digits_commodity_code_t2 = pci,
+        pci_rank_4_digits_commodity_code_t2 = pci_rank
       ) %>% 
       select(-commodity_code_length)
     
     pci_6_t2 <- pci_t2 %>% 
       filter(commodity_code_length == 6) %>% 
       rename(
-        pci_6_2 = pci,
-        pci_rank_6_2 = pci_rank
+        pci_6_digits_commodity_code_t2 = pci,
+        pci_rank_6_digits_commodity_code_t2 = pci_rank
       ) %>% 
       select(-commodity_code_length)
     
@@ -334,14 +356,13 @@ compute_tables <- function(t) {
       left_join(pci_4_t2, by = "commodity_code") %>%
       left_join(pci_6_t2, by = "commodity_code") %>%
       mutate(
-        pci_rank_4_delta = pci_rank_4 - pci_rank_4_2,
-        pci_rank_6_delta = pci_rank_6 - pci_rank_6_2
+        pci_rank_4_digits_commodity_code_delta = pci_rank_4_digits_commodity_code - pci_rank_4_digits_commodity_code_t2,
+        pci_rank_6_digits_commodity_code_delta = pci_rank_6_digits_commodity_code - pci_rank_6_digits_commodity_code_t2
       ) %>%
-      select(-c(pci_4_2, pci_6_2, pci_rank_4_2, pci_rank_6_2)) %>%
       left_join(max_exp_2, by = "commodity_code") %>%
       left_join(max_imp_2, by = "commodity_code") %>%
       compute_changes() %>%
-      select(year, commodity_code, export_value_usd, import_value_usd, pci_4, pci_6, everything()) %>% 
+      select(year, commodity_code, export_value_usd, import_value_usd, pci_4_digits_commodity_code, pci_6_digits_commodity_code, everything()) %>% 
       select(-c(ends_with("_t2"), ends_with("_t3")))
     
     fwrite(yc, yc_csv[[t]])
