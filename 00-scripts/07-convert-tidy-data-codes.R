@@ -74,8 +74,8 @@ convert_codes <- function(t, x, y) {
       rename(commodity_code = commodity_code_parent)
     
     data_unrepeated_parent_tidy <- data_unrepeated_parent_4 %>% 
-      bind_rows(data_unrepeated_parent_6) %>% 
       bind_rows(data_unrepeated_parent_6_summary) %>% 
+      bind_rows(data_unrepeated_parent_6) %>% 
       arrange(reporter_iso, partner_iso, commodity_code) %>% 
       select(reporter_iso, partner_iso, commodity_code, trade_value_usd)
     

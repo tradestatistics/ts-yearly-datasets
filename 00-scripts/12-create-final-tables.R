@@ -32,27 +32,35 @@ compute_changes <- function(d) {
       import_value_usd_t3 = ifelse(import_value_usd_t3 == 0, NA, import_value_usd_t3)
     ) %>% 
     mutate(
-      export_value_usd_change_1year = export_value_usd - export_value_usd_t2,
-      export_value_usd_change_5years = export_value_usd - export_value_usd_t3,
+      export_value_usd_change_1_year = export_value_usd - export_value_usd_t2,
+      export_value_usd_change_5_years = export_value_usd - export_value_usd_t3,
       
-      export_value_usd_percentage_change_1year = export_value_usd_change_1year / export_value_usd_t2,
-      export_value_usd_percentage_change_5years = export_value_usd_change_5years / export_value_usd_t3,
+      export_value_usd_percentage_change_1_year = export_value_usd_change_1_year / export_value_usd_t2,
+      export_value_usd_percentage_change_5_years = export_value_usd_change_5_years / export_value_usd_t3,
       
-      import_value_usd_change_1year = import_value_usd - import_value_usd_t2,
-      import_value_usd_change_5years = import_value_usd - import_value_usd_t3,
+      import_value_usd_change_1_year = import_value_usd - import_value_usd_t2,
+      import_value_usd_change_5_years = import_value_usd - import_value_usd_t3,
       
-      import_value_usd_percentage_change_1year = import_value_usd_change_1year / import_value_usd_t2,
-      import_value_usd_percentage_change_5years = import_value_usd_change_5years / import_value_usd_t3
+      import_value_usd_percentage_change_1_year = import_value_usd_change_1_year / import_value_usd_t2,
+      import_value_usd_percentage_change_5_years = import_value_usd_change_5_years / import_value_usd_t3
     )
 }
 
 compute_tables <- function(t) {
   if (file.exists(yrpc_gz[[t]])) {
     messageline()
-    message(paste("yrpc table for the year", years[t], "exists. Skipping."))
+    message(paste("yrpc table for the year", years_full[t], "exists. Skipping."))
   } else {
     messageline()
-    message(paste("Creating yrpc table for the year", years[t]))
+    message(paste("Creating yrpc table for the year", years_full[t]))
+    
+    # pci/eci data ------------------------------------------------------------
+    
+    eci <- fread2("05-metrics/hs-rev2007-eci/eci-joined-ranking.csv.gz")
+    pci <- fread2("05-metrics/hs-rev2007-pci/pci-joined-ranking.csv.gz", character = c("commodity_code"))
+    
+    pci_4 <- pci %>% filter(commodity_code_length == 4)
+    pci_6 <- pci %>% filter(commodity_code_length == 6)
     
     # yrpc ------------------------------------------------------------------
     
@@ -110,38 +118,6 @@ compute_tables <- function(t) {
         left_join(yrpc_t3, by = c("reporter_iso", "partner_iso", "commodity_code"))
       
       rm(yrpc_t3)
-    }
-    
-    yrpc_t1 <- yrpc_t1 %>%
-      mutate(
-        export_value_usd = ifelse(export_value_usd == 0, NA, export_value_usd),
-        import_value_usd = ifelse(import_value_usd == 0, NA, import_value_usd)
-      )
-    
-    if (class(yrpc_t1$export_value_usd_t2) != "logical") {
-      yrpc_t1 <- yrpc_t1 %>%
-        mutate(
-          export_value_usd_t2 = ifelse(export_value_usd_t2 == 0, NA, export_value_usd_t2),
-          import_value_usd_t2 = ifelse(import_value_usd_t2 == 0, NA, import_value_usd_t2)
-        )
-    }
-    
-    if (class(yrpc_t1$export_value_usd_t3) != "logical") {
-      yrpc_t1 <- yrpc_t1 %>%
-        mutate(
-          export_value_usd_t3 = ifelse(export_value_usd_t3 == 0, NA, export_value_usd_t3),
-          import_value_usd_t3 = ifelse(import_value_usd_t3 == 0, NA, import_value_usd_t3)
-        )
-    }
-    
-    if (class(yrpc_t1$export_value_usd_t2) != "numeric") {
-      yrpc_t1 <- yrpc_t1 %>%
-        mutate(
-          export_value_usd_t2 = as.numeric(export_value_usd_t2),
-          export_value_usd_t3 = as.numeric(export_value_usd_t3),
-          import_value_usd_t2 = as.numeric(import_value_usd_t2),
-          import_value_usd_t3 = as.numeric(import_value_usd_t3)
-        )
     }
     
     yrpc_t1 <- yrpc_t1 %>%
@@ -277,7 +253,7 @@ compute_tables <- function(t) {
     # yc -------------------------------------------------------------------
     
     pci_t1 <- pci %>%
-      filter(year == years[[t]]) %>%
+      filter(year == years_full[[t]]) %>%
       select(-year)
     
     pci_4_t1 <- pci_t1 %>% 
@@ -304,7 +280,7 @@ compute_tables <- function(t) {
         )
     } else {
       pci_t2 <- pci %>%
-        filter(year == years[[t - 1]]) %>%
+        filter(year == years_full[[t - 1]]) %>%
         select(-year)
     }
     
@@ -367,6 +343,5 @@ compute_tables <- function(t) {
     
     fwrite(yc, yc_csv[[t]])
     compress_gz(yc_csv[[t]])
-    rm(yrpc, yc, pci_t1, pci_t2, max_exp_2, max_imp_2)
   }
 }

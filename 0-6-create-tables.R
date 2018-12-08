@@ -42,14 +42,6 @@ tables <- function(n_cores = 2) {
   load("../ts-comtrade-codes/02-2-tidy-product-data/product-codes.RData")
   load("../ts-observatory-codes/02-2-product-data-tidy/hs-rev2007-product-names.RData")
   
-  # pci/eci data ------------------------------------------------------------
-  
-  eci <- fread2("05-metrics/hs-rev2007-eci/eci-joined-ranking.csv.gz")
-  pci <- fread2("05-metrics/hs-rev2007-pci/pci-joined-ranking.csv.gz", character = c("commodity_code"))
-  
-  pci_4 <- pci %>% filter(commodity_code_length == 4)
-  pci_6 <- pci %>% filter(commodity_code_length == 6)
-  
   # input data --------------------------------------------------------------
   
   attributes_countries <- country_codes %>% 

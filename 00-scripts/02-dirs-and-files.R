@@ -135,44 +135,44 @@ try(dir.create(yp_dir))
 yc_dir <- paste0(tables_dir, "/7-yc")
 try(dir.create(yc_dir))
 
-yrpc_gz <- converted_gz %>%
-  gsub(converted_dir, yrpc_dir, .) %>% 
+yrpc_gz <- unified_gz %>%
+  gsub(unified_dir, yrpc_dir, .) %>% 
   gsub("1-yrpc/hs-rev2007/hs-rev2007", "1-yrpc/yrpc", .)
 
 yrpc_csv <- yrpc_gz %>% gsub(".gz", "", .)
 
-yrp_gz <- converted_gz %>%
-  gsub(converted_dir, yrp_dir, .) %>% 
+yrp_gz <- unified_gz %>%
+  gsub(unified_dir, yrp_dir, .) %>% 
   gsub("2-yrp/hs-rev2007/hs-rev2007", "2-yrp/yrp", .)
 
 yrp_csv <- yrp_gz %>% gsub(".gz", "", .)
 
-yrc_gz <- converted_gz %>%
-  gsub(converted_dir, yrc_dir, .) %>% 
+yrc_gz <- unified_gz %>%
+  gsub(unified_dir, yrc_dir, .) %>% 
   gsub("3-yrc/hs-rev2007/hs-rev2007", "3-yrc/yrc", .)
 
 yrc_csv <- yrc_gz %>% gsub(".gz", "", .)
 
-ypc_gz <- converted_gz %>%
-  gsub(converted_dir, ypc_dir, .) %>% 
+ypc_gz <- unified_gz %>%
+  gsub(unified_dir, ypc_dir, .) %>% 
   gsub("4-ypc/hs-rev2007/hs-rev2007", "4-ypc/ypc", .)
 
 ypc_csv <- ypc_gz %>% gsub(".gz", "", .)
 
-yr_gz <- converted_gz %>%
-  gsub(converted_dir, yr_dir, .) %>% 
+yr_gz <- unified_gz %>%
+  gsub(unified_dir, yr_dir, .) %>% 
   gsub("5-yr/hs-rev2007/hs-rev2007", "5-yr/yr", .)
 
 yr_csv <- yr_gz %>% gsub(".gz", "", .)
 
-yp_gz <- converted_gz %>%
-  gsub(converted_dir, yp_dir, .) %>% 
+yp_gz <- unified_gz %>%
+  gsub(unified_dir, yp_dir, .) %>% 
   gsub("6-yp/hs-rev2007/hs-rev2007", "6-yp/yp", .)
 
 yp_csv <- yp_gz %>% gsub(".gz", "", .)
 
-yc_gz <- converted_gz %>%
-  gsub(converted_dir, yc_dir, .) %>% 
+yc_gz <- unified_gz %>%
+  gsub(unified_dir, yc_dir, .) %>% 
   gsub("7-yc/hs-rev2007/hs-rev2007", "7-yc/yc", .)
 
 yc_csv <- yc_gz %>% gsub(".gz", "", .)
