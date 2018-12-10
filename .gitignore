@@ -22,3 +22,4 @@ packrat/
 0-9-copy-data.R
 tentative-schema.sql
 packrat/lib*/
+server-settings.R
