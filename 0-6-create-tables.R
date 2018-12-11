@@ -21,10 +21,10 @@ tables <- function(n_cores = 2) {
   source("00-scripts/05-read-extract-remove-compress.R")
   # source("00-scripts/06-tidy-downloaded-data.R")
   # source("00-scripts/07-convert-tidy-data-codes.R")
-  #source("00-scripts/08-join-converted-datasets.R")
-  #Rcpp::sourceCpp("00-scripts/09-proximity-countries-denominator.cpp")
-  #Rcpp::sourceCpp("00-scripts/10-proximity-products-denominator.cpp")
-  #source("00-scripts/11-compute-rca-and-related-metrics.R")
+  # source("00-scripts/08-join-converted-datasets.R")
+  # Rcpp::sourceCpp("00-scripts/09-proximity-countries-denominator.cpp")
+  # Rcpp::sourceCpp("00-scripts/10-proximity-products-denominator.cpp")
+  # source("00-scripts/11-compute-rca-and-related-metrics.R")
   source("00-scripts/12-create-final-tables.R")
   
   # codes -------------------------------------------------------------------

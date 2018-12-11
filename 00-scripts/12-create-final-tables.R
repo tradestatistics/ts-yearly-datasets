@@ -121,7 +121,10 @@ compute_tables <- function(t) {
     }
     
     yrpc_t1 <- yrpc_t1 %>%
-      mutate(commodity_code_length = str_length(commodity_code))
+      mutate(
+        year = years_full[t],
+        commodity_code_length = str_length(commodity_code)
+      )
     
     yrpc <- yrpc_t1 %>% 
       compute_changes() %>% 
@@ -205,6 +208,7 @@ compute_tables <- function(t) {
     # yr -------------------------------------------------------------------
     
     max_exp <- yrpc_t1 %>%
+      filter(commodity_code_length == 4) %>% 
       group_by(reporter_iso, commodity_code) %>%
       summarise(export_value_usd = sum(export_value_usd, na.rm = T)) %>%
       group_by(reporter_iso) %>%
@@ -215,6 +219,7 @@ compute_tables <- function(t) {
       )
     
     max_imp <- yrpc_t1 %>%
+      filter(commodity_code_length == 4) %>% 
       group_by(reporter_iso, commodity_code) %>%
       summarise(import_value_usd = sum(import_value_usd, na.rm = T)) %>%
       group_by(reporter_iso) %>%
@@ -225,6 +230,7 @@ compute_tables <- function(t) {
       )
     
     yr <- yrpc_t1 %>%
+      filter(commodity_code_length == 4) %>% 
       group_by(year, reporter_iso) %>%
       summarise_trade() %>%
       ungroup() %>% 
