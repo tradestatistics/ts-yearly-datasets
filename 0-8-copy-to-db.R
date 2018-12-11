@@ -78,8 +78,7 @@ copy_attributes <- function(overwrite = F) {
   # data --------------------------------------------------------------------
 
   lapply(
-    #seq_along(years_full), 
-    55,
+    seq_along(years_full),
     function (t) {
       yrpc <- fread2(yrpc_gz[[t]], character = "commodity_code")
       dbWriteTable(con, "hs07_yrpc", yrpc, append = TRUE, overwrite = overwrite, row.names = FALSE)
