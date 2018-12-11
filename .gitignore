@@ -16,10 +16,5 @@ packrat/
 05-metrics/
 05-tables/
 06-tables/
-0-7-create-schema.R
-0-7-create-schema.sql
-0-8-copy-attributes.R
-0-9-copy-data.R
 tentative-schema.sql
 packrat/lib*/
-server-settings.R
