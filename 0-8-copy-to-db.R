@@ -71,7 +71,7 @@ copy_attributes <- function(overwrite = F) {
   obs_attributes_products <- as.numeric(dbGetQuery(con, "SELECT COUNT(*) FROM public.attributes_product_names"))
   
   if (obs_attributes_products == 0) {
-    attributes_products <- fread2(paste0(tables_dir, "/attributes_products.csv.gz"), character = c("commodity_code", "group_code"))
+    attributes_products <- fread2(paste0(tables_dir, "/attributes_products.csv.gz"), character = c("commodity_code", "group_code", "community_code"))
     dbWriteTable(con, "attributes_product_names", attributes_products, append = TRUE, overwrite = overwrite, row.names = FALSE)
   }
   

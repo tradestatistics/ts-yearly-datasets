@@ -88,6 +88,8 @@ create_schema <- function(overwrite = F) {
       product_fullname_english varchar(255) DEFAULT NULL,
       group_code varchar(2) DEFAULT NULL,
       group_name varchar(255) DEFAULT NULL,
+      community_code varchar(2) DEFAULT NULL,
+      community_name varchar(255) DEFAULT NULL,
       colour varchar(7) DEFAULT NULL
       )"
     )
