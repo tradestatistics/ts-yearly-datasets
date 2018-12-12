@@ -28,8 +28,7 @@ fread2 <- function(file, select = NULL, character = NULL, numeric = NULL) {
       colClasses = list(
         character = character,
         numeric = numeric
-      ),
-      integer64 = "double"
+      )
     ) %>%
       as_tibble() %>%
       clean_names()

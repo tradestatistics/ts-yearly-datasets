@@ -56,14 +56,27 @@ tables <- function(n_cores = 2) {
     rename(
       commodity_code = code,
       product_fullname_english = description
+    ) %>% 
+    mutate(group_code = str_sub(commodity_code, 1, 2))
+  
+  product_names_2 <- product_codes %>% 
+    filter(classification == "H3", str_length(code) == 2) %>% 
+    select(code, description) %>% 
+    rename(
+      group_code = code,
+      group_name = description
     )
   
-  product_names_2 <- hs_product_names %>% 
-    rename(commodity_code = hs) %>% 
-    select(-c(product_name,color))
+  product_names_3 <- hs_product_names %>% 
+    rename(
+      commodity_code = hs,
+      community_code = group_id,
+      community_name = group_name
+    ) %>% 
+    select(commodity_code, community_code, community_name)
   
-  colours <- product_names_2 %>% 
-    select(group_id) %>% 
+  colours <- product_names_3 %>% 
+    select(community_code) %>% 
     distinct() %>% 
     mutate(colour = c('#F2F3F4', '#222222', '#F3C300', '#875692', '#F38400', '#A1CAF1', '#BE0032', '#C2B280', '#848482', 
                       '#008856', '#E68FAC', '#0067A5', '#F99379', '#604E97', '#F6A600', '#B3446C', '#DCD300', '#882D17', 
@@ -71,10 +84,9 @@ tables <- function(n_cores = 2) {
   
   attributes_products <- product_names %>% 
     left_join(product_names_2) %>% 
-    left_join(colours) %>% 
-    rename(group_code = group_id) %>% 
-    select(commodity_code, product_fullname_english, group_code, group_name, colour)
-  
+    left_join(product_names_3) %>% 
+    left_join(colours)
+
   if (!file.exists(paste0(tables_dir, "/attributes_products.csv.gz"))) {
     fwrite(attributes_products, paste0(tables_dir, "/attributes_products.csv"))
     compress_gz(paste0(tables_dir, "/attributes_products.csv"))
