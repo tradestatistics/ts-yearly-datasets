@@ -78,7 +78,7 @@ copy_attributes <- function(overwrite = F) {
   # data --------------------------------------------------------------------
 
   lapply(
-    seq_along(years_full),
+    rev(seq_along(years_full)),
     function (t) {
       yrpc <- fread2(
         yrpc_gz[[t]], 
