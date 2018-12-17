@@ -77,7 +77,10 @@ create_schema <- function(overwrite = F) {
       country_iso varchar(3) DEFAULT '' PRIMARY KEY NOT NULL,
       country_name_english varchar(255) DEFAULT NULL,
       country_fullname_english varchar(255) DEFAULT NULL,
-      country_abbreviation varchar(255) DEFAULT NULL
+      continent_id integer DEFAULT NULL,
+      continent varchar(255) DEFAULT NULL,
+      eu28_member integer DEFAULT NULL,
+      colour varchar(7) DEFAULT NULL
       )"
     )
     

@@ -41,14 +41,26 @@ tables <- function(n_cores = 2) {
   # input data --------------------------------------------------------------
   
   attributes_countries <- country_codes %>% 
-    select(iso3_digit_alpha, contains("name"), country_abbrevation) %>% 
+    select(
+      iso3_digit_alpha, contains("name"), country_abbrevation, 
+      contains("continent"), eu28_member
+    ) %>% 
     rename(
       country_iso = iso3_digit_alpha,
       country_abbreviation = country_abbrevation
     ) %>% 
     mutate(country_iso = str_to_lower(country_iso)) %>% 
     filter(country_iso != "null") %>% 
-    distinct(country_iso, .keep_all = T)
+    distinct(country_iso, .keep_all = T) %>% 
+    select(-country_abbreviation)
+  
+  continents <- attributes_countries %>% 
+    select(continent_id) %>% 
+    distinct() %>% 
+    mutate(colour = c('#F2F3F4', '#222222', '#F3C300', '#875692', '#F38400'))
+  
+  attributes_countries <- attributes_countries %>% 
+    left_join(continents)
   
   if (!file.exists(paste0(tables_dir, "/attributes_countries.csv.gz"))) {
     fwrite(attributes_countries, paste0(tables_dir, "/attributes_countries.csv"))
