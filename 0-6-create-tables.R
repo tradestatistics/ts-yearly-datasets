@@ -36,8 +36,7 @@ tables <- function(n_cores = 2) {
   
   load("../ts-comtrade-codes/01-2-tidy-country-data/country-codes.RData")
   load("../ts-comtrade-codes/02-2-tidy-product-data/product-codes.RData")
-  load("../ts-observatory-codes/02-2-product-data-tidy/hs-rev2007-product-names.RData")
-  
+
   # input data --------------------------------------------------------------
   
   attributes_countries <- country_codes %>% 
@@ -84,25 +83,8 @@ tables <- function(n_cores = 2) {
       group_name = description
     )
   
-  product_names_3 <- hs_product_names %>% 
-    rename(
-      commodity_code = hs,
-      community_code = group_id,
-      community_name = group_name
-    ) %>% 
-    select(commodity_code, community_code, community_name)
-  
-  colours <- product_names_3 %>% 
-    select(community_code) %>% 
-    distinct() %>% 
-    mutate(colour = c('#F2F3F4', '#222222', '#F3C300', '#875692', '#F38400', '#A1CAF1', '#BE0032', '#C2B280', '#848482', 
-                      '#008856', '#E68FAC', '#0067A5', '#F99379', '#604E97', '#F6A600', '#B3446C', '#DCD300', '#882D17', 
-                      '#8DB600', '#654522', '#E25822', '#2B3D26'))
-  
   attributes_products <- product_names %>% 
-    left_join(product_names_2) %>% 
-    left_join(product_names_3) %>% 
-    left_join(colours)
+    left_join(product_names_2)
 
   if (!file.exists(paste0(tables_dir, "/attributes_products.csv.gz"))) {
     fwrite(attributes_products, paste0(tables_dir, "/attributes_products.csv"))
