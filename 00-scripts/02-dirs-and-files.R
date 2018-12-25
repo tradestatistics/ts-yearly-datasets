@@ -123,16 +123,10 @@ try(dir.create(yrp_dir))
 yrc_dir <- paste0(tables_dir, "/3-yrc")
 try(dir.create(yrc_dir))
 
-ypc_dir <- paste0(tables_dir, "/4-ypc")
-try(dir.create(ypc_dir))
-
-yr_dir <- paste0(tables_dir, "/5-yr")
+yr_dir <- paste0(tables_dir, "/4-yr")
 try(dir.create(yr_dir))
 
-yp_dir <- paste0(tables_dir, "/6-yp")
-try(dir.create(yp_dir))
-
-yc_dir <- paste0(tables_dir, "/7-yc")
+yc_dir <- paste0(tables_dir, "/5-yc")
 try(dir.create(yc_dir))
 
 yrpc_gz <- unified_gz %>%

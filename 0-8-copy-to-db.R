@@ -145,25 +145,6 @@ copy_attributes <- function(overwrite = F) {
       dbWriteTable(con, "hs07_yrc", yrc, append = TRUE, overwrite = overwrite, row.names = FALSE)
       rm(yrc)
       
-      ypc <- fread2(
-        ypc_gz[[t]], 
-        character = "commodity_code",
-        numeric = c(
-          "export_value_usd",
-          "import_value_usd",
-          "export_value_usd_change_1_year",
-          "export_value_usd_change_5_years",
-          "export_value_usd_percentage_change_1_year",
-          "export_value_usd_percentage_change_5_years",
-          "import_value_usd_change_1_year",
-          "import_value_usd_change_5_years",
-          "import_value_usd_percentage_change_1_year",
-          "import_value_usd_percentage_change_5_years"
-        )
-      )
-      dbWriteTable(con, "hs07_ypc", ypc, append = TRUE, overwrite = overwrite, row.names = FALSE)
-      rm(ypc)
-      
       yr <- fread2(
         yr_gz[[t]], 
         character = c("top_export_commodity_code", "top_import_commodity_code"), 
@@ -184,24 +165,6 @@ copy_attributes <- function(overwrite = F) {
       )
       dbWriteTable(con, "hs07_yr", yr, append = TRUE, overwrite = overwrite, row.names = FALSE)
       rm(yr)
-      
-      yp <- fread2(
-        yp_gz[[t]],
-        numeric = c(
-          "export_value_usd",
-          "import_value_usd",
-          "export_value_usd_change_1_year",
-          "export_value_usd_change_5_years",
-          "export_value_usd_percentage_change_1_year",
-          "export_value_usd_percentage_change_5_years",
-          "import_value_usd_change_1_year",
-          "import_value_usd_change_5_years",
-          "import_value_usd_percentage_change_1_year",
-          "import_value_usd_percentage_change_5_years"
-        )
-      )
-      dbWriteTable(con, "hs07_yp", yp, append = TRUE, overwrite = overwrite, row.names = FALSE)
-      rm(yp)
       
       yc <- fread2(
         yc_gz[[t]], 
