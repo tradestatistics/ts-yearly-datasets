@@ -99,58 +99,6 @@ create_schema <- function(overwrite = F) {
       )"
     )
     
-    # Year - Partner ----------------------------------------------------------
-    
-    dbSendQuery(con, "DROP TABLE IF EXISTS public.hs07_yp")
-    
-    dbSendQuery(
-      con,
-      "CREATE TABLE public.hs07_yp 
-      (
-      year integer NOT NULL,
-      partner_iso varchar(3) NOT NULL,
-      export_value_usd decimal(16,2) DEFAULT NULL,
-      import_value_usd decimal(16,2) DEFAULT NULL,
-      export_value_usd_change_1_year decimal DEFAULT NULL,
-      export_value_usd_change_5_years decimal DEFAULT NULL,
-      export_value_usd_percentage_change_1_year float DEFAULT NULL,
-      export_value_usd_percentage_change_5_years float DEFAULT NULL,
-      import_value_usd_change_1_year decimal DEFAULT NULL,
-      import_value_usd_change_5_years decimal DEFAULT NULL,
-      import_value_usd_percentage_change_1_year float DEFAULT NULL,
-      import_value_usd_percentage_change_5_years float DEFAULT NULL,
-      CONSTRAINT hs07_yp_pk PRIMARY KEY (year, partner_iso),
-      CONSTRAINT hs07_yp_attributes_country_names_fk FOREIGN KEY (partner_iso) REFERENCES public.attributes_country_names (country_iso)
-      )"
-    )
-    
-    # Year - Partner - Commodity ----------------------------------------------
-    
-    dbSendQuery(con, "DROP TABLE IF EXISTS public.hs07_ypc")
-    
-    dbSendQuery(
-      con,
-      "CREATE TABLE public.hs07_ypc 
-      (
-      year integer NOT NULL,
-      partner_iso varchar(3) NOT NULL,
-      commodity_code varchar(6) NOT NULL,
-      export_value_usd decimal(16,2) DEFAULT NULL,
-      import_value_usd decimal(16,2) DEFAULT NULL,
-      export_value_usd_change_1_year decimal DEFAULT NULL,
-      export_value_usd_change_5_years decimal DEFAULT NULL,
-      export_value_usd_percentage_change_1_year float DEFAULT NULL,
-      export_value_usd_percentage_change_5_years float DEFAULT NULL,
-      import_value_usd_change_1_year decimal DEFAULT NULL,
-      import_value_usd_change_5_years decimal DEFAULT NULL,
-      import_value_usd_percentage_change_1_year float DEFAULT NULL,
-      import_value_usd_percentage_change_5_years float DEFAULT NULL,
-      CONSTRAINT hs07_ypc_pk PRIMARY KEY (year, partner_iso, commodity_code),
-      CONSTRAINT hs07_ypc_attributes_country_names_fk FOREIGN KEY (partner_iso) REFERENCES public.attributes_country_names (country_iso),
-      CONSTRAINT hs07_ypc_attributes_product_names_fk_2 FOREIGN KEY (commodity_code) REFERENCES public.attributes_product_names (commodity_code)
-      )"
-    )
-    
     # Year - Reporter ---------------------------------------------------------
     
     dbSendQuery(con, "DROP TABLE IF EXISTS public.hs07_yr")
@@ -163,6 +111,10 @@ create_schema <- function(overwrite = F) {
       reporter_iso varchar(3) NOT NULL,
       export_value_usd decimal(16,2) DEFAULT NULL,
       import_value_usd decimal(16,2) DEFAULT NULL,
+      eci_4_digits_commodity_code float DEFAULT NULL,
+      eci_rank_4_digits_commodity_code integer DEFAULT NULL,
+      eci_rank_4_digits_commodity_code_delta_1_year integer DEFAULT NULL,
+      eci_rank_4_digits_commodity_code_delta_5_years integer DEFAULT NULL,
       top_export_commodity_code varchar(6) DEFAULT NULL,
       top_export_trade_value_usd decimal(16,2) DEFAULT NULL,
       top_import_commodity_code varchar(6) DEFAULT NULL,
@@ -281,11 +233,13 @@ create_schema <- function(overwrite = F) {
       export_value_usd decimal(16,2) DEFAULT NULL,
       import_value_usd decimal(16,2) DEFAULT NULL,
       pci_4_digits_commodity_code float DEFAULT NULL,
-      pci_6_digits_commodity_code float DEFAULT NULL,
       pci_rank_4_digits_commodity_code integer DEFAULT NULL,
+      pci_6_digits_commodity_code float DEFAULT NULL,
       pci_rank_6_digits_commodity_code integer DEFAULT NULL,
-      pci_rank_4_digits_commodity_code_delta integer DEFAULT NULL,
-      pci_rank_6_digits_commodity_code_delta integer DEFAULT NULL,
+      pci_rank_4_digits_commodity_code_delta_1_year integer DEFAULT NULL,
+      pci_rank_6_digits_commodity_code_delta_1_year integer DEFAULT NULL,
+      pci_rank_4_digits_commodity_code_delta_5_years integer DEFAULT NULL,
+      pci_rank_6_digits_commodity_code_delta_5_years integer DEFAULT NULL,
       top_exporter_iso varchar(3) DEFAULT NULL,
       top_exporter_trade_value_usd decimal(16,2) DEFAULT NULL,
       top_importer_iso varchar(3) DEFAULT NULL,

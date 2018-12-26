@@ -47,22 +47,18 @@ compute_changes <- function(d) {
 }
 
 compute_tables <- function(t) {
-  if (file.exists(yrpc_gz[[t]])) {
-    messageline()
-    message(paste("yrpc table for the year", years_full[t], "exists. Skipping."))
-  } else {
-    messageline()
-    message(paste("Creating yrpc table for the year", years_full[t]))
-    
-    # pci/eci data ------------------------------------------------------------
-    
-    eci <- fread2("05-metrics/hs-rev2007-eci/eci-joined-ranking.csv.gz")
-    pci <- fread2("05-metrics/hs-rev2007-pci/pci-joined-ranking.csv.gz", character = c("commodity_code"))
-    
-    pci_4 <- pci %>% filter(commodity_code_length == 4)
-    pci_6 <- pci %>% filter(commodity_code_length == 6)
-    
-    # yrpc ------------------------------------------------------------------
+  # PCI/ECI data ------------------------------------------------------------
+  
+  eci <- fread2("05-metrics/hs-rev2007-eci/eci-joined-ranking.csv.gz")
+  pci <- fread2("05-metrics/hs-rev2007-pci/pci-joined-ranking.csv.gz", character = c("commodity_code"))
+  
+  pci_4 <- pci %>% filter(commodity_code_length == 4)
+  pci_6 <- pci %>% filter(commodity_code_length == 6)
+  
+  # YRPC ------------------------------------------------------------------
+  
+  if (!file.exists(yrpc_internal_gz[t])) {
+    message(paste("Creating YRPC table for the year", years_full[t]))
     
     exports_t1 <- fread2(unified_gz[t], character = "commodity_code") %>% 
       rename(export_value_usd = trade_value_usd) %>% 
@@ -84,7 +80,7 @@ compute_tables <- function(t) {
       exports_t2 <- fread2(unified_gz[t - 1], character = "commodity_code") %>% 
         rename(export_value_usd_t2 = trade_value_usd) %>% 
         select(-c(year, commodity_code_length))
-
+      
       imports_t2 <- exports_t2
       names(imports_t2) <- c("partner_iso", "reporter_iso", "commodity_code", "import_value_usd_t2")
       
@@ -126,6 +122,9 @@ compute_tables <- function(t) {
         commodity_code_length = str_length(commodity_code)
       )
     
+    fwrite(yrpc_t1, yrpc_internal_csv[t])
+    compress_gz(yrpc_internal_csv[t])
+    
     yrpc <- yrpc_t1 %>% 
       compute_changes() %>% 
       select(year, matches("iso"), matches("commodity"), export_value_usd, import_value_usd, matches("change"))
@@ -133,221 +132,312 @@ compute_tables <- function(t) {
     fwrite(yrpc, yrpc_csv[[t]])
     compress_gz(yrpc_csv[[t]])
     rm(yrpc)
+  } else {
+    message(paste("Reading YRPC table for the year", years_full[t]))
     
-    # yrp ------------------------------------------------------------------
-    
-    yrp <- yrpc_t1 %>%
-      group_by(year, reporter_iso, partner_iso) %>%
-      summarise_trade() %>%
-      ungroup() %>% 
-      compute_changes() %>%
-      select(-c(ends_with("_t2"), ends_with("_t3")))
-    
-    fwrite(yrp, yrp_csv[[t]])
-    compress_gz(yrp_csv[[t]])
-    rm(yrp)
-    
-    # yrc ------------------------------------------------------------------
-    
-    rca_exp <- fread2(rca_exports_gz[[t]], character = "commodity_code") %>%
-      select(-year)
-    
-    rca_exp_4 <- rca_exp %>% 
-      filter(str_length(commodity_code) == 4) %>% 
-      rename(export_rca_4_digits_commodity_code = export_rca)
-    
-    rca_exp_6 <- rca_exp %>% 
-      filter(str_length(commodity_code) == 6) %>% 
-      rename(export_rca_6_digits_commodity_code = export_rca)
-    
-    rm(rca_exp)
-    
-    rca_imp <- fread2(rca_imports_gz[[t]], character = "commodity_code") %>%
-      select(-year)
-    
-    rca_imp_4 <- rca_imp %>% 
-      filter(str_length(commodity_code) == 4) %>% 
-      rename(import_rca_4_digits_commodity_code = import_rca)
-    
-    rca_imp_6 <- rca_imp %>% 
-      filter(str_length(commodity_code) == 6) %>% 
-      rename(import_rca_6_digits_commodity_code = import_rca)
-    
-    rm(rca_imp)
-    
-    yrc <- yrpc_t1 %>%
-      group_by(year, reporter_iso, commodity_code) %>%
-      summarise_trade() %>%
-      ungroup() %>%
-      left_join(rca_exp_4, by = c("reporter_iso" = "country_iso", "commodity_code")) %>%
-      left_join(rca_exp_6, by = c("reporter_iso" = "country_iso", "commodity_code")) %>%
-      left_join(rca_imp_4, by = c("reporter_iso" = "country_iso", "commodity_code")) %>%
-      left_join(rca_imp_6, by = c("reporter_iso" = "country_iso", "commodity_code")) %>%
-      compute_changes() %>% 
-      select(year, reporter_iso, commodity_code, everything()) %>%
-      select(-c(ends_with("_t2"), ends_with("_t3")))
-    
-    fwrite(yrc, yrc_csv[[t]])
-    compress_gz(yrc_csv[[t]])
-    rm(yrc, rca_exp, rca_imp)
-    
-    # ypc ------------------------------------------------------------------
-    
-    ypc <- yrpc_t1 %>%
-      group_by(year, partner_iso, commodity_code) %>%
-      summarise_trade() %>%
-      ungroup() %>%
-      compute_changes() %>%
-      select(year, partner_iso, commodity_code, everything()) %>%
-      select(-c(ends_with("_t2"), ends_with("_t3")))
-    
-    fwrite(ypc, ypc_csv[[t]])
-    compress_gz(ypc_csv[[t]])
-    rm(ypc)
-    
-    # yr -------------------------------------------------------------------
-    
-    max_exp <- yrpc_t1 %>%
-      filter(commodity_code_length == 4) %>% 
-      group_by(reporter_iso, commodity_code) %>%
-      summarise(export_value_usd = sum(export_value_usd, na.rm = T)) %>%
-      group_by(reporter_iso) %>%
-      slice(which.max(export_value_usd)) %>%
-      rename(
-        top_export_commodity_code = commodity_code,
-        top_export_trade_value_usd = export_value_usd
+    yrpc_t1 <- fread2(
+      yrpc_internal_gz[t],
+      character = "commodity_code",
+      numeric = c(
+        "export_value_usd",
+        "import_value_usd",
+        "export_value_usd_t2",
+        "import_value_usd_t2",
+        "export_value_usd_t3",
+        "import_value_usd_t3"
       )
-    
-    max_imp <- yrpc_t1 %>%
-      filter(commodity_code_length == 4) %>% 
-      group_by(reporter_iso, commodity_code) %>%
-      summarise(import_value_usd = sum(import_value_usd, na.rm = T)) %>%
-      group_by(reporter_iso) %>%
-      slice(which.max(import_value_usd)) %>%
-      rename(
-        top_import_commodity_code = commodity_code,
-        top_import_trade_value_usd = import_value_usd
-      )
-    
-    yr <- yrpc_t1 %>%
-      filter(commodity_code_length == 4) %>% 
-      group_by(year, reporter_iso) %>%
-      summarise_trade() %>%
-      ungroup() %>% 
-      left_join(max_exp, by = "reporter_iso") %>%
-      left_join(max_imp, by = "reporter_iso") %>%
-      compute_changes() %>% 
-      select(-c(ends_with("_t2"), ends_with("_t3")))
-    
-    fwrite(yr, yr_csv[[t]])
-    compress_gz(yr_csv[[t]])
-    rm(yr, max_exp, max_imp)
-    
-    # yp -------------------------------------------------------------------
-    
-    yp <- yrpc_t1 %>%
-      group_by(year, partner_iso) %>%
-      summarise_trade() %>%
-      ungroup() %>%
-      compute_changes() %>%
-      select(-c(ends_with("_t2"), ends_with("_t3")))
-    
-    fwrite(yp, yp_csv[[t]])
-    compress_gz(yp_csv[[t]])
-    rm(yp)
-    
-    # yc -------------------------------------------------------------------
-    
-    pci_t1 <- pci %>%
-      filter(year == years_full[[t]]) %>%
-      select(-year)
-    
-    pci_4_t1 <- pci_t1 %>% 
-      filter(commodity_code_length == 4) %>% 
-      rename(
-        pci_4_digits_commodity_code = pci,
-        pci_rank_4_digits_commodity_code = pci_rank
-      ) %>% 
-      select(-commodity_code_length)
-
-    pci_6_t1 <- pci_t1 %>% 
-      filter(commodity_code_length == 6) %>% 
-      rename(
-        pci_6_digits_commodity_code = pci,
-        pci_rank_6_digits_commodity_code = pci_rank
-      ) %>% 
-      select(-commodity_code_length)
-    
-    if (t %in% match(years_missing_t_minus_1, years_full)) {
-      pci_t2 <- pci_t1 %>%
-        mutate(
-          pci_rank = NA,
-          pci = NA
-        )
-    } else {
-      pci_t2 <- pci %>%
-        filter(year == years_full[[t - 1]]) %>%
-        select(-year)
-    }
-    
-    pci_4_t2 <- pci_t2 %>% 
-      filter(commodity_code_length == 4) %>% 
-      rename(
-        pci_4_digits_commodity_code_t2 = pci,
-        pci_rank_4_digits_commodity_code_t2 = pci_rank
-      ) %>% 
-      select(-commodity_code_length)
-    
-    pci_6_t2 <- pci_t2 %>% 
-      filter(commodity_code_length == 6) %>% 
-      rename(
-        pci_6_digits_commodity_code_t2 = pci,
-        pci_rank_6_digits_commodity_code_t2 = pci_rank
-      ) %>% 
-      select(-commodity_code_length)
-    
-    rm(pci_t1)
-    try(rm(pci_t2))
-    
-    max_exp_2 <- yrpc_t1 %>%
-      group_by(reporter_iso, commodity_code) %>%
-      summarise(export_value_usd = sum(export_value_usd, na.rm = T)) %>%
-      group_by(commodity_code) %>%
-      slice(which.max(export_value_usd)) %>%
-      rename(
-        top_exporter_iso = reporter_iso,
-        top_exporter_trade_value_usd = export_value_usd
-      )
-
-    max_imp_2 <- yrpc_t1 %>%
-      group_by(reporter_iso, commodity_code) %>%
-      summarise(import_value_usd = sum(import_value_usd, na.rm = T)) %>%
-      group_by(commodity_code) %>%
-      slice(which.max(import_value_usd)) %>%
-      rename(
-        top_importer_iso = reporter_iso,
-        top_importer_trade_value_usd = import_value_usd
-      )
-    
-    yc <- yrpc_t1 %>%
-      group_by(year, commodity_code) %>%
-      summarise_trade() %>%
-      ungroup() %>% 
-      left_join(pci_4_t1, by = "commodity_code") %>%
-      left_join(pci_6_t1, by = "commodity_code") %>%
-      left_join(pci_4_t2, by = "commodity_code") %>%
-      left_join(pci_6_t2, by = "commodity_code") %>%
-      mutate(
-        pci_rank_4_digits_commodity_code_delta = pci_rank_4_digits_commodity_code - pci_rank_4_digits_commodity_code_t2,
-        pci_rank_6_digits_commodity_code_delta = pci_rank_6_digits_commodity_code - pci_rank_6_digits_commodity_code_t2
-      ) %>%
-      left_join(max_exp_2, by = "commodity_code") %>%
-      left_join(max_imp_2, by = "commodity_code") %>%
-      compute_changes() %>%
-      select(year, commodity_code, export_value_usd, import_value_usd, pci_4_digits_commodity_code, pci_6_digits_commodity_code, everything()) %>% 
-      select(-c(ends_with("_t2"), ends_with("_t3")))
-    
-    fwrite(yc, yc_csv[[t]])
-    compress_gz(yc_csv[[t]])
+    )
   }
+  
+  # YRP ------------------------------------------------------------------
+  
+  yrp <- yrpc_t1 %>%
+    group_by(year, reporter_iso, partner_iso) %>%
+    summarise_trade() %>%
+    ungroup() %>% 
+    compute_changes() %>%
+    select(-c(ends_with("_t2"), ends_with("_t3")))
+  
+  fwrite(yrp, yrp_csv[[t]])
+  compress_gz(yrp_csv[[t]])
+  rm(yrp)
+  
+  # YRC ------------------------------------------------------------------
+  
+  rca_exp <- fread2(rca_exports_gz[[t]], character = "commodity_code") %>%
+    select(-year)
+  
+  rca_exp_4 <- rca_exp %>% 
+    filter(str_length(commodity_code) == 4) %>% 
+    rename(export_rca_4_digits_commodity_code = export_rca)
+  
+  rca_exp_6 <- rca_exp %>% 
+    filter(str_length(commodity_code) == 6) %>% 
+    rename(export_rca_6_digits_commodity_code = export_rca)
+  
+  rm(rca_exp)
+  
+  rca_imp <- fread2(rca_imports_gz[[t]], character = "commodity_code") %>%
+    select(-year)
+  
+  rca_imp_4 <- rca_imp %>% 
+    filter(str_length(commodity_code) == 4) %>% 
+    rename(import_rca_4_digits_commodity_code = import_rca)
+  
+  rca_imp_6 <- rca_imp %>% 
+    filter(str_length(commodity_code) == 6) %>% 
+    rename(import_rca_6_digits_commodity_code = import_rca)
+  
+  rm(rca_imp)
+  
+  yrc <- yrpc_t1 %>%
+    group_by(year, reporter_iso, commodity_code) %>%
+    summarise_trade() %>%
+    ungroup() %>%
+    left_join(rca_exp_4, by = c("reporter_iso" = "country_iso", "commodity_code")) %>%
+    left_join(rca_exp_6, by = c("reporter_iso" = "country_iso", "commodity_code")) %>%
+    left_join(rca_imp_4, by = c("reporter_iso" = "country_iso", "commodity_code")) %>%
+    left_join(rca_imp_6, by = c("reporter_iso" = "country_iso", "commodity_code")) %>%
+    compute_changes() %>% 
+    select(year, reporter_iso, commodity_code, everything()) %>%
+    select(-c(ends_with("_t2"), ends_with("_t3")))
+  
+  fwrite(yrc, yrc_csv[[t]])
+  compress_gz(yrc_csv[[t]])
+  rm(yrc)
+  
+  # YR -------------------------------------------------------------------
+  
+  eci_t1 <- eci %>%
+    filter(year == years_full[[t]]) %>%
+    select(-year)
+  
+  eci_4_t1 <- eci_t1 %>% 
+    rename(
+      eci_4_digits_commodity_code = eci,
+      eci_rank_4_digits_commodity_code = eci_rank
+    )
+  
+  if (t %in% match(years_missing_t_minus_1, years_full)) {
+    eci_t2 <- eci_t1 %>%
+      mutate(
+        eci_rank = NA,
+        eci = NA
+      )
+  } else {
+    eci_t2 <- eci %>%
+      filter(year == years_full[[t - 1]]) %>%
+      select(-year)
+  }
+  
+  eci_4_t2 <- eci_t2 %>% 
+    rename(
+      eci_4_digits_commodity_code_t2 = eci,
+      eci_rank_4_digits_commodity_code_t2 = eci_rank
+    )
+  
+  try(rm(eci_t2))
+  
+  if (any(t %in% match(years_missing_t_minus_1, years_full) | t %in% match(years_missing_t_minus_5, years_full))) {
+    eci_t3 <- eci_t1 %>%
+      mutate(
+        eci_rank = NA,
+        eci = NA
+      )
+  } else {
+    eci_t3 <- eci %>%
+      filter(year == years_full[[t - 5]]) %>%
+      select(-year)
+  }
+  
+  eci_4_t3 <- eci_t3 %>% 
+    rename(
+      eci_4_digits_commodity_code_t3 = eci,
+      eci_rank_4_digits_commodity_code_t3 = eci_rank
+    )
+  
+  try(rm(eci_t3))
+  rm(eci_t1)
+  
+  max_exp <- yrpc_t1 %>%
+    filter(commodity_code_length == 4) %>% 
+    group_by(reporter_iso, commodity_code) %>%
+    summarise(export_value_usd = sum(export_value_usd, na.rm = T)) %>%
+    group_by(reporter_iso) %>%
+    slice(which.max(export_value_usd)) %>%
+    rename(
+      top_export_commodity_code = commodity_code,
+      top_export_trade_value_usd = export_value_usd
+    )
+  
+  max_imp <- yrpc_t1 %>%
+    filter(commodity_code_length == 4) %>% 
+    group_by(reporter_iso, commodity_code) %>%
+    summarise(import_value_usd = sum(import_value_usd, na.rm = T)) %>%
+    group_by(reporter_iso) %>%
+    slice(which.max(import_value_usd)) %>%
+    rename(
+      top_import_commodity_code = commodity_code,
+      top_import_trade_value_usd = import_value_usd
+    )
+  
+  yr <- yrpc_t1 %>%
+    filter(commodity_code_length == 4) %>% 
+    group_by(year, reporter_iso) %>%
+    summarise_trade() %>%
+    ungroup() %>% 
+    
+    left_join(eci_4_t1, by = c("reporter_iso" = "country_iso")) %>%
+    left_join(eci_4_t2, by = c("reporter_iso" = "country_iso")) %>%
+    left_join(eci_4_t3, by = c("reporter_iso" = "country_iso")) %>%
+    
+    mutate(
+      eci_rank_4_digits_commodity_code_delta_1_year = eci_rank_4_digits_commodity_code - eci_rank_4_digits_commodity_code_t2,
+      eci_rank_4_digits_commodity_code_delta_5_years = eci_rank_4_digits_commodity_code - eci_rank_4_digits_commodity_code_t3
+    ) %>%
+    
+    left_join(max_exp, by = "reporter_iso") %>%
+    left_join(max_imp, by = "reporter_iso") %>%
+    
+    compute_changes() %>% 
+    select(-c(ends_with("_t2"), ends_with("_t3")))
+  
+  fwrite(yr, yr_csv[t])
+  compress_gz(yr_csv[[t]])
+  rm(yr, eci_4_t1, eci_4_t2, eci_4_t3, max_exp, max_imp)
+  
+  # YC -------------------------------------------------------------------
+  
+  pci_t1 <- pci %>%
+    filter(year == years_full[[t]]) %>%
+    select(-year)
+  
+  pci_4_t1 <- pci_t1 %>% 
+    filter(commodity_code_length == 4) %>% 
+    rename(
+      pci_4_digits_commodity_code = pci,
+      pci_rank_4_digits_commodity_code = pci_rank
+    ) %>% 
+    select(-commodity_code_length)
+  
+  pci_6_t1 <- pci_t1 %>% 
+    filter(commodity_code_length == 6) %>% 
+    rename(
+      pci_6_digits_commodity_code = pci,
+      pci_rank_6_digits_commodity_code = pci_rank
+    ) %>% 
+    select(-commodity_code_length)
+  
+  if (t %in% match(years_missing_t_minus_1, years_full)) {
+    pci_t2 <- pci_t1 %>%
+      mutate(
+        pci_rank = NA,
+        pci = NA
+      )
+  } else {
+    pci_t2 <- pci %>%
+      filter(year == years_full[[t - 1]]) %>%
+      select(-year)
+  }
+  
+  pci_4_t2 <- pci_t2 %>% 
+    filter(commodity_code_length == 4) %>% 
+    rename(
+      pci_4_digits_commodity_code_t2 = pci,
+      pci_rank_4_digits_commodity_code_t2 = pci_rank
+    ) %>% 
+    select(-commodity_code_length)
+  
+  pci_6_t2 <- pci_t2 %>% 
+    filter(commodity_code_length == 6) %>% 
+    rename(
+      pci_6_digits_commodity_code_t2 = pci,
+      pci_rank_6_digits_commodity_code_t2 = pci_rank
+    ) %>% 
+    select(-commodity_code_length)
+  
+  try(rm(pci_t2))
+  
+  if (t %in% match(years_missing_t_minus_1, years_full) | t %in% match(years_missing_t_minus_5, years_full)) {
+    pci_t3 <- pci_t1 %>%
+      mutate(
+        pci_rank = NA,
+        pci = NA
+      )
+  } else {
+    pci_t3 <- pci %>%
+      filter(year == years_full[[t - 5]]) %>%
+      select(-year)
+  }
+  
+  pci_4_t3 <- pci_t3 %>% 
+    filter(commodity_code_length == 4) %>% 
+    rename(
+      pci_4_digits_commodity_code_t3 = pci,
+      pci_rank_4_digits_commodity_code_t3 = pci_rank
+    ) %>% 
+    select(-commodity_code_length)
+  
+  pci_6_t3 <- pci_t3 %>% 
+    filter(commodity_code_length == 6) %>% 
+    rename(
+      pci_6_digits_commodity_code_t3 = pci,
+      pci_rank_6_digits_commodity_code_t3 = pci_rank
+    ) %>% 
+    select(-commodity_code_length)
+  
+  try(rm(pci_t3))
+  rm(pci_t1)
+  
+  max_exp_2 <- yrpc_t1 %>%
+    group_by(reporter_iso, commodity_code) %>%
+    summarise(export_value_usd = sum(export_value_usd, na.rm = T)) %>%
+    group_by(commodity_code) %>%
+    slice(which.max(export_value_usd)) %>%
+    rename(
+      top_exporter_iso = reporter_iso,
+      top_exporter_trade_value_usd = export_value_usd
+    )
+  
+  max_imp_2 <- yrpc_t1 %>%
+    group_by(reporter_iso, commodity_code) %>%
+    summarise(import_value_usd = sum(import_value_usd, na.rm = T)) %>%
+    group_by(commodity_code) %>%
+    slice(which.max(import_value_usd)) %>%
+    rename(
+      top_importer_iso = reporter_iso,
+      top_importer_trade_value_usd = import_value_usd
+    )
+  
+  yc <- yrpc_t1 %>%
+    group_by(year, commodity_code) %>%
+    summarise_trade() %>%
+    ungroup() %>% 
+    
+    left_join(pci_4_t1, by = "commodity_code") %>%
+    left_join(pci_6_t1, by = "commodity_code") %>%
+    
+    left_join(pci_4_t2, by = "commodity_code") %>%
+    left_join(pci_6_t2, by = "commodity_code") %>%
+    
+    left_join(pci_4_t3, by = "commodity_code") %>%
+    left_join(pci_6_t3, by = "commodity_code") %>%
+    
+    mutate(
+      pci_rank_4_digits_commodity_code_delta_1_year = pci_rank_4_digits_commodity_code - pci_rank_4_digits_commodity_code_t2,
+      pci_rank_6_digits_commodity_code_delta_1_year = pci_rank_6_digits_commodity_code - pci_rank_6_digits_commodity_code_t2,
+      
+      pci_rank_4_digits_commodity_code_delta_5_years = pci_rank_4_digits_commodity_code - pci_rank_4_digits_commodity_code_t3,
+      pci_rank_6_digits_commodity_code_delta_5_years = pci_rank_6_digits_commodity_code - pci_rank_6_digits_commodity_code_t3
+    ) %>%
+    
+    left_join(max_exp_2, by = "commodity_code") %>%
+    left_join(max_imp_2, by = "commodity_code") %>%
+    
+    compute_changes() %>%
+    select(year, commodity_code, export_value_usd, import_value_usd, starts_with("pci_"), everything()) %>% 
+    select(-c(ends_with("_t2"), ends_with("_t3")))
+  
+  fwrite(yc, yc_csv[[t]])
+  compress_gz(yc_csv[[t]])
 }
