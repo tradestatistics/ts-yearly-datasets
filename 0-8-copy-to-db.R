@@ -151,6 +151,7 @@ copy_attributes <- function(overwrite = F) {
         numeric = c(
           "export_value_usd",
           "import_value_usd",
+          "eci_4_digits_commodity_code",
           "top_export_trade_value_usd",
           "top_import_trade_value_usd",
           "export_value_usd_change_1_year",
@@ -172,6 +173,8 @@ copy_attributes <- function(overwrite = F) {
         numeric = c(
           "export_value_usd",
           "import_value_usd",
+          "pci_4_digits_commodity_code",
+          "pci_6_digits_commodity_code",
           "top_exporter_trade_value_usd",
           "top_importer_trade_value_usd",
           "export_value_usd_change_1_year",
