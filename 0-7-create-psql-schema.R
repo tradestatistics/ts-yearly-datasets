@@ -200,6 +200,7 @@ create_schema <- function(overwrite = F) {
       year integer NOT NULL,
       reporter_iso varchar(3) NOT NULL,
       commodity_code varchar(6) NOT NULL,
+      commodity_code_length integer DEFAULT NULL,
       export_value_usd decimal(16,2) DEFAULT NULL,
       import_value_usd decimal(16,2) DEFAULT NULL,
       export_rca_4_digits_commodity_code float DEFAULT NULL,
@@ -230,6 +231,7 @@ create_schema <- function(overwrite = F) {
       (
       year integer NOT NULL,
       commodity_code varchar(6) NOT NULL,
+      commodity_code_length integer DEFAULT NULL,
       export_value_usd decimal(16,2) DEFAULT NULL,
       import_value_usd decimal(16,2) DEFAULT NULL,
       pci_4_digits_commodity_code float DEFAULT NULL,
