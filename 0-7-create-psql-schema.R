@@ -72,21 +72,20 @@ create_schema <- function(overwrite = F) {
     
     dbSendQuery(
       con,
-      "CREATE TABLE public.attributes_country_names
+      "CREATE TABLE public.attributes_countries
       (
       country_iso varchar(3) DEFAULT '' PRIMARY KEY NOT NULL,
       country_name_english varchar(255) DEFAULT NULL,
       country_fullname_english varchar(255) DEFAULT NULL,
       continent_id integer DEFAULT NULL,
       continent varchar(255) DEFAULT NULL,
-      eu28_member integer DEFAULT NULL,
-      colour varchar(7) DEFAULT NULL
+      eu28_member integer DEFAULT NULL
       )"
     )
     
     # Product names -----------------------------------------------------------
     
-    dbSendQuery(con, "DROP TABLE IF EXISTS public.attributes_product_names")
+    dbSendQuery(con, "DROP TABLE IF EXISTS public.attributes_products")
     
     dbSendQuery(
       con,
