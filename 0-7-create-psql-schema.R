@@ -66,13 +66,13 @@ create_schema <- function(overwrite = F) {
     messageline()
     message("Creating/Overwriting DB schema...")
     
-    # Country names -----------------------------------------------------------
-    
-    dbSendQuery(con, "DROP TABLE IF EXISTS public.attributes_country_names")
+    # Countries ---------------------------------------------------------------
+
+    dbSendQuery(con, "DROP TABLE IF EXISTS public.attributes_countries")
     
     dbSendQuery(
       con,
-      "CREATE TABLE public.attributes_country_names
+      "CREATE TABLE public.attributes_countries
       (
       country_iso varchar(3) DEFAULT '' PRIMARY KEY NOT NULL,
       country_name_english varchar(255) DEFAULT NULL,
@@ -86,11 +86,11 @@ create_schema <- function(overwrite = F) {
     
     # Product names -----------------------------------------------------------
     
-    dbSendQuery(con, "DROP TABLE IF EXISTS public.attributes_product_names")
+    dbSendQuery(con, "DROP TABLE IF EXISTS public.attributes_products")
     
     dbSendQuery(
       con,
-      "CREATE TABLE public.attributes_product_names 
+      "CREATE TABLE public.attributes_products 
       (
       commodity_code varchar(6) DEFAULT '' PRIMARY KEY NOT NULL,
       product_fullname_english varchar(255) DEFAULT NULL,
@@ -128,7 +128,7 @@ create_schema <- function(overwrite = F) {
       import_value_usd_percentage_change_1_year float DEFAULT NULL,
       import_value_usd_percentage_change_5_years float DEFAULT NULL,
       CONSTRAINT hs07_yr_pk PRIMARY KEY (year, reporter_iso),
-      CONSTRAINT hs07_yr_attributes_country_names_fk FOREIGN KEY (reporter_iso) REFERENCES public.attributes_country_names (country_iso)
+      CONSTRAINT hs07_yr_attributes_countries_fk FOREIGN KEY (reporter_iso) REFERENCES public.attributes_countries (country_iso)
       )"
     )
     
@@ -154,8 +154,8 @@ create_schema <- function(overwrite = F) {
       import_value_usd_percentage_change_1_year float DEFAULT NULL,
       import_value_usd_percentage_change_5_years float DEFAULT NULL,
       CONSTRAINT hs07_yrp_pk PRIMARY KEY (year, reporter_iso, partner_iso),
-      CONSTRAINT hs07_yrp_attributes_country_names_id_fk FOREIGN KEY (reporter_iso) REFERENCES public.attributes_country_names (country_iso),
-      CONSTRAINT hs07_yrp_attributes_country_names_id_fk_2 FOREIGN KEY (partner_iso) REFERENCES public.attributes_country_names (country_iso)
+      CONSTRAINT hs07_yrp_attributes_countries_id_fk FOREIGN KEY (reporter_iso) REFERENCES public.attributes_countries (country_iso),
+      CONSTRAINT hs07_yrp_attributes_countries_id_fk_2 FOREIGN KEY (partner_iso) REFERENCES public.attributes_countries (country_iso)
       )"
     )
     
@@ -183,9 +183,9 @@ create_schema <- function(overwrite = F) {
       import_value_usd_percentage_change_1_year float DEFAULT NULL,
       import_value_usd_percentage_change_5_years float DEFAULT NULL,
       CONSTRAINT hs07_yrpc_pk PRIMARY KEY (year, reporter_iso, partner_iso, commodity_code),
-      CONSTRAINT hs07_yrpc_attributes_country_names_fk FOREIGN KEY (reporter_iso) REFERENCES public.attributes_country_names (country_iso),
-      CONSTRAINT hs07_yrpc_attributes_country_names_fk_2 FOREIGN KEY (partner_iso) REFERENCES public.attributes_country_names (country_iso),
-      CONSTRAINT hs07_yrpc_attributes_product_names_fk_3 FOREIGN KEY (commodity_code) REFERENCES public.attributes_product_names (commodity_code)
+      CONSTRAINT hs07_yrpc_attributes_countries_fk FOREIGN KEY (reporter_iso) REFERENCES public.attributes_countries (country_iso),
+      CONSTRAINT hs07_yrpc_attributes_countries_fk_2 FOREIGN KEY (partner_iso) REFERENCES public.attributes_countries (country_iso),
+      CONSTRAINT hs07_yrpc_attributes_product_names_fk_3 FOREIGN KEY (commodity_code) REFERENCES public.attributes_products (commodity_code)
       )"
     )
     
@@ -216,8 +216,8 @@ create_schema <- function(overwrite = F) {
       import_value_usd_percentage_change_1_year float DEFAULT NULL,
       import_value_usd_percentage_change_5_years float DEFAULT NULL,
       CONSTRAINT hs07_yrc_pk PRIMARY KEY (year, reporter_iso, commodity_code),
-      CONSTRAINT hs07_yrc_attributes_country_names_fk FOREIGN KEY (reporter_iso) REFERENCES public.attributes_country_names (country_iso),
-      CONSTRAINT hs07_yrc_attributes_product_names_fk_2 FOREIGN KEY (commodity_code) REFERENCES public.attributes_product_names (commodity_code)
+      CONSTRAINT hs07_yrc_attributes_countries_fk FOREIGN KEY (reporter_iso) REFERENCES public.attributes_countries (country_iso),
+      CONSTRAINT hs07_yrc_attributes_product_names_fk_2 FOREIGN KEY (commodity_code) REFERENCES public.attributes_products (commodity_code)
       )"
     )
     
@@ -255,7 +255,7 @@ create_schema <- function(overwrite = F) {
       import_value_usd_percentage_change_1_year float DEFAULT NULL,
       import_value_usd_percentage_change_5_years float DEFAULT NULL,
       CONSTRAINT hs07_yc_pk PRIMARY KEY (year, commodity_code),
-      CONSTRAINT hs07_yc_attributes_product_names_fk FOREIGN KEY (commodity_code) REFERENCES public.attributes_product_names (commodity_code)
+      CONSTRAINT hs07_yc_attributes_product_names_fk FOREIGN KEY (commodity_code) REFERENCES public.attributes_products (commodity_code)
       )"
     )
   }
