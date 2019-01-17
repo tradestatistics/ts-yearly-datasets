@@ -55,8 +55,7 @@ tables <- function(n_cores = 2) {
   
   continents <- attributes_countries %>% 
     select(continent_id) %>% 
-    distinct() %>% 
-    mutate(colour = c('#F2F3F4', '#222222', '#F3C300', '#875692', '#F38400'))
+    distinct()
   
   attributes_countries <- attributes_countries %>% 
     left_join(continents)
