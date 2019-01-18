@@ -17,5 +17,5 @@ packrat/
 05-metrics/
 05-tables/
 06-tables/
-tentative-schema.sql
-packrat/lib*/
+06-tables
+packrat/

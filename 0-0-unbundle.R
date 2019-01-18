@@ -14,3 +14,7 @@ last_bundle_gz <- gsub("https://github.com/tradestatistics/ts-packrat-library/re
 if (!file.exists(last_bundle_gz)) { download.file(last_bundle_url, last_bundle_gz) }
 
 unbundle(last_bundle_gz, getwd())
+
+try(file.rename("ts-packrat-library/.Rprofile", ".Rprofile"))
+try(file.rename("ts-packrat-library/packrat", "packrat"))
+try(unlink("ts-packrat-library", recursive = TRUE))
