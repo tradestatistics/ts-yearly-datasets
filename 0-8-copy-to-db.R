@@ -76,17 +76,17 @@ copy_attributes <- function(overwrite = F) {
   obs_attributes_products <- as.numeric(dbGetQuery(con, "SELECT COUNT(*) FROM public.attributes_products"))
   
   if (obs_attributes_products == 0) {
-    attributes_products <- fread2(paste0(tables_dir, "/attributes_products.csv.gz"), character = c("commodity_code", "group_code", "community_code"))
+    attributes_products <- fread2(paste0(tables_dir, "/attributes_products.csv.gz"), character = c("commodity_code", "group_code"))
     dbWriteTable(con, "attributes_products", attributes_products, append = TRUE, overwrite = overwrite, row.names = FALSE)
   }
   
   # data --------------------------------------------------------------------
 
   lapply(
-    rev(seq_along(years_full)),
+    seq_along(years_full),
     function (t) {
       yrpc <- fread2(
-        yrpc_gz[[t]], 
+        yrpc_gz[t], 
         character = "commodity_code",
         numeric = c(
           "export_value_usd",
@@ -103,9 +103,14 @@ copy_attributes <- function(overwrite = F) {
       )
       dbWriteTable(con, "hs07_yrpc", yrpc, append = TRUE, overwrite = overwrite, row.names = FALSE)
       rm(yrpc)
-      
+    }
+  )
+  
+  lapply(
+    seq_along(years_full),
+    function (t) {
       yrp <- fread2(
-        yrp_gz[[t]],
+        yrp_gz[t],
         numeric = c(
           "export_value_usd",
           "import_value_usd",
@@ -121,9 +126,14 @@ copy_attributes <- function(overwrite = F) {
       )
       dbWriteTable(con, "hs07_yrp", yrp, append = TRUE, overwrite = overwrite, row.names = FALSE)
       rm(yrp)
-      
+    }
+  )
+  
+  lapply(
+    seq_along(years_full),
+    function (t) {
       yrc <- fread2(
-        yrc_gz[[t]], 
+        yrc_gz[t],
         character = "commodity_code",
         numeric = c(
           "export_value_usd",
@@ -144,10 +154,15 @@ copy_attributes <- function(overwrite = F) {
       )
       dbWriteTable(con, "hs07_yrc", yrc, append = TRUE, overwrite = overwrite, row.names = FALSE)
       rm(yrc)
-      
+    }
+  )
+  
+  lapply(
+    seq_along(years_full),
+    function (t) {
       yr <- fread2(
-        yr_gz[[t]], 
-        character = c("top_export_commodity_code", "top_import_commodity_code"), 
+        yr_gz[t],
+        character = c("top_export_commodity_code", "top_import_commodity_code"),
         numeric = c(
           "export_value_usd",
           "import_value_usd",
@@ -166,9 +181,14 @@ copy_attributes <- function(overwrite = F) {
       )
       dbWriteTable(con, "hs07_yr", yr, append = TRUE, overwrite = overwrite, row.names = FALSE)
       rm(yr)
-      
+    }
+  )
+  
+  lapply(
+    seq_along(years_full),
+    function (t) {
       yc <- fread2(
-        yc_gz[[t]], 
+        yc_gz[t],
         character = "commodity_code",
         numeric = c(
           "export_value_usd",
