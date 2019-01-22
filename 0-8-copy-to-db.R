@@ -80,6 +80,15 @@ copy_attributes <- function(overwrite = F) {
     dbWriteTable(con, "attributes_products", attributes_products, append = TRUE, overwrite = overwrite, row.names = FALSE)
   }
   
+  # communities attributes
+  
+  obs_attributes_communities <- as.numeric(dbGetQuery(con, "SELECT COUNT(*) FROM public.attributes_communities"))
+  
+  if (obs_attributes_communities == 0) {
+    attributes_communities <- fread2(paste0(tables_dir, "/attributes_communities.csv.gz"), character = c("commodity_code", "community_code"))
+    dbWriteTable(con, "attributes_communities", attributes_communities, append = TRUE, overwrite = overwrite, row.names = FALSE)
+  }
+  
   # data --------------------------------------------------------------------
 
   lapply(

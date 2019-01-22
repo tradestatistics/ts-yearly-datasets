@@ -98,6 +98,23 @@ create_schema <- function(overwrite = F) {
       )"
     )
     
+    # Communities -------------------------------------------------------------
+    
+    dbSendQuery(con, "DROP TABLE IF EXISTS public.attributes_communities")
+    
+    dbSendQuery(
+      con,
+      "CREATE TABLE public.attributes_communities 
+      (
+      commodity_code varchar(6) NOT NULL,
+      community_code varchar(2) DEFAULT NULL,
+      community_name varchar(255) DEFAULT NULL,
+      community_colour varchar(7) DEFAULT NULL,
+      CONSTRAINT hs07_attributes_communities_pk PRIMARY KEY (commodity_code),
+      CONSTRAINT hs07_attributes_communities_attributes_products_fk FOREIGN KEY (commodity_code) REFERENCES public.attributes_products (commodity_code)
+      )"
+    )
+    
     # Year - Reporter ---------------------------------------------------------
     
     dbSendQuery(con, "DROP TABLE IF EXISTS public.hs07_yr")

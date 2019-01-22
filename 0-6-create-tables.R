@@ -34,9 +34,10 @@ tables <- function(n_cores = 2) {
   
   # codes -------------------------------------------------------------------
   
-  load("../ts-comtrade-codes/01-2-tidy-country-data/country-codes.RData")
-  load("../ts-comtrade-codes/02-2-tidy-product-data/product-codes.RData")
-
+  load("../comtrade-codes/01-2-tidy-country-data/country-codes.RData")
+  load("../comtrade-codes/02-2-tidy-product-data/product-codes.RData")
+  load("../observatory-codes/02-2-product-data-tidy/hs-rev2007-product-names.RData")
+  
   # input data --------------------------------------------------------------
   
   attributes_countries <- country_codes %>% 
@@ -82,6 +83,23 @@ tables <- function(n_cores = 2) {
       group_name = description
     )
   
+  product_names_3 <- product_names %>%
+    inner_join(hs_product_names, by = c("commodity_code" = "hs")) %>% 
+    rename(
+      community_code = group_id,
+      community_name = group_name
+    ) %>% 
+    select(commodity_code, community_code, community_name)
+  
+  colours <- product_names_3 %>% 
+    select(community_code) %>% 
+    distinct() %>% 
+    mutate(community_colour = c('#74c0e2', '#406662', '#549e95', '#8abdb6', '#bcd8af', 
+                                '#a8c380', '#ede788', '#d6c650', '#dc8e7a', '#d05555',
+                                '#bf3251', '#872a41', '#993f7b', '#7454a6', '#a17cb0',
+                                '#d1a1bc', '#a1aafb', '#5c57d9', '#1c26b3', '#4d6fd0', 
+                                '#7485aa', '#635b56'))
+  
   attributes_products <- product_names %>% 
     left_join(product_names_2)
 
@@ -91,6 +109,16 @@ tables <- function(n_cores = 2) {
   }
   
   rm(product_names_2)
+  
+  attributes_communities <- product_names_3 %>% 
+    left_join(colours)
+  
+  if (!file.exists(paste0(tables_dir, "/attributes_communities.csv.gz"))) {
+    fwrite(attributes_communities, paste0(tables_dir, "/attributes_communities.csv"))
+    compress_gz(paste0(tables_dir, "/attributes_communities.csv"))
+  }
+  
+  rm(product_names_3)
   
   # tables ------------------------------------------------------------------
   
