@@ -92,7 +92,7 @@ create_schema <- function(overwrite = F) {
       "CREATE TABLE public.attributes_products 
       (
       commodity_code varchar(6) DEFAULT '' PRIMARY KEY NOT NULL,
-      product_fullname_english varchar(255) DEFAULT NULL,
+      commodity_fullname_english varchar(255) DEFAULT NULL,
       group_code varchar(2) DEFAULT NULL,
       group_name varchar(255) DEFAULT NULL
       )"

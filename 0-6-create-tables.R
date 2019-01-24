@@ -71,7 +71,7 @@ tables <- function(n_cores = 2) {
     select(code, description) %>% 
     rename(
       commodity_code = code,
-      product_fullname_english = description
+      commodity_fullname_english = description
     ) %>% 
     mutate(group_code = str_sub(commodity_code, 1, 2))
   
