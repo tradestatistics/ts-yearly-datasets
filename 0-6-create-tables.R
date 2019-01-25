@@ -36,7 +36,19 @@ tables <- function(n_cores = 2) {
   
   load("../comtrade-codes/01-2-tidy-country-data/country-codes.RData")
   load("../comtrade-codes/02-2-tidy-product-data/product-codes.RData")
+  
   load("../observatory-codes/02-2-product-data-tidy/hs-rev2007-product-names.RData")
+  hs_product_names_07 <- hs_product_names
+  
+  load("../observatory-codes/02-2-product-data-tidy/hs-rev1992-product-names.RData")
+  hs_product_names_92 <- hs_product_names %>% 
+    select(hs, product_name) %>% 
+    rename(
+      commodity_code = hs,
+      commodity_shortname_english = product_name
+    )
+  
+  rm(hs_product_names)
   
   # input data --------------------------------------------------------------
   
@@ -84,7 +96,7 @@ tables <- function(n_cores = 2) {
     )
   
   product_names_3 <- product_names %>%
-    inner_join(hs_product_names, by = c("commodity_code" = "hs")) %>% 
+    left_join(hs_product_names_07, by = c("commodity_code" = "hs")) %>% 
     rename(
       community_code = group_id,
       community_name = group_name
@@ -103,12 +115,12 @@ tables <- function(n_cores = 2) {
   attributes_products <- product_names %>% 
     left_join(product_names_2)
 
+  rm(product_names_2)
+  
   if (!file.exists(paste0(tables_dir, "/attributes_products.csv.gz"))) {
     fwrite(attributes_products, paste0(tables_dir, "/attributes_products.csv"))
     compress_gz(paste0(tables_dir, "/attributes_products.csv"))
   }
-  
-  rm(product_names_2)
   
   attributes_communities <- product_names_3 %>% 
     left_join(colours)
@@ -119,6 +131,51 @@ tables <- function(n_cores = 2) {
   }
   
   rm(product_names_3)
+  
+  attributes_products_shortnames <- attributes_products %>% 
+    select(commodity_code, commodity_fullname_english) %>% 
+    filter(str_length(commodity_code) == 4) %>% 
+    left_join(hs_product_names_92)
+  
+  attributes_products_shortnames_complete <- attributes_products_shortnames %>% 
+    filter(!is.na(commodity_shortname_english))
+  
+  attributes_products_shortnames_nas <- attributes_products_shortnames %>% 
+    filter(is.na(commodity_shortname_english)) %>% 
+    mutate(
+      commodity_shortname_english = c(
+        "Mercury-based compounds",
+        "Miscellaneous inorganic products",
+        "Chemical mixtures",
+        "Chemical waste",
+        "Ovine prepared leather",
+        "Non-Ovine prepared leather",
+        "Chamois leather",
+        "Composition leather",
+        "Knitted fabrics, width <= 30 cms",
+        "Kniteed fabrics, width > 30 cms",
+        "Warp knit fabrics",
+        "Other fabrics",
+        "Semiconductor machines",
+        "Non-electric machinery"
+      )
+    )
+  
+  attributes_products_shortnames <- attributes_products_shortnames_complete %>% 
+    bind_rows(attributes_products_shortnames_nas) %>% 
+    mutate(
+      commodity_shortname_english = iconv(commodity_shortname_english, from = "", to = "UTF-8"),
+      commodity_shortname_english = ifelse(commodity_code == "0903", "Mate", commodity_shortname_english)
+    ) %>% 
+    arrange(commodity_code) %>% 
+    select(-commodity_fullname_english)
+  
+  if (!file.exists(paste0(tables_dir, "/attributes_products_shortnames.csv.gz"))) {
+    fwrite(attributes_products_shortnames, paste0(tables_dir, "/attributes_products_shortnames.csv"))
+    compress_gz(paste0(tables_dir, "/attributes_products_shortnames.csv"))
+  }
+  
+  rm(attributes_products_shortnames_complete, attributes_products_shortnames_nas)
   
   # tables ------------------------------------------------------------------
   

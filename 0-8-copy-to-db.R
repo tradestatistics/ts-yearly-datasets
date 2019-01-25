@@ -80,6 +80,13 @@ copy_attributes <- function(overwrite = F) {
     dbWriteTable(con, "attributes_products", attributes_products, append = TRUE, overwrite = overwrite, row.names = FALSE)
   }
   
+  obs_attributes_products_shortnames <- as.numeric(dbGetQuery(con, "SELECT COUNT(*) FROM public.attributes_products_shortnames"))
+  
+  if (obs_attributes_products_shortnames == 0) {
+    attributes_products_shortnames <- fread2(paste0(tables_dir, "/attributes_products_shortnames.csv.gz"), character = "commodity_code")
+    dbWriteTable(con, "attributes_products_shortnames", attributes_products_shortnames, append = TRUE, overwrite = overwrite, row.names = FALSE)
+  }
+  
   # communities attributes
   
   obs_attributes_communities <- as.numeric(dbGetQuery(con, "SELECT COUNT(*) FROM public.attributes_communities"))
