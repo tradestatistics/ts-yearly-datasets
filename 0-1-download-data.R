@@ -38,7 +38,7 @@ download <- function(n_cores = 4) {
   # source("00-scripts/12-create-final-tables.R")
 
   # download data -----------------------------------------------------------
-
+  
   try(
     old_file <- list.files(raw_dir, pattern = "downloaded", full.names = T)
   )
@@ -111,7 +111,7 @@ download <- function(n_cores = 4) {
   }
   
   links <- links %>%
-    mutate(url = gsub(token, "REPLACE_TOKEN", url)) %>%
+    mutate(url = str_replace(url, "token=*", "token=REPLACE_TOKEN")) %>%
     select(year, url, new_file, local_file_date) %>%
     rename(file = new_file)
 
