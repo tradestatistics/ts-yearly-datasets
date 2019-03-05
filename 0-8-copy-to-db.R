@@ -76,14 +76,14 @@ copy_attributes <- function(overwrite = F) {
   obs_attributes_products <- as.numeric(dbGetQuery(con, "SELECT COUNT(*) FROM public.attributes_products"))
   
   if (obs_attributes_products == 0) {
-    attributes_products <- fread2(paste0(tables_dir, "/attributes_products.csv.gz"), character = c("commodity_code", "group_code"))
+    attributes_products <- fread2(paste0(tables_dir, "/attributes_products.csv.gz"), character = c("product_code", "group_code"))
     dbWriteTable(con, "attributes_products", attributes_products, append = TRUE, overwrite = overwrite, row.names = FALSE)
   }
   
   obs_attributes_products_shortnames <- as.numeric(dbGetQuery(con, "SELECT COUNT(*) FROM public.attributes_products_shortnames"))
   
   if (obs_attributes_products_shortnames == 0) {
-    attributes_products_shortnames <- fread2(paste0(tables_dir, "/attributes_products_shortnames.csv.gz"), character = "commodity_code")
+    attributes_products_shortnames <- fread2(paste0(tables_dir, "/attributes_products_shortnames.csv.gz"), character = "product_code")
     dbWriteTable(con, "attributes_products_shortnames", attributes_products_shortnames, append = TRUE, overwrite = overwrite, row.names = FALSE)
   }
   
@@ -92,7 +92,7 @@ copy_attributes <- function(overwrite = F) {
   obs_attributes_communities <- as.numeric(dbGetQuery(con, "SELECT COUNT(*) FROM public.attributes_communities"))
   
   if (obs_attributes_communities == 0) {
-    attributes_communities <- fread2(paste0(tables_dir, "/attributes_communities.csv.gz"), character = c("commodity_code", "community_code"))
+    attributes_communities <- fread2(paste0(tables_dir, "/attributes_communities.csv.gz"), character = c("product_code", "community_code"))
     dbWriteTable(con, "attributes_communities", attributes_communities, append = TRUE, overwrite = overwrite, row.names = FALSE)
   }
   
@@ -103,7 +103,7 @@ copy_attributes <- function(overwrite = F) {
     function (t) {
       yrpc <- fread2(
         yrpc_gz[t], 
-        character = "commodity_code",
+        character = "product_code",
         numeric = c(
           "export_value_usd",
           "import_value_usd",
@@ -150,14 +150,14 @@ copy_attributes <- function(overwrite = F) {
     function (t) {
       yrc <- fread2(
         yrc_gz[t],
-        character = "commodity_code",
+        character = "product_code",
         numeric = c(
           "export_value_usd",
           "import_value_usd",
-          "export_rca_4_digits_commodity_code",
-          "export_rca_6_digits_commodity_code",
-          "import_rca_4_digits_commodity_code",
-          "import_rca_6_digits_commodity_code",
+          "export_rca_4_digits_product_code",
+          "export_rca_6_digits_product_code",
+          "import_rca_4_digits_product_code",
+          "import_rca_6_digits_product_code",
           "export_value_usd_change_1_year",
           "export_value_usd_change_5_years",
           "export_value_usd_percentage_change_1_year",
@@ -178,11 +178,11 @@ copy_attributes <- function(overwrite = F) {
     function (t) {
       yr <- fread2(
         yr_gz[t],
-        character = c("top_export_commodity_code", "top_import_commodity_code"),
+        character = c("top_export_product_code", "top_import_product_code"),
         numeric = c(
           "export_value_usd",
           "import_value_usd",
-          "eci_4_digits_commodity_code",
+          "eci_4_digits_product_code",
           "top_export_trade_value_usd",
           "top_import_trade_value_usd",
           "export_value_usd_change_1_year",
@@ -205,12 +205,12 @@ copy_attributes <- function(overwrite = F) {
     function (t) {
       yc <- fread2(
         yc_gz[t],
-        character = "commodity_code",
+        character = "product_code",
         numeric = c(
           "export_value_usd",
           "import_value_usd",
-          "pci_4_digits_commodity_code",
-          "pci_6_digits_commodity_code",
+          "pci_4_digits_product_code",
+          "pci_6_digits_product_code",
           "top_exporter_trade_value_usd",
           "top_importer_trade_value_usd",
           "export_value_usd_change_1_year",

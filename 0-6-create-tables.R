@@ -44,8 +44,8 @@ tables <- function(n_cores = 2) {
   hs_product_names_92 <- hs_product_names %>% 
     select(hs, product_name) %>% 
     rename(
-      commodity_code = hs,
-      commodity_shortname_english = product_name
+      product_code = hs,
+      product_shortname_english = product_name
     )
   
   rm(hs_product_names)
@@ -82,10 +82,10 @@ tables <- function(n_cores = 2) {
     filter(classification == "H3", str_length(code) %in% c(4,6)) %>% 
     select(code, description) %>% 
     rename(
-      commodity_code = code,
-      commodity_fullname_english = description
+      product_code = code,
+      product_fullname_english = description
     ) %>% 
-    mutate(group_code = str_sub(commodity_code, 1, 2))
+    mutate(group_code = str_sub(product_code, 1, 2))
   
   product_names_2 <- product_codes %>% 
     filter(classification == "H3", str_length(code) == 2) %>% 
@@ -96,12 +96,12 @@ tables <- function(n_cores = 2) {
     )
   
   product_names_3 <- product_names %>%
-    left_join(hs_product_names_07, by = c("commodity_code" = "hs")) %>% 
+    left_join(hs_product_names_07, by = c("product_code" = "hs")) %>% 
     rename(
       community_code = group_id,
       community_name = group_name
     ) %>% 
-    select(commodity_code, community_code, community_name)
+    select(product_code, community_code, community_name)
   
   colours <- product_names_3 %>% 
     select(community_code) %>% 
@@ -133,17 +133,17 @@ tables <- function(n_cores = 2) {
   rm(product_names_3)
   
   attributes_products_shortnames <- attributes_products %>% 
-    select(commodity_code, commodity_fullname_english) %>% 
-    filter(str_length(commodity_code) == 4) %>% 
+    select(product_code, product_fullname_english) %>% 
+    filter(str_length(product_code) == 4) %>% 
     left_join(hs_product_names_92)
   
   attributes_products_shortnames_complete <- attributes_products_shortnames %>% 
-    filter(!is.na(commodity_shortname_english))
+    filter(!is.na(product_shortname_english))
   
   attributes_products_shortnames_nas <- attributes_products_shortnames %>% 
-    filter(is.na(commodity_shortname_english)) %>% 
+    filter(is.na(product_shortname_english)) %>% 
     mutate(
-      commodity_shortname_english = c(
+      product_shortname_english = c(
         "Mercury-based compounds",
         "Miscellaneous inorganic products",
         "Chemical mixtures",
@@ -164,11 +164,11 @@ tables <- function(n_cores = 2) {
   attributes_products_shortnames <- attributes_products_shortnames_complete %>% 
     bind_rows(attributes_products_shortnames_nas) %>% 
     mutate(
-      commodity_shortname_english = iconv(commodity_shortname_english, from = "", to = "UTF-8"),
-      commodity_shortname_english = ifelse(commodity_code == "0903", "Mate", commodity_shortname_english)
+      product_shortname_english = iconv(product_shortname_english, from = "", to = "UTF-8"),
+      product_shortname_english = ifelse(product_code == "0903", "Mate", product_shortname_english)
     ) %>% 
-    arrange(commodity_code) %>% 
-    select(-commodity_fullname_english)
+    arrange(product_code) %>% 
+    select(-product_fullname_english)
   
   if (!file.exists(paste0(tables_dir, "/attributes_products_shortnames.csv.gz"))) {
     fwrite(attributes_products_shortnames, paste0(tables_dir, "/attributes_products_shortnames.csv"))

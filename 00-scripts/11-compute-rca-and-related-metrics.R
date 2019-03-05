@@ -15,13 +15,13 @@ compute_rca <- function(x, y, keep, t) {
       "Creating smooth RCA file for the year ", years_full[t], ". Be patient..."
     ))
     
-    trade_t1 <- fread2(x[t], character = "commodity_code", numeric = "trade_value_usd") %>%
-      group_by(year, !!sym(keep), commodity_code, commodity_code_length) %>%
+    trade_t1 <- fread2(x[t], character = "product_code", numeric = "trade_value_usd") %>%
+      group_by(year, !!sym(keep), product_code, product_code_length) %>%
       summarise(trade_value_usd_t1 = sum(trade_value_usd, na.rm = T)) %>% 
       ungroup()
     
-    trade_t1_4 <- filter(trade_t1, commodity_code_length == 4)
-    trade_t1_6 <- filter(trade_t1, commodity_code_length == 6)
+    trade_t1_4 <- filter(trade_t1, product_code_length == 4)
+    trade_t1_6 <- filter(trade_t1, product_code_length == 6)
     rm(trade_t1)
     
     if (years_full[t] <= years_missing_t_minus_1) {
@@ -31,20 +31,20 @@ compute_rca <- function(x, y, keep, t) {
       trade_t1_6 <- trade_t1_6 %>%
         mutate(trade_value_usd_t2 = NA)
     } else {
-      trade_t2 <- fread2(x[t - 1], character = "commodity_code", numeric = "trade_value_usd") %>%
-        group_by(!!sym(keep), commodity_code, commodity_code_length) %>%
+      trade_t2 <- fread2(x[t - 1], character = "product_code", numeric = "trade_value_usd") %>%
+        group_by(!!sym(keep), product_code, product_code_length) %>%
         summarise(trade_value_usd_t2 = sum(trade_value_usd, na.rm = T)) %>% 
         ungroup()
       
-      trade_t2_4 <- trade_t2 %>% filter(commodity_code_length == 4)
-      trade_t2_6 <- trade_t2 %>% filter(commodity_code_length == 6)
+      trade_t2_4 <- trade_t2 %>% filter(product_code_length == 4)
+      trade_t2_6 <- trade_t2 %>% filter(product_code_length == 6)
       rm(trade_t2)
       
       trade_t1_4 <- trade_t1_4 %>%
-        left_join(trade_t2_4, by = c(keep, "commodity_code"))
+        left_join(trade_t2_4, by = c(keep, "product_code"))
       
       trade_t1_6 <- trade_t1_6 %>%
-        left_join(trade_t2_6, by = c(keep, "commodity_code"))
+        left_join(trade_t2_6, by = c(keep, "product_code"))
     }
     
     if (years_full[t] <= years_missing_t_minus_2) {
@@ -54,20 +54,20 @@ compute_rca <- function(x, y, keep, t) {
       trade_t1_6 <- trade_t1_6 %>%
         mutate(trade_value_usd_t3 = NA)
     } else {
-      trade_t3 <- fread2(x[t - 2], character = "commodity_code", numeric = "trade_value_usd") %>%
-        group_by(!!sym(keep), commodity_code, commodity_code_length) %>%
+      trade_t3 <- fread2(x[t - 2], character = "product_code", numeric = "trade_value_usd") %>%
+        group_by(!!sym(keep), product_code, product_code_length) %>%
         summarise(trade_value_usd_t3 = sum(trade_value_usd, na.rm = T)) %>% 
         ungroup()
       
-      trade_t3_4 <- trade_t3 %>% filter(commodity_code_length == 4)
-      trade_t3_6 <- trade_t3 %>% filter(commodity_code_length == 6)
+      trade_t3_4 <- trade_t3 %>% filter(product_code_length == 4)
+      trade_t3_6 <- trade_t3 %>% filter(product_code_length == 6)
       rm(trade_t3)
       
       trade_t1_4 <- trade_t1_4 %>%
-        left_join(trade_t3_4, by = c(keep, "commodity_code"))
+        left_join(trade_t3_4, by = c(keep, "product_code"))
       
       trade_t1_6 <- trade_t1_6 %>%
-        left_join(trade_t3_6, by = c(keep, "commodity_code"))
+        left_join(trade_t3_6, by = c(keep, "product_code"))
     }
     
     trade_t1_4 <- trade_t1_4 %>%
@@ -82,7 +82,7 @@ compute_rca <- function(x, y, keep, t) {
       ungroup() %>%
       select(-c(trade_value_usd_t1, trade_value_usd_t2, trade_value_usd_t3)) %>%
       
-      group_by(commodity_code) %>% # Sum by product
+      group_by(product_code) %>% # Sum by product
       mutate(sum_p_xcp = sum(xcp, na.rm = TRUE)) %>%
       ungroup() %>%
       
@@ -95,7 +95,7 @@ compute_rca <- function(x, y, keep, t) {
         rca = (xcp / sum_c_xcp) / (sum_p_xcp / sum_c_p_xcp) # Compute RCA
       ) %>%
       
-      select(year, !!sym(keep), commodity_code, rca)
+      select(year, !!sym(keep), product_code, rca)
     
     trade_t1_6 <- trade_t1_6 %>%
       rowwise() %>% # To apply a weighted mean by rows with 1 weight = 1 column
@@ -109,7 +109,7 @@ compute_rca <- function(x, y, keep, t) {
       ungroup() %>%
       select(-c(trade_value_usd_t1, trade_value_usd_t2, trade_value_usd_t3)) %>%
       
-      group_by(commodity_code) %>% # Sum by product
+      group_by(product_code) %>% # Sum by product
       mutate(sum_p_xcp = sum(xcp, na.rm = TRUE)) %>%
       ungroup() %>%
       
@@ -122,15 +122,15 @@ compute_rca <- function(x, y, keep, t) {
         rca = (xcp / sum_c_xcp) / (sum_p_xcp / sum_c_p_xcp) # Compute RCA
       ) %>%
       
-      select(year, !!sym(keep), commodity_code, rca)
+      select(year, !!sym(keep), product_code, rca)
     
-    trade_t1 <- bind_rows(trade_t1_4, trade_t1_6) %>% arrange(!!sym(keep), commodity_code)
+    trade_t1 <- bind_rows(trade_t1_4, trade_t1_6) %>% arrange(!!sym(keep), product_code)
     rm(trade_t1_4, trade_t1_6)
     
     if (keep == "reporter_iso") {
-      names(trade_t1) <- c("year", "country_iso", "commodity_code", "export_rca")
+      names(trade_t1) <- c("year", "country_iso", "product_code", "export_rca")
     } else {
-      names(trade_t1) <- c("year", "country_iso", "commodity_code", "import_rca")
+      names(trade_t1) <- c("year", "country_iso", "product_code", "import_rca")
     }
     
     fwrite(trade_t1, str_replace(y[t], ".gz", ""))
@@ -142,21 +142,21 @@ compute_rca_metrics <- function(x, y, z, q, w, n_cores, t) {
   if (!file.exists(w[t])) {
     # RCA matrix (Mcp) ---------------------------------------------------------
     
-    rca_data <- fread2(x[t], character = c("commodity_code"))
+    rca_data <- fread2(x[t], character = c("product_code"))
     
     rca_tibble_4 <- rca_data %>%
       select(-year) %>%
-      filter(str_length(commodity_code) == 4) %>% 
+      filter(str_length(product_code) == 4) %>% 
       inner_join(select(ranking_1, reporter_iso), by = c("country_iso" = "reporter_iso")) %>%
       mutate(export_rca = ifelse(export_rca > 1, 1, 0)) %>%
-      spread(commodity_code, export_rca)
+      spread(product_code, export_rca)
     
     rca_tibble_6 <- rca_data %>%
       select(-year) %>%
-      filter(str_length(commodity_code) == 6) %>% 
+      filter(str_length(product_code) == 6) %>% 
       inner_join(select(ranking_1, reporter_iso), by = c("country_iso" = "reporter_iso")) %>%
       mutate(export_rca = ifelse(export_rca > 1, 1, 0)) %>%
-      spread(commodity_code, export_rca)
+      spread(product_code, export_rca)
     
     diversity_4 <- rca_tibble_4 %>% select(country_iso)
     diversity_6 <- rca_tibble_6 %>% select(country_iso)
@@ -267,23 +267,23 @@ compute_rca_metrics <- function(x, y, z, q, w, n_cores, t) {
         (kp_4[, 20] - mean(kp_4[, 20])) / sd(kp_4[, 20])
       ) %>%
       mutate(
-        commodity_code = ubiquity_4$product,
+        product_code = ubiquity_4$product,
         year = years_full[t]
       ) %>%
-      select(year, commodity_code, value) %>%
+      select(year, product_code, value) %>%
       rename(pci = value)
     
     pci_reflections_6 <- as_tibble(
       (kp_6[, 20] - mean(kp_6[, 20])) / sd(kp_6[, 20])
     ) %>%
       mutate(
-        commodity_code = ubiquity_6$product,
+        product_code = ubiquity_6$product,
         year = years_full[t]
       ) %>%
-      select(year, commodity_code, value) %>%
+      select(year, product_code, value) %>%
       rename(pci = value)
     
-    pci_reflections <- bind_rows(pci_reflections_4, pci_reflections_6) %>% arrange(commodity_code)
+    pci_reflections <- bind_rows(pci_reflections_4, pci_reflections_6) %>% arrange(product_code)
     
     fwrite(pci_reflections, str_replace(z[t], ".gz", ""))
     compress_gz(str_replace(z[t], ".gz", ""))
@@ -335,7 +335,7 @@ compute_rca_metrics <- function(x, y, z, q, w, n_cores, t) {
       mutate(id = rownames(Phi_pp)) %>%
       gather(id2, value, -id) %>%
       filter(!is.na(value)) %>%
-      setNames(c("commodity_code", "commodity_code_2", "value"))
+      setNames(c("product_code", "product_code_2", "value"))
     
     fwrite(Phi_pp_long, str_replace(w[t], ".gz", ""))
     compress_gz(str_replace(w[t], ".gz", ""))
@@ -348,7 +348,7 @@ compute_rca_metrics <- function(x, y, z, q, w, n_cores, t) {
     # Omega_countries_cp_long <- as_tibble(as.matrix(Omega_countries_cp)) %>%
     #   mutate(country_iso = rownames(Omega_countries_cp)) %>%
     #   gather(product, value, -country_iso) %>%
-    #   setNames(c("country_iso", "commodity_code", "value"))
+    #   setNames(c("country_iso", "product_code", "value"))
     # 
     # fwrite(Omega_countries_cp_long, str_replace(e[t], ".gz", ""))
     # compress_gz(str_replace(e[t], ".gz", ""))
@@ -361,7 +361,7 @@ compute_rca_metrics <- function(x, y, z, q, w, n_cores, t) {
     # Omega_products_cp_long <- as_tibble(as.matrix(Omega_products_cp)) %>%
     #   mutate(country_iso = rownames(Omega_products_cp)) %>%
     #   gather(product, value, -country_iso) %>%
-    #   setNames(c("country_iso", "commodity_code", "value"))
+    #   setNames(c("country_iso", "product_code", "value"))
     # 
     # fwrite(Omega_products_cp_long, str_replace(r[t], ".gz", ""))
     # compress_gz(str_replace(r[t], ".gz", ""))

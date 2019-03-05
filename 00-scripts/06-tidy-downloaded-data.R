@@ -33,15 +33,18 @@ compute_tidy_data <- function(t) {
                          numeric = "Trade Value (US$)"
     ) %>%
       
-      rename(trade_value_usd = trade_value_us) %>%
+      rename(
+        product_code = commodity_code,
+        trade_value_usd = trade_value_us
+      ) %>%
       
       filter(aggregate_level %in% J) %>%
       filter(trade_flow %in% c("Export","Import")) %>%
       
       filter(
-        !is.na(commodity_code),
-        commodity_code != "",
-        commodity_code != " "
+        !is.na(product_code),
+        product_code != "",
+        product_code != " "
       ) %>%
       
       mutate(
@@ -58,28 +61,28 @@ compute_tidy_data <- function(t) {
     
     exports <- clean_data %>%
       filter(trade_flow == "Export") %>%
-      select(reporter_iso, partner_iso, commodity_code, trade_value_usd) %>% 
+      select(reporter_iso, partner_iso, product_code, trade_value_usd) %>% 
       mutate(trade_value_usd = ceiling(trade_value_usd))
     
     exports_mirrored <- clean_data %>%
       filter(trade_flow == "Import") %>%
-      select(reporter_iso, partner_iso, commodity_code, trade_value_usd) %>% 
+      select(reporter_iso, partner_iso, product_code, trade_value_usd) %>% 
       mutate(trade_value_usd = ceiling(trade_value_usd / cif_fob_rate))
     
-    colnames(exports_mirrored) <- c("partner_iso", "reporter_iso", "commodity_code", "trade_value_usd")
+    colnames(exports_mirrored) <- c("partner_iso", "reporter_iso", "product_code", "trade_value_usd")
     
     rm(clean_data)
     
     exports_model <- exports %>% 
-      full_join(exports_mirrored, by = c("reporter_iso", "partner_iso", "commodity_code")) %>% 
+      full_join(exports_mirrored, by = c("reporter_iso", "partner_iso", "product_code")) %>% 
       rowwise() %>% 
       mutate(trade_value_usd = max(trade_value_usd.x, trade_value_usd.y, na.rm = T)) %>% 
       ungroup() %>% 
-      mutate(commodity_code_parent = str_sub(commodity_code, 1, 4)) %>% 
-      group_by(reporter_iso, partner_iso, commodity_code_parent) %>% 
+      mutate(product_code_parent = str_sub(product_code, 1, 4)) %>% 
+      group_by(reporter_iso, partner_iso, product_code_parent) %>% 
       mutate(parent_count = n()) %>% 
       ungroup() %>% 
-      select(reporter_iso, partner_iso, commodity_code, commodity_code_parent, parent_count, trade_value_usd)
+      select(reporter_iso, partner_iso, product_code, product_code_parent, parent_count, trade_value_usd)
     
     rm(exports, exports_mirrored)
     
@@ -89,24 +92,24 @@ compute_tidy_data <- function(t) {
     exports_model_repeated_parent <- exports_model %>% 
       filter(
         parent_count > 1,
-        str_length(commodity_code) %in% c(5,6)
+        str_length(product_code) %in% c(5,6)
       )
     
     exports_model_repeated_parent_summary <- exports_model_repeated_parent %>% 
-      group_by(reporter_iso, partner_iso, commodity_code_parent) %>% 
+      group_by(reporter_iso, partner_iso, product_code_parent) %>% 
       summarise(trade_value_usd = sum(trade_value_usd, na.rm = T)) %>% 
       ungroup() %>% 
-      rename(commodity_code = commodity_code_parent)
+      rename(product_code = product_code_parent)
     
     exports_model <- exports_model_unrepeated_parent %>% 
       bind_rows(exports_model_repeated_parent) %>% 
       bind_rows(exports_model_repeated_parent_summary) %>% 
-      arrange(reporter_iso, partner_iso, commodity_code) %>% 
+      arrange(reporter_iso, partner_iso, product_code) %>% 
       mutate(
         year = years[t],
-        commodity_code_length = str_length(commodity_code)
+        product_code_length = str_length(product_code)
       ) %>% 
-      select(year, reporter_iso, partner_iso, commodity_code, commodity_code_length, trade_value_usd) %>% 
+      select(year, reporter_iso, partner_iso, product_code, product_code_length, trade_value_usd) %>% 
       filter(trade_value_usd > 0)
     
     rm(exports_model_unrepeated_parent, exports_model_repeated_parent, exports_model_repeated_parent_summary)

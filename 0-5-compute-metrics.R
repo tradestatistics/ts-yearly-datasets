@@ -81,15 +81,15 @@ metrics <- function(n_cores = 2) {
 
   # join PCI rankings -------------------------------------------------------
 
-  joined_pci_rankings <- lapply(pci_rankings_gz, fread2, character = c("commodity_code"))
+  joined_pci_rankings <- lapply(pci_rankings_gz, fread2, character = c("product_code"))
   
   joined_pci_rankings <-  lapply(
     seq_along(years_full),
     function(t) {
       joined_pci_rankings[[t]] %>%
-        mutate(commodity_code_length = str_length(commodity_code)) %>% 
-        arrange(-pci, commodity_code_length) %>% 
-        group_by(commodity_code_length) %>% 
+        mutate(product_code_length = str_length(product_code)) %>% 
+        arrange(-pci, product_code_length) %>% 
+        group_by(product_code_length) %>% 
         mutate(pci_rank = row_number()) %>%
         ungroup()
     }

@@ -144,17 +144,17 @@ join_datasets <- function(x, y, z, t) {
       complementary_files = c(complementary_files, rep(0, 5 - length(complementary_files)))
     }
     
-    data <- fread2(leading_file, character = "commodity_code",  numeric = "trade_value_usd")
+    data <- fread2(leading_file, character = "product_code",  numeric = "trade_value_usd")
     
     if (complementary_files[1] != 0) {
-      data2 <- fread2(complementary_files[1], character = "commodity_code",  numeric = "trade_value_usd") %>%
+      data2 <- fread2(complementary_files[1], character = "product_code",  numeric = "trade_value_usd") %>%
         anti_join(data, by = c("reporter_iso", "partner_iso"))
     } else {
       data2 <- NULL
     }
     
     if (complementary_files[2] != 0) {
-      data3 <- fread2(complementary_files[2], character = "commodity_code",  numeric = "trade_value_usd") %>%
+      data3 <- fread2(complementary_files[2], character = "product_code",  numeric = "trade_value_usd") %>%
         anti_join(data, by = c("reporter_iso", "partner_iso")) %>%
         anti_join(data2, by = c("reporter_iso", "partner_iso"))
     } else {
@@ -162,7 +162,7 @@ join_datasets <- function(x, y, z, t) {
     }
     
     if (complementary_files[3] != 0) {
-      data4 <- fread2(complementary_files[3], character = "commodity_code",  numeric = "trade_value_usd") %>%
+      data4 <- fread2(complementary_files[3], character = "product_code",  numeric = "trade_value_usd") %>%
         anti_join(data, by = c("reporter_iso", "partner_iso")) %>%
         anti_join(data2, by = c("reporter_iso", "partner_iso")) %>%
         anti_join(data3, by = c("reporter_iso", "partner_iso"))
@@ -171,7 +171,7 @@ join_datasets <- function(x, y, z, t) {
     }
     
     if (complementary_files[4] != 0) {
-      data5 <- fread2(complementary_files[4], character = "commodity_code",  numeric = "trade_value_usd") %>%
+      data5 <- fread2(complementary_files[4], character = "product_code",  numeric = "trade_value_usd") %>%
         anti_join(data, by = c("reporter_iso", "partner_iso")) %>%
         anti_join(data2, by = c("reporter_iso", "partner_iso")) %>%
         anti_join(data3, by = c("reporter_iso", "partner_iso")) %>%
@@ -181,7 +181,7 @@ join_datasets <- function(x, y, z, t) {
     }
     
     if (complementary_files[5] != 0) {
-      data6 <- fread2(complementary_files[5], character = "commodity_code",  numeric = "trade_value_usd") %>%
+      data6 <- fread2(complementary_files[5], character = "product_code",  numeric = "trade_value_usd") %>%
         anti_join(data, by = c("reporter_iso", "partner_iso")) %>%
         anti_join(data2, by = c("reporter_iso", "partner_iso")) %>%
         anti_join(data3, by = c("reporter_iso", "partner_iso")) %>%
@@ -192,7 +192,7 @@ join_datasets <- function(x, y, z, t) {
     }
     
     data <- bind_rows(data, data2, data3, data4, data5, data6) %>%
-      arrange(reporter_iso, partner_iso, commodity_code)
+      arrange(reporter_iso, partner_iso, product_code)
     
     fwrite(data, str_replace(z[t], ".gz", ""))
     compress_gz(str_replace(z[t], ".gz", ""))
