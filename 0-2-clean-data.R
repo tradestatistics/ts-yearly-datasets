@@ -5,7 +5,7 @@
 # The scripts within this project are released under GNU General Public License 3.0
 # See https://github.com/tradestatistics/ts-yearly-datasets/LICENSE for the details
 
-clean <- function(n_cores = 2) {
+clean <- function(n_cores = 4) {
   # messages ----------------------------------------------------------------
   
   message("\nCopyright (C) 2018, Mauricio \"Pacha\" Vargas\n")
@@ -42,8 +42,6 @@ clean <- function(n_cores = 2) {
   } else {
     lapply(seq_along(raw_zip), compute_tidy_data)
   }
-  
-  lapply(str_replace(raw_zip, "zip", "csv"), file_remove)
 }
 
 clean()

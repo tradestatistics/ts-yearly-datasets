@@ -5,7 +5,7 @@
 # The scripts within this project are released under GNU General Public License 3.0
 # See https://github.com/tradestatistics/ts-yearly-datasets/LICENSE for the details
 
-tables <- function(n_cores = 2) {
+tables <- function(n_cores = 4) {
   # messages ----------------------------------------------------------------
   
   message("\nCopyright (C) 2018, Mauricio \"Pacha\" Vargas\n")
@@ -66,16 +66,9 @@ tables <- function(n_cores = 2) {
     distinct(country_iso, .keep_all = T) %>% 
     select(-country_abbreviation)
   
-  continents <- attributes_countries %>% 
-    select(continent_id) %>% 
-    distinct()
-  
-  attributes_countries <- attributes_countries %>% 
-    left_join(continents)
-  
-  if (!file.exists(paste0(tables_dir, "/attributes_countries.csv.gz"))) {
-    fwrite(attributes_countries, paste0(tables_dir, "/attributes_countries.csv"))
-    compress_gz(paste0(tables_dir, "/attributes_countries.csv"))
+  if (!file.exists(paste0(attributes_dir, "/attributes_countries.csv.gz"))) {
+    fwrite(attributes_countries, paste0(attributes_dir, "/attributes_countries.csv"))
+    compress_gz(paste0(attributes_dir, "/attributes_countries.csv"))
   }
   
   product_names <- product_codes %>%
@@ -117,17 +110,17 @@ tables <- function(n_cores = 2) {
 
   rm(product_names_2)
   
-  if (!file.exists(paste0(tables_dir, "/attributes_products.csv.gz"))) {
-    fwrite(attributes_products, paste0(tables_dir, "/attributes_products.csv"))
-    compress_gz(paste0(tables_dir, "/attributes_products.csv"))
+  if (!file.exists(paste0(attributes_dir, "/attributes_products.csv.gz"))) {
+    fwrite(attributes_products, paste0(attributes_dir, "/attributes_products.csv"))
+    compress_gz(paste0(attributes_dir, "/attributes_products.csv"))
   }
   
   attributes_communities <- product_names_3 %>% 
     left_join(colours)
   
-  if (!file.exists(paste0(tables_dir, "/attributes_communities.csv.gz"))) {
-    fwrite(attributes_communities, paste0(tables_dir, "/attributes_communities.csv"))
-    compress_gz(paste0(tables_dir, "/attributes_communities.csv"))
+  if (!file.exists(paste0(attributes_dir, "/attributes_communities.csv.gz"))) {
+    fwrite(attributes_communities, paste0(attributes_dir, "/attributes_communities.csv"))
+    compress_gz(paste0(attributes_dir, "/attributes_communities.csv"))
   }
   
   rm(product_names_3)
@@ -170,20 +163,20 @@ tables <- function(n_cores = 2) {
     arrange(product_code) %>% 
     select(-product_fullname_english)
   
-  if (!file.exists(paste0(tables_dir, "/attributes_products_shortnames.csv.gz"))) {
-    fwrite(attributes_products_shortnames, paste0(tables_dir, "/attributes_products_shortnames.csv"))
-    compress_gz(paste0(tables_dir, "/attributes_products_shortnames.csv"))
+  if (!file.exists(paste0(attributes_dir, "/attributes_products_shortnames.csv.gz"))) {
+    fwrite(attributes_products_shortnames, paste0(attributes_dir, "/attributes_products_shortnames.csv"))
+    compress_gz(paste0(attributes_dir, "/attributes_products_shortnames.csv"))
   }
   
   rm(attributes_products_shortnames_complete, attributes_products_shortnames_nas)
   
   # tables ------------------------------------------------------------------
   
-  if (operating_system != "Windows") {
-    mclapply(seq_along(years_full), compute_tables, mc.cores = n_cores)
-  } else {
+  #if (operating_system != "Windows") {
+  #  mclapply(seq_along(years_full), compute_tables, mc.cores = n_cores)
+  #} else {
     lapply(seq_along(years_full), compute_tables)
-  }
+  #}
 }
 
 tables()

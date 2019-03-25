@@ -188,7 +188,7 @@ create_schema <- function(overwrite = F) {
       )"
     )
     
-    # Year - Reporter - Partner - Commodity -----------------------------------
+    # Year - Reporter - Partner - Product Code --------------------------------
     
     dbSendQuery(con, "DROP TABLE IF EXISTS public.hs07_yrpc")
     
@@ -218,8 +218,8 @@ create_schema <- function(overwrite = F) {
       )"
     )
     
-    # Year - Reporter - Commodity ---------------------------------------------
-    
+    # Year - Reporter - Product Code ------------------------------------------
+
     dbSendQuery(con, "DROP TABLE IF EXISTS public.hs07_yrc")
     
     dbSendQuery(
@@ -250,7 +250,7 @@ create_schema <- function(overwrite = F) {
       )"
     )
     
-    # Year - Commodity --------------------------------------------------------
+    # Year - Product Code -----------------------------------------------------
     
     dbSendQuery(con, "DROP TABLE IF EXISTS public.hs07_yc")
     

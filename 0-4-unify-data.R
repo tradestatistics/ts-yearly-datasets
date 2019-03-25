@@ -9,7 +9,7 @@
 
 #ask_for_converted_codes <- 1
 
-unify <- function(n_cores = 2) {
+unify <- function(n_cores = 4) {
   # messages ----------------------------------------------------------------
   
   message("\nCopyright (C) 2018, Mauricio \"Pacha\" Vargas\n")

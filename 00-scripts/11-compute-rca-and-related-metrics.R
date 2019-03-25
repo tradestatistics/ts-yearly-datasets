@@ -310,16 +310,16 @@ compute_rca_metrics <- function(x, y, z, q, w, n_cores, t) {
     # proximity (countries) ---------------------------------------------------
     
     Phi_cc <- (Mcp_4 %*% t(Mcp_4)) / proximity_countries_denominator(Mcp_4, D_4, cores = min(1,n_cores))
-    
+
     Phi_cc_l <- Phi_cc
     Phi_cc_l[upper.tri(Phi_cc_l, diag = T)] <- NA
-    
+
     Phi_cc_long <- as_tibble(as.matrix(Phi_cc_l)) %>%
       mutate(id = rownames(Phi_cc)) %>%
       gather(id2, value, -id) %>%
       filter(!is.na(value)) %>%
       setNames(c("country_iso", "country_iso_2", "value"))
-    
+
     fwrite(Phi_cc_long, str_replace(q[t], ".gz", ""))
     compress_gz(str_replace(q[t], ".gz", ""))
     rm(Phi_cc_l, Phi_cc_long)
@@ -327,29 +327,29 @@ compute_rca_metrics <- function(x, y, z, q, w, n_cores, t) {
     # proximity (products) ---------------------------------------------------
     
     Phi_pp <- (t(Mcp_4) %*% Mcp_4) / proximity_products_denominator(Mcp_4, U_4, cores = min(1,n_cores))
-    
+
     Phi_pp_l <- Phi_pp
     Phi_pp_l[upper.tri(Phi_pp_l, diag = T)] <- NA
-    
+
     Phi_pp_long <- as_tibble(as.matrix(Phi_pp_l)) %>%
       mutate(id = rownames(Phi_pp)) %>%
       gather(id2, value, -id) %>%
       filter(!is.na(value)) %>%
       setNames(c("product_code", "product_code_2", "value"))
-    
+
     fwrite(Phi_pp_long, str_replace(w[t], ".gz", ""))
     compress_gz(str_replace(w[t], ".gz", ""))
     rm(Phi_pp_l, Phi_pp_long)
-    
+
     # density (countries) -----------------------------------------------------
-    
+
     # Omega_countries_cp <- (Phi_cc %*% Mcp) / colSums(Phi_cc)
-    # 
+    #
     # Omega_countries_cp_long <- as_tibble(as.matrix(Omega_countries_cp)) %>%
     #   mutate(country_iso = rownames(Omega_countries_cp)) %>%
     #   gather(product, value, -country_iso) %>%
     #   setNames(c("country_iso", "product_code", "value"))
-    # 
+    #
     # fwrite(Omega_countries_cp_long, str_replace(e[t], ".gz", ""))
     # compress_gz(str_replace(e[t], ".gz", ""))
     # rm(Omega_countries_cp, Omega_countries_cp_long)

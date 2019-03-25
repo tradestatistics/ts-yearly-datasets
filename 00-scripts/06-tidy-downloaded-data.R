@@ -17,7 +17,7 @@ compute_tidy_data <- function(t) {
     
     # ISO-3 codes -------------------------------------------------------------
     
-    load("../ts-comtrade-codes/01-2-tidy-country-data/country-codes.RData")
+    load("../comtrade-codes/01-2-tidy-country-data/country-codes.RData")
     
     country_codes <- country_codes %>% 
       select(iso3_digit_alpha) %>% 

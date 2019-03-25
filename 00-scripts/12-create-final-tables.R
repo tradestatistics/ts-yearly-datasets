@@ -127,7 +127,7 @@ compute_tables <- function(t) {
     
     yrpc <- yrpc_t1 %>% 
       compute_changes() %>% 
-      select(year, matches("iso"), matches("commodity"), export_value_usd, import_value_usd, matches("change"))
+      select(year, matches("iso"), matches("product"), export_value_usd, import_value_usd, matches("change"))
     
     fwrite(yrpc, yrpc_csv[[t]])
     compress_gz(yrpc_csv[[t]])
@@ -147,6 +147,14 @@ compute_tables <- function(t) {
         "import_value_usd_t3"
       )
     )
+    
+    yrpc <- yrpc_t1 %>% 
+      compute_changes() %>% 
+      select(year, matches("iso"), matches("product"), export_value_usd, import_value_usd, matches("change"))
+    
+    fwrite(yrpc, yrpc_csv[[t]])
+    compress_gz(yrpc_csv[[t]])
+    rm(yrpc)
   }
   
   # YRP ------------------------------------------------------------------

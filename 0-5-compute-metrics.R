@@ -5,7 +5,7 @@
 # The scripts within this project are released under GNU General Public License 3.0
 # See https://github.com/tradestatistics/ts-yearly-datasets/LICENSE for the details
 
-metrics <- function(n_cores = 2) {
+metrics <- function(n_cores = 4) {
   # messages ----------------------------------------------------------------
   
   message("\nCopyright (C) 2018, Mauricio \"Pacha\" Vargas\n")
@@ -44,7 +44,7 @@ metrics <- function(n_cores = 2) {
   
   # RCA based measures ----------------------------------------------------
   
-  ranking_1 <- as_tibble(fread("../ts-atlas-data/2-scraped-tables/ranking-1-economic-complexity-index.csv")) %>%
+  ranking_1 <- as_tibble(fread("../atlas-data/2-scraped-tables/ranking-1-economic-complexity-index.csv")) %>%
     mutate(iso_code = tolower(iso_code)) %>%
     rename(reporter_iso = iso_code)
   

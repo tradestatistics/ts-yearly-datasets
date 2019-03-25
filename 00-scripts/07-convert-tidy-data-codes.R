@@ -8,8 +8,8 @@
 convert_codes <- function(t, x, y) {
   # product codes -----------------------------------------------------------
   
-  load("../ts-comtrade-codes/02-2-tidy-product-data/product-conversion.RData")
-  #load("../ts-comtrade-codes/02-2-tidy-product-data/product-correlation.RData")
+  load("../comtrade-codes/02-2-tidy-product-data/product-conversion.RData")
+  #load("../comtrade-codes/02-2-tidy-product-data/product-correlation.RData")
   
   # convert data ------------------------------------------------------------
   

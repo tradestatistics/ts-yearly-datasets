@@ -114,6 +114,9 @@ try(dir.create(tables_dir))
 tables_dir <- sprintf("%s/hs-rev2007", tables_dir)
 try(dir.create(tables_dir))
 
+attributes_dir <- paste0(tables_dir, "/0-attributes")
+try(dir.create(attributes_dir))
+
 yrpc_dir <- paste0(tables_dir, "/1-yrpc")
 try(dir.create(yrpc_dir))
 
