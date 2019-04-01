@@ -148,19 +148,22 @@ compute_tables <- function(t) {
       )
     )
     
-    yrpc <- yrpc_t1 %>% 
-      compute_changes() %>% 
-      select(year, matches("iso"), matches("product"), export_value_usd, import_value_usd, matches("change"))
-    
-    fwrite(yrpc, yrpc_csv[[t]])
-    compress_gz(yrpc_csv[[t]])
-    rm(yrpc)
+    if (!file.exists(yrpc_gz[t])) {
+      yrpc <- yrpc_t1 %>% 
+        compute_changes() %>% 
+        select(year, matches("iso"), matches("product"), export_value_usd, import_value_usd, matches("change"))
+      
+      fwrite(yrpc, yrpc_csv[[t]])
+      compress_gz(yrpc_csv[[t]])
+      rm(yrpc)
+    }
   }
   
   # YRP ------------------------------------------------------------------
   
   if (!file.exists(yrp_gz[t])) {
     yrp <- yrpc_t1 %>%
+      filter(product_code_length == 4) %>% 
       group_by(year, reporter_iso, partner_iso) %>%
       summarise_trade() %>%
       ungroup() %>% 

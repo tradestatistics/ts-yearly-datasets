@@ -172,11 +172,11 @@ tables <- function(n_cores = 4) {
   
   # tables ------------------------------------------------------------------
   
-  #if (operating_system != "Windows") {
-  #  mclapply(seq_along(years_full), compute_tables, mc.cores = n_cores)
-  #} else {
+  if (operating_system != "Windows") {
+    mclapply(seq_along(years_full), compute_tables, mc.cores = n_cores)
+  } else {
     lapply(seq_along(years_full), compute_tables)
-  #}
+  }
 }
 
 tables()
