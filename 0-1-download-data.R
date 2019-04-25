@@ -61,7 +61,7 @@ download <- function(n_cores = 4) {
       "/ALL/",
       classification2,
       "?token=",
-      token
+      Sys.getenv("token")
     ),
     file = NA
   )
