@@ -1,3 +1,0 @@
-PENDIENTES
-
-TABLAS YC EN 0-6-create-tables
