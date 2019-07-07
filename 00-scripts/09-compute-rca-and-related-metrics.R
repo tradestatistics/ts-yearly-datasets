@@ -14,62 +14,62 @@ compute_rca <- function(x, y, t, group_field) {
     message(paste0(
       "Creating smooth RCA file for the year ", years_full[t], ". Be patient..."
     ))
-    
+
     trade_t1 <- fread2(x[t], character = "product_code", numeric = "trade_value_usd") %>%
       group_by(year, !!sym(group_field), product_code, product_code_length) %>%
-      summarise(trade_value_usd_t1 = sum(trade_value_usd, na.rm = T)) %>% 
+      summarise(trade_value_usd_t1 = sum(trade_value_usd, na.rm = T)) %>%
       ungroup()
-    
+
     trade_t1_4 <- filter(trade_t1, product_code_length == 4)
     trade_t1_6 <- filter(trade_t1, product_code_length == 6)
     rm(trade_t1)
-    
+
     if (years_full[t] <= years_missing_t_minus_1) {
       trade_t1_4 <- trade_t1_4 %>%
         mutate(trade_value_usd_t2 = NA)
-      
+
       trade_t1_6 <- trade_t1_6 %>%
         mutate(trade_value_usd_t2 = NA)
     } else {
       trade_t2 <- fread2(x[t - 1], character = "product_code", numeric = "trade_value_usd") %>%
         group_by(!!sym(group_field), product_code, product_code_length) %>%
-        summarise(trade_value_usd_t2 = sum(trade_value_usd, na.rm = T)) %>% 
+        summarise(trade_value_usd_t2 = sum(trade_value_usd, na.rm = T)) %>%
         ungroup()
-      
+
       trade_t2_4 <- trade_t2 %>% filter(product_code_length == 4)
       trade_t2_6 <- trade_t2 %>% filter(product_code_length == 6)
       rm(trade_t2)
-      
+
       trade_t1_4 <- trade_t1_4 %>%
         left_join(trade_t2_4, by = c(group_field, "product_code"))
-      
+
       trade_t1_6 <- trade_t1_6 %>%
         left_join(trade_t2_6, by = c(group_field, "product_code"))
     }
-    
+
     if (years_full[t] <= years_missing_t_minus_2) {
       trade_t1_4 <- trade_t1_4 %>%
         mutate(trade_value_usd_t3 = NA)
-      
+
       trade_t1_6 <- trade_t1_6 %>%
         mutate(trade_value_usd_t3 = NA)
     } else {
       trade_t3 <- fread2(x[t - 2], character = "product_code", numeric = "trade_value_usd") %>%
         group_by(!!sym(group_field), product_code, product_code_length) %>%
-        summarise(trade_value_usd_t3 = sum(trade_value_usd, na.rm = T)) %>% 
+        summarise(trade_value_usd_t3 = sum(trade_value_usd, na.rm = T)) %>%
         ungroup()
-      
+
       trade_t3_4 <- trade_t3 %>% filter(product_code_length == 4)
       trade_t3_6 <- trade_t3 %>% filter(product_code_length == 6)
       rm(trade_t3)
-      
+
       trade_t1_4 <- trade_t1_4 %>%
         left_join(trade_t3_4, by = c(group_field, "product_code"))
-      
+
       trade_t1_6 <- trade_t1_6 %>%
         left_join(trade_t3_6, by = c(group_field, "product_code"))
     }
-    
+
     trade_t1_4 <- trade_t1_4 %>%
       rowwise() %>% # To apply a weighted mean by rows with 1 weight = 1 column
       mutate(
@@ -87,11 +87,11 @@ compute_rca <- function(x, y, t, group_field) {
         value = "xcp",
         discrete = F,
         tbl_output = T
-      ) %>% 
-      rename(!!sym(group_field) := country, product_code = product) %>% 
-      mutate(year = years_full[t]) %>% 
+      ) %>%
+      rename(!!sym(group_field) := country, product_code = product) %>%
+      mutate(year = years_full[t]) %>%
       select(year, !!sym(group_field), product_code, value)
-    
+
     trade_t1_6 <- trade_t1_6 %>%
       rowwise() %>% # To apply a weighted mean by rows with 1 weight = 1 column
       mutate(
@@ -109,20 +109,20 @@ compute_rca <- function(x, y, t, group_field) {
         value = "xcp",
         discrete = F,
         tbl_output = T
-      ) %>% 
-      rename(!!sym(group_field) := country, product_code = product) %>% 
-      mutate(year = years_full[t]) %>% 
+      ) %>%
+      rename(!!sym(group_field) := country, product_code = product) %>%
+      mutate(year = years_full[t]) %>%
       select(year, !!sym(group_field), product_code, value)
-    
+
     trade_t1 <- bind_rows(trade_t1_4, trade_t1_6) %>% arrange(!!sym(group_field), product_code)
     rm(trade_t1_4, trade_t1_6)
-    
+
     if (group_field == "reporter_iso") {
       names(trade_t1) <- c("year", "country_iso", "product_code", "export_rca")
     } else {
       names(trade_t1) <- c("year", "country_iso", "product_code", "import_rca")
     }
-    
+
     fwrite(trade_t1, str_replace(y[t], ".gz", ""))
     compress_gz(str_replace(y[t], ".gz", ""))
   }
@@ -131,22 +131,22 @@ compute_rca <- function(x, y, t, group_field) {
 compute_complexity_measures <- function(x, yr, ye, yf, zr, ze, zf, q, w, n_cores, t) {
   if (!file.exists(w[t])) {
     # RCA data ----
-    
-    rca_data <- fread2(x[t], character = c("product_code")) %>% 
+
+    rca_data <- fread2(x[t], character = c("product_code")) %>%
       inner_join(select(ranking_1, reporter_iso), by = c("country_iso" = "reporter_iso")) %>%
-      mutate(export_rca = ifelse(export_rca > 1, 1, 0)) %>% 
+      mutate(export_rca = ifelse(export_rca > 1, 1, 0)) %>%
       select(-year)
-    
-    rca_4 <- rca_data %>% 
+
+    rca_4 <- rca_data %>%
       filter(str_length(product_code) == 4)
-    
-    rca_6 <- rca_data %>% 
+
+    rca_6 <- rca_data %>%
       filter(str_length(product_code) == 6)
-    
+
     rm(rca_data)
-    
+
     # ECI/PCI 4 digits ----
-    
+
     reflections_4 <- complexity_measures(
       revealed_comparative_advantage = rca_4,
       country = "country_iso",
@@ -155,7 +155,7 @@ compute_complexity_measures <- function(x, yr, ye, yf, zr, ze, zf, q, w, n_cores
       value = "export_rca",
       tbl_output = TRUE
     )
-    
+
     eigenvalues_4 <- complexity_measures(
       revealed_comparative_advantage = rca_4,
       country = "country_iso",
@@ -164,7 +164,7 @@ compute_complexity_measures <- function(x, yr, ye, yf, zr, ze, zf, q, w, n_cores
       value = "export_rca",
       tbl_output = TRUE
     )
-    
+
     fitness_4 <- complexity_measures(
       revealed_comparative_advantage = rca_4,
       country = "country_iso",
@@ -173,9 +173,9 @@ compute_complexity_measures <- function(x, yr, ye, yf, zr, ze, zf, q, w, n_cores
       value = "export_rca",
       tbl_output = TRUE
     )
-    
+
     # ECI/PCI 6 digits ----
-    
+
     reflections_6 <- complexity_measures(
       revealed_comparative_advantage = rca_6,
       country = "country_iso",
@@ -184,7 +184,7 @@ compute_complexity_measures <- function(x, yr, ye, yf, zr, ze, zf, q, w, n_cores
       value = "export_rca",
       tbl_output = TRUE
     )
-    
+
     eigenvalues_6 <- complexity_measures(
       revealed_comparative_advantage = rca_6,
       country = "country_iso",
@@ -193,7 +193,7 @@ compute_complexity_measures <- function(x, yr, ye, yf, zr, ze, zf, q, w, n_cores
       value = "export_rca",
       tbl_output = TRUE
     )
-    
+
     fitness_6 <- complexity_measures(
       revealed_comparative_advantage = rca_6,
       country = "country_iso",
@@ -202,26 +202,26 @@ compute_complexity_measures <- function(x, yr, ye, yf, zr, ze, zf, q, w, n_cores
       value = "export_rca",
       tbl_output = TRUE
     )
-    
+
     # save ECI ----
-    
+
     if (!file.exists(yr[t])) {
       fwrite(reflections_4$economic_complexity_index, str_replace(yr[t], ".gz", ""))
       compress_gz(str_replace(yr[t], ".gz", ""))
     }
-    
+
     if (!file.exists(ye[t])) {
       fwrite(eigenvalues_4$economic_complexity_index, str_replace(ye[t], ".gz", ""))
       compress_gz(str_replace(ye[t], ".gz", ""))
     }
-    
+
     if (!file.exists(yf[t])) {
       fwrite(fitness_4$economic_complexity_index, str_replace(yf[t], ".gz", ""))
       compress_gz(str_replace(yf[t], ".gz", ""))
     }
-    
+
     # save PCI 4 digits ----
-    
+
     if (!file.exists(zr[t])) {
       fwrite(
         bind_rows(
@@ -232,7 +232,7 @@ compute_complexity_measures <- function(x, yr, ye, yf, zr, ze, zf, q, w, n_cores
       )
       compress_gz(str_replace(zr[t], ".gz", ""))
     }
-    
+
     if (!file.exists(ze[t])) {
       fwrite(
         bind_rows(
@@ -243,7 +243,7 @@ compute_complexity_measures <- function(x, yr, ye, yf, zr, ze, zf, q, w, n_cores
       )
       compress_gz(str_replace(ze[t], ".gz", ""))
     }
-    
+
     if (!file.exists(zf[t])) {
       fwrite(
         bind_rows(
@@ -254,11 +254,11 @@ compute_complexity_measures <- function(x, yr, ye, yf, zr, ze, zf, q, w, n_cores
       )
       compress_gz(str_replace(zf[t], ".gz", ""))
     }
-    
+
     rm(reflections_4, eigenvalues_4, rca_6)
-    
+
     # proximity 4 digits ----
-    
+
     proximity_4 <- proximity(
       revealed_comparative_advantage = rca_4,
       country = "country_iso",
@@ -268,12 +268,12 @@ compute_complexity_measures <- function(x, yr, ye, yf, zr, ze, zf, q, w, n_cores
       ubiquity = fitness_4$ubiquity,
       tbl_output = TRUE
     )
-    
+
     if (!file.exists(q[t])) {
       fwrite(proximity_4$proximity_countries, str_replace(q[t], ".gz", ""))
       compress_gz(str_replace(q[t], ".gz", ""))
     }
-    
+
     if (!file.exists(w[t])) {
       fwrite(proximity_4$proximity_products, str_replace(w[t], ".gz", ""))
       compress_gz(str_replace(w[t], ".gz", ""))

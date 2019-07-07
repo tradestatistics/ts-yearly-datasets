@@ -7,7 +7,7 @@
 
 create_schema <- function(overwrite = F) {
   # messages ----------------------------------------------------------------
-  
+
   message("\nCopyright (C) 2018, Mauricio \"Pacha\" Vargas\n")
   message("This file is part of Open Trade Statistics project")
   message("\nThe scripts within this project are released under GNU General Public License 3.0")
@@ -15,15 +15,16 @@ create_schema <- function(overwrite = F) {
   message("This is free software, and you are welcome to redistribute it under certain conditions.\n")
   message("See https://github.com/tradestatistics/ts-yearly-datasets/LICENSE for the details\n")
   readline(prompt = "Press [enter] to continue if and only if you agree to the license terms")
-  
+
   credentials <- menu(c("yes", "no"),
-                      title = "Have you stored the host, user password and DB name safely in your .Renviron file?",
-                      graphics = F)
-  
+    title = "Have you stored the host, user password and DB name safely in your .Renviron file?",
+    graphics = F
+  )
+
   stopifnot(credentials == 1)
-  
+
   # helpers -----------------------------------------------------------------
-  
+
   source("00-scripts/00-user-input-and-derived-classification-digits-years.R")
   source("00-scripts/01-packages.R")
   source("00-scripts/02-dirs-and-files.R")
@@ -35,16 +36,16 @@ create_schema <- function(overwrite = F) {
   # source("00-scripts/08-join-converted-datasets.R")
   # source("00-scripts/09-compute-rca-and-related-metrics.R")
   # source("00-scripts/10-create-final-tables.R")
-  
+
   # connection parameters ---------------------------------------------------
-  
+
   drv <- dbDriver("PostgreSQL") # choose the driver
-  
+
   dbusr <- Sys.getenv("dbusr")
   dbpwd <- Sys.getenv("dbpwd")
   dbhost <- Sys.getenv("dbhost")
   dbname <- Sys.getenv("dbname")
-  
+
   con <- dbConnect(
     drv,
     host = dbhost,
@@ -53,21 +54,21 @@ create_schema <- function(overwrite = F) {
     password = dbpwd,
     dbname = dbname
   )
-  
+
   # List tables associated with the public schema
   db_tables <- dbGetQuery(con, "SELECT table_name FROM information_schema.tables WHERE table_schema='public'")
-  
+
   if (nrow(db_tables) > 0 & overwrite == F) {
     messageline()
     message("The DB schema is not empty so it won't be replaced.")
   } else {
     messageline()
     message("Creating/Overwriting DB schema...")
-    
+
     # Countries ---------------------------------------------------------------
-    
+
     dbSendQuery(con, "DROP TABLE IF EXISTS public.attributes_countries")
-    
+
     dbSendQuery(
       con,
       "CREATE TABLE public.attributes_countries
@@ -80,11 +81,11 @@ create_schema <- function(overwrite = F) {
       eu28_member integer DEFAULT NULL
       )"
     )
-    
+
     # Product names -----------------------------------------------------------
-    
+
     dbSendQuery(con, "DROP TABLE IF EXISTS public.attributes_products")
-    
+
     dbSendQuery(
       con,
       "CREATE TABLE public.attributes_products 
@@ -95,9 +96,9 @@ create_schema <- function(overwrite = F) {
       group_name varchar(255) DEFAULT NULL
       )"
     )
-    
+
     dbSendQuery(con, "DROP TABLE IF EXISTS public.attributes_products_shortnames")
-    
+
     dbSendQuery(
       con,
       "CREATE TABLE public.attributes_products_shortnames 
@@ -108,11 +109,11 @@ create_schema <- function(overwrite = F) {
       CONSTRAINT hs07_attributes_products_shortnames_attributes_products_pk FOREIGN KEY (product_code) REFERENCES public.attributes_products (product_code)
       )"
     )
-    
+
     # Communities -------------------------------------------------------------
-    
+
     dbSendQuery(con, "DROP TABLE IF EXISTS public.attributes_communities")
-    
+
     dbSendQuery(
       con,
       "CREATE TABLE public.attributes_communities 
@@ -125,11 +126,11 @@ create_schema <- function(overwrite = F) {
       CONSTRAINT hs07_attributes_communities_attributes_products_fk FOREIGN KEY (product_code) REFERENCES public.attributes_products (product_code)
       )"
     )
-    
+
     # Year - Reporter ---------------------------------------------------------
-    
+
     dbSendQuery(con, "DROP TABLE IF EXISTS public.hs07_yr")
-    
+
     dbSendQuery(
       con,
       "CREATE TABLE public.hs07_yr 
@@ -166,11 +167,11 @@ create_schema <- function(overwrite = F) {
       CONSTRAINT hs07_yr_attributes_countries_fk FOREIGN KEY (reporter_iso) REFERENCES public.attributes_countries (country_iso)
       )"
     )
-    
+
     # Year - Reporter - Partner -----------------------------------------------
-    
+
     dbSendQuery(con, "DROP TABLE IF EXISTS public.hs07_yrp")
-    
+
     dbSendQuery(
       con,
       "CREATE TABLE public.hs07_yrp 
@@ -193,11 +194,11 @@ create_schema <- function(overwrite = F) {
       CONSTRAINT hs07_yrp_attributes_countries_id_fk_2 FOREIGN KEY (partner_iso) REFERENCES public.attributes_countries (country_iso)
       )"
     )
-    
+
     # Year - Reporter - Partner - Product Code --------------------------------
-    
+
     dbSendQuery(con, "DROP TABLE IF EXISTS public.hs07_yrpc")
-    
+
     dbSendQuery(
       con,
       "CREATE TABLE public.hs07_yrpc 
@@ -223,11 +224,11 @@ create_schema <- function(overwrite = F) {
       CONSTRAINT hs07_yrpc_attributes_product_names_fk_3 FOREIGN KEY (product_code) REFERENCES public.attributes_products (product_code)
       )"
     )
-    
+
     # Year - Reporter - Product Code ------------------------------------------
-    
+
     dbSendQuery(con, "DROP TABLE IF EXISTS public.hs07_yrc")
-    
+
     dbSendQuery(
       con,
       "CREATE TABLE public.hs07_yrc 
@@ -255,11 +256,11 @@ create_schema <- function(overwrite = F) {
       CONSTRAINT hs07_yrc_attributes_product_names_fk_2 FOREIGN KEY (product_code) REFERENCES public.attributes_products (product_code)
       )"
     )
-    
+
     # Year - Product Code -----------------------------------------------------
-    
+
     dbSendQuery(con, "DROP TABLE IF EXISTS public.hs07_yc")
-    
+
     dbSendQuery(
       con,
       "CREATE TABLE public.hs07_yc
@@ -298,6 +299,6 @@ create_schema <- function(overwrite = F) {
       )"
     )
   }
-  }
+}
 
 create_schema()

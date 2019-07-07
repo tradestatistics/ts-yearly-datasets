@@ -7,7 +7,7 @@
 
 clean <- function(n_cores = 4) {
   # messages ----------------------------------------------------------------
-  
+
   message("\nCopyright (C) 2018, Mauricio \"Pacha\" Vargas\n")
   message("This file is part of Open Trade Statistics project")
   message("\nThe scripts within this project are released under GNU General Public License 3.0")
@@ -15,9 +15,9 @@ clean <- function(n_cores = 4) {
   message("This is free software, and you are welcome to redistribute it under certain conditions.\n")
   message("See https://github.com/tradestatistics/ts-yearly-datasets/LICENSE for the details\n")
   readline(prompt = "Press [enter] to continue if and only if you agree to the license terms")
-  
+
   # scripts -----------------------------------------------------------------
-  
+
   source("00-scripts/00-user-input-and-derived-classification-digits-years.R")
   source("00-scripts/01-packages.R")
   source("00-scripts/02-dirs-and-files.R")
@@ -29,12 +29,12 @@ clean <- function(n_cores = 4) {
   # source("00-scripts/08-join-converted-datasets.R")
   # source("00-scripts/09-compute-rca-and-related-metrics.R")
   # source("00-scripts/10-create-final-tables.R")
-  
+
   # create tidy datasets ----------------------------------------------------
-  
+
   messageline()
   message("Rearranging files. Please wait...")
-  
+
   if (operating_system != "Windows") {
     mclapply(seq_along(raw_zip), compute_tidy_data, mc.cores = n_cores)
   } else {

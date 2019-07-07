@@ -13,9 +13,9 @@ if (exists("ask_for_token")) {
     title = "Have you safely stored your token in your .Renviron file?",
     graphics = F
   )
-  
+
   stopifnot(token == 1)
-  
+
   token <- Sys.getenv("token")
 }
 
@@ -46,7 +46,7 @@ if (exists("ask_to_remove_old_files")) {
 #     c("HS rev 1992", "HS rev 1996", "HS rev 2002", "HS rev 2007", "SITC rev 1", "SITC rev 2", "SITC rev 3", "SITC rev 4"),
 #     title = "Converted codes:",
 #     graphics = F
-#   )  
+#   )
 # }
 
 # classification ----------------------------------------------------------
@@ -60,21 +60,53 @@ if (dataset < 5) {
 # number of digits --------------------------------------------------------
 
 if (classification == "sitc") {
-  J <- c(4,5) 
+  J <- c(4, 5)
 } else {
-  J <- c(4,6)
+  J <- c(4, 6)
 }
 
 # years by classification -------------------------------------------------
 
-if (dataset == 1) { revision <- 1992; revision2 <- revision; classification2 <- "H0" }
-if (dataset == 2) { revision <- 1996; revision2 <- revision; classification2 <- "H1" }
-if (dataset == 3) { revision <- 2002; revision2 <- revision; classification2 <- "H2" }
-if (dataset == 4) { revision <- 2007; revision2 <- revision; classification2 <- "H3" }
-if (dataset == 5) { revision <- 1; revision2 <- 1962; classification2 <- "S1" }
-if (dataset == 6) { revision <- 2; revision2 <- 1976; classification2 <- "S2" }
-if (dataset == 7) { revision <- 3; revision2 <- 1988; classification2 <- "S3" }
-if (dataset == 8) { revision <- 4; revision2 <- 2007; classification2 <- "S4" }
+if (dataset == 1) {
+  revision <- 1992
+  revision2 <- revision
+  classification2 <- "H0"
+}
+if (dataset == 2) {
+  revision <- 1996
+  revision2 <- revision
+  classification2 <- "H1"
+}
+if (dataset == 3) {
+  revision <- 2002
+  revision2 <- revision
+  classification2 <- "H2"
+}
+if (dataset == 4) {
+  revision <- 2007
+  revision2 <- revision
+  classification2 <- "H3"
+}
+if (dataset == 5) {
+  revision <- 1
+  revision2 <- 1962
+  classification2 <- "S1"
+}
+if (dataset == 6) {
+  revision <- 2
+  revision2 <- 1976
+  classification2 <- "S2"
+}
+if (dataset == 7) {
+  revision <- 3
+  revision2 <- 1988
+  classification2 <- "S3"
+}
+if (dataset == 8) {
+  revision <- 4
+  revision2 <- 2007
+  classification2 <- "S4"
+}
 
 years <- revision2:2017
 years_full <- 1962:2017

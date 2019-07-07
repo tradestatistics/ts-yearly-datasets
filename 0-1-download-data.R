@@ -20,9 +20,9 @@ download <- function(n_cores = 4) {
   message("This is free software, and you are welcome to redistribute it under certain conditions.\n")
   message("See https://github.com/tradestatistics/ts-yearly-datasets/LICENSE for the details\n")
   readline(prompt = "Press [enter] to continue if and only if you agree to the license terms")
-  
+
   # scripts -----------------------------------------------------------------
-  
+
   source("00-scripts/00-user-input-and-derived-classification-digits-years.R")
   source("00-scripts/01-packages.R")
   source("00-scripts/02-dirs-and-files.R")
@@ -36,7 +36,7 @@ download <- function(n_cores = 4) {
   # source("00-scripts/10-create-final-tables.R")
 
   # download data -----------------------------------------------------------
-  
+
   try(
     old_file <- list.files(raw_dir, pattern = "downloaded", full.names = T)
   )
@@ -107,7 +107,7 @@ download <- function(n_cores = 4) {
   } else {
     lapply(seq_along(years), data_downloading)
   }
-  
+
   links <- links %>%
     mutate(url = str_replace(url, "token=*", "token=REPLACE_TOKEN")) %>%
     select(year, url, new_file, local_file_date) %>%
@@ -115,30 +115,32 @@ download <- function(n_cores = 4) {
 
   try(file.remove(old_file))
   fwrite(links, paste0(raw_dir, "/downloaded-files-", Sys.Date(), ".csv"))
-  
-  # re-compress -------------------------------------------------------------
-  
-  lapply(seq_along(raw_zip), 
-         function(t) {
-           gz <- raw_zip[t] %>% str_replace("/zip/", "/gz/") %>% str_replace("zip$", "csv.gz")
 
-           if (!file.exists(gz)) {
-             x <- raw_zip[t]
-             extract(x, y = raw_dir_gz)
-           }
-         }
+  # re-compress -------------------------------------------------------------
+
+  lapply(
+    seq_along(raw_zip),
+    function(t) {
+      gz <- raw_zip[t] %>% str_replace("/zip/", "/gz/") %>% str_replace("zip$", "csv.gz")
+
+      if (!file.exists(gz)) {
+        x <- raw_zip[t]
+        extract(x, y = raw_dir_gz)
+      }
+    }
   )
-  
+
   raw_csv <- list.files(path = raw_dir_gz, pattern = "csv$", full.names = T)
-  
-  lapply(seq_along(raw_csv), 
-         function (t) {
-           x <- raw_csv[t]
-           y <- str_replace(raw_csv[t], "csv$", "csv.gz")
-           if (!file.exists(y)) {
-             compress_gz(x) 
-           }
-         }
+
+  lapply(
+    seq_along(raw_csv),
+    function(t) {
+      x <- raw_csv[t]
+      y <- str_replace(raw_csv[t], "csv$", "csv.gz")
+      if (!file.exists(y)) {
+        compress_gz(x)
+      }
+    }
   )
 }
 

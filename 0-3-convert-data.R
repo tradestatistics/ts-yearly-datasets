@@ -7,11 +7,11 @@
 
 # user input --------------------------------------------------------------
 
-#ask_for_conversion_codes <- 1
+# ask_for_conversion_codes <- 1
 
 convert <- function(n_cores = 4) {
   # messages ----------------------------------------------------------------
-  
+
   message("\nCopyright (C) 2018, Mauricio \"Pacha\" Vargas\n")
   message("This file is part of Open Trade Statistics project")
   message("\nThe scripts within this project are released under GNU General Public License 3.0")
@@ -19,9 +19,9 @@ convert <- function(n_cores = 4) {
   message("This is free software, and you are welcome to redistribute it under certain conditions.\n")
   message("See https://github.com/tradestatistics/ts-yearly-datasets/LICENSE for the details\n")
   readline(prompt = "Press [enter] to continue if and only if you agree to the license terms")
-  
+
   # scripts -----------------------------------------------------------------
-  
+
   source("00-scripts/00-user-input-and-derived-classification-digits-years.R")
   source("00-scripts/01-packages.R")
   source("00-scripts/02-dirs-and-files.R")
@@ -33,15 +33,18 @@ convert <- function(n_cores = 4) {
   # source("00-scripts/08-join-converted-datasets.R")
   # source("00-scripts/09-compute-rca-and-related-metrics.R")
   # source("00-scripts/10-create-final-tables.R")
-  
+
   # convert data ------------------------------------------------------------
 
   if (operating_system != "Windows") {
-    mclapply(seq_along(converted_gz), convert_codes, mc.cores = n_cores, 
-             x = clean_gz, y = converted_gz)
+    mclapply(seq_along(converted_gz), convert_codes,
+      mc.cores = n_cores,
+      x = clean_gz, y = converted_gz
+    )
   } else {
-    lapply(seq_along(converted_gz), convert_codes, 
-           x = clean_gz, y = converted_gz)
+    lapply(seq_along(converted_gz), convert_codes,
+      x = clean_gz, y = converted_gz
+    )
   }
 }
 

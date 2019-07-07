@@ -54,7 +54,7 @@ try(dir.create(converted_dir))
 
 try(dir.create(paste(converted_dir, c1[dataset], sep = "/")))
 
-converted_gz <- grep(c1[dataset], clean_gz, value = TRUE) %>% 
+converted_gz <- grep(c1[dataset], clean_gz, value = TRUE) %>%
   str_replace(clean_dir, converted_dir)
 
 # 0-4-unify-data.R
@@ -134,37 +134,37 @@ yc_dir <- paste0(tables_dir, "/5-yc")
 try(dir.create(yc_dir))
 
 yrpc_gz <- unified_gz %>%
-  gsub(unified_dir, yrpc_dir, .) %>% 
+  gsub(unified_dir, yrpc_dir, .) %>%
   gsub("1-yrpc/hs-rev2007/hs-rev2007", "1-yrpc/yrpc", .)
 
 yrpc_csv <- yrpc_gz %>% gsub(".gz", "", .)
 
 yrpc_internal_gz <- unified_gz %>%
-  gsub(unified_dir, yrpc_internal_dir, .) %>% 
+  gsub(unified_dir, yrpc_internal_dir, .) %>%
   gsub("1-yrpc-internal/hs-rev2007/hs-rev2007", "1-yrpc-internal/yrpc", .)
 
 yrpc_internal_csv <- yrpc_internal_gz %>% gsub(".gz", "", .)
 
 yrp_gz <- unified_gz %>%
-  gsub(unified_dir, yrp_dir, .) %>% 
+  gsub(unified_dir, yrp_dir, .) %>%
   gsub("2-yrp/hs-rev2007/hs-rev2007", "2-yrp/yrp", .)
 
 yrp_csv <- yrp_gz %>% gsub(".gz", "", .)
 
 yrc_gz <- unified_gz %>%
-  gsub(unified_dir, yrc_dir, .) %>% 
+  gsub(unified_dir, yrc_dir, .) %>%
   gsub("3-yrc/hs-rev2007/hs-rev2007", "3-yrc/yrc", .)
 
 yrc_csv <- yrc_gz %>% gsub(".gz", "", .)
 
 yr_gz <- unified_gz %>%
-  gsub(unified_dir, yr_dir, .) %>% 
+  gsub(unified_dir, yr_dir, .) %>%
   gsub("4-yr/hs-rev2007/hs-rev2007", "4-yr/yr", .)
 
 yr_csv <- yr_gz %>% gsub(".gz", "", .)
 
 yc_gz <- unified_gz %>%
-  gsub(unified_dir, yc_dir, .) %>% 
+  gsub(unified_dir, yc_dir, .) %>%
   gsub("5-yc/hs-rev2007/hs-rev2007", "5-yc/yc", .)
 
 yc_csv <- yc_gz %>% gsub(".gz", "", .)

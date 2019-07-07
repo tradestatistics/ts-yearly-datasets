@@ -20,8 +20,8 @@ fread2 <- function(file, select = NULL, character = NULL, numeric = NULL) {
   messageline()
   message("function fread2")
   message("file: ", file)
-  
-  if(str_sub(file, start = -2) == "gz") {
+
+  if (str_sub(file, start = -2) == "gz") {
     d <- fread(
       cmd = paste("zcat", file),
       select = select,
@@ -44,7 +44,7 @@ fread2 <- function(file, select = NULL, character = NULL, numeric = NULL) {
       as_tibble() %>%
       clean_names()
   }
-  
+
   return(d)
 }
 
