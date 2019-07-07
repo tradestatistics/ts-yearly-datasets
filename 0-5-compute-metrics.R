@@ -27,78 +27,237 @@ metrics <- function(n_cores = 4) {
   # source("00-scripts/06-tidy-downloaded-data.R")
   # source("00-scripts/07-convert-tidy-data-codes.R")
   # source("00-scripts/08-join-converted-datasets.R")
-  Rcpp::sourceCpp("00-scripts/09-proximity-countries-denominator.cpp")
-  Rcpp::sourceCpp("00-scripts/10-proximity-products-denominator.cpp")
-  source("00-scripts/11-compute-rca-and-related-metrics.R")
-  # source("00-scripts/12-create-final-tables.R")
+  source("00-scripts/09-compute-rca-and-related-metrics.R")
+  # source("00-scripts/10-create-final-tables.R")
 
-  # RCA -------------------------------------------------------------------
+  # RCA ----
 
   lapply(seq_along(years_full), compute_rca,
-         x = unified_gz, y = rca_exports_gz, keep = "reporter_iso"
+         x = unified_gz, y = rca_exports_gz, group_field = "reporter_iso"
   )
   
   lapply(seq_along(years_full), compute_rca,
-         x = unified_gz, y = rca_imports_gz, keep = "partner_iso"
+         x = unified_gz, y = rca_imports_gz, group_field = "partner_iso"
   )
   
-  # RCA based measures ----------------------------------------------------
+  # RCA based measures ----
   
   ranking_1 <- as_tibble(fread("../atlas-data/2-scraped-tables/ranking-1-economic-complexity-index.csv")) %>%
-    mutate(iso_code = tolower(iso_code)) %>%
+    mutate(
+      iso_code = tolower(iso_code),
+      iso_code = ifelse(iso_code == "rou", "rom", iso_code)
+    ) %>%
     rename(reporter_iso = iso_code)
   
   if (operating_system != "Windows") {
-    mclapply(seq_along(years_full), compute_rca_metrics,
-             x = rca_exports_gz, y = eci_rankings_gz, z = pci_rankings_gz,
-             q = proximity_countries_gz, w = proximity_products_gz, n_cores = n_cores
+    mclapply(seq_along(years_full), 
+             compute_complexity_measures,
+             x = rca_exports_gz, 
+             yr = eci_rankings_r_gz,
+             ye = eci_rankings_e_gz,
+             yf = eci_rankings_f_gz,
+             zr = pci_rankings_r_gz,
+             ze = pci_rankings_e_gz,
+             zf = pci_rankings_f_gz,
+             q = proximity_countries_gz, 
+             w = proximity_products_gz,
+             n_cores = n_cores
     )
   } else {
-    lapply(seq_along(years_full), compute_rca_metrics,
-           x = rca_exports_gz, y = eci_rankings_gz, z = pci_rankings_gz,
-           q = proximity_countries_gz, w = proximity_products_gz
+    lapply(seq_along(years_full), 
+           compute_complexity_measures,
+           x = rca_exports_gz, 
+           yr = eci_rankings_r_gz,
+           ye = eci_rankings_e_gz,
+           yf = eci_rankings_f_gz,
+           zr = pci_rankings_r_gz,
+           ze = pci_rankings_e_gz,
+           zf = pci_rankings_f_gz,
+           q = proximity_countries_gz,
+           w = proximity_products_gz,
+           n_cores = 1
     ) 
   }
   
-  # join ECI rankings -------------------------------------------------------
+  # join ECI rankings ----
 
-  joined_eci_rankings <- lapply(eci_rankings_gz, fread2)
-
-  joined_eci_rankings <- lapply(
+  joined_eci_r_rankings <- lapply(eci_rankings_r_gz, fread2)
+  joined_eci_e_rankings <- lapply(eci_rankings_e_gz, fread2)
+  joined_eci_f_rankings <- lapply(eci_rankings_f_gz, fread2)
+  
+  joined_eci_r_rankings <- lapply(
       seq_along(years_full),
       function(t) {
-        joined_eci_rankings[[t]] %>%
-          arrange(-eci) %>% 
-          mutate(eci_rank = row_number()) %>%
+        joined_eci_r_rankings[[t]] %>%
+          arrange(-value) %>% 
+          rename(eci = value) %>% 
+          mutate(
+            year = years_full[t],
+            eci_rank = row_number()
+          ) %>%
           select(year, everything())
       }
     )
 
-  joined_eci_rankings <- bind_rows(joined_eci_rankings)
-  fwrite(joined_eci_rankings, paste0(eci_dir, "/eci-joined-ranking.csv"))
-  compress_gz(paste0(eci_dir, "/eci-joined-ranking.csv"))
-  rm(joined_eci_rankings)
-
-  # join PCI rankings -------------------------------------------------------
-
-  joined_pci_rankings <- lapply(pci_rankings_gz, fread2, character = c("product_code"))
+  joined_eci_r_rankings <- bind_rows(joined_eci_r_rankings)
+  fwrite(joined_eci_r_rankings, paste0(eci_dir, "/eci-reflections-joined-ranking.csv"))
+  compress_gz(paste0(eci_dir, "/eci-reflections-joined-ranking.csv"))
+  rm(joined_eci_r_rankings)
   
-  joined_pci_rankings <-  lapply(
+  joined_eci_e_rankings <- lapply(
     seq_along(years_full),
     function(t) {
-      joined_pci_rankings[[t]] %>%
-        mutate(product_code_length = str_length(product_code)) %>% 
-        arrange(-pci, product_code_length) %>% 
-        group_by(product_code_length) %>% 
-        mutate(pci_rank = row_number()) %>%
-        ungroup()
+      joined_eci_e_rankings[[t]] %>%
+        arrange(-value) %>% 
+        rename(eci = value) %>% 
+        mutate(
+          year = years_full[t],
+          eci_rank = row_number()
+        ) %>%
+        select(year, everything())
     }
   )
+  
+  joined_eci_e_rankings <- bind_rows(joined_eci_e_rankings)
+  fwrite(joined_eci_e_rankings, paste0(eci_dir, "/eci-eigenvalues-joined-ranking.csv"))
+  compress_gz(paste0(eci_dir, "/eci-eigenvalues-joined-ranking.csv"))
+  rm(joined_eci_e_rankings)
+  
+  joined_eci_f_rankings <- lapply(
+    seq_along(years_full),
+    function(t) {
+      joined_eci_f_rankings[[t]] %>%
+        arrange(-value) %>% 
+        rename(eci = value) %>% 
+        mutate(
+          year = years_full[t],
+          eci_rank = row_number()
+        ) %>%
+        select(year, everything())
+    }
+  )
+  
+  joined_eci_f_rankings <- bind_rows(joined_eci_f_rankings)
+  fwrite(joined_eci_f_rankings, paste0(eci_dir, "/eci-fitness-joined-ranking.csv"))
+  compress_gz(paste0(eci_dir, "/eci-fitness-joined-ranking.csv"))
+  rm(joined_eci_f_rankings)
+  
+  # join PCI rankings ----
 
-  joined_pci_rankings <- bind_rows(joined_pci_rankings)
-  fwrite(joined_pci_rankings, paste0(pci_dir, "/pci-joined-ranking.csv"))
-  compress_gz(paste0(pci_dir, "/pci-joined-ranking.csv"))
-  rm(joined_pci_rankings)
+  joined_pci_r_rankings <- lapply(pci_rankings_r_gz, fread2, character = c("product"))
+  joined_pci_e_rankings <- lapply(pci_rankings_e_gz, fread2, character = c("product"))
+  joined_pci_f_rankings <- lapply(pci_rankings_f_gz, fread2, character = c("product"))
+  
+  joined_pci_r_rankings_4 <- lapply(
+    seq_along(years_full),
+    function(t) {
+      joined_pci_r_rankings[[t]] %>%
+        filter(str_length(product) == 4) %>% 
+        arrange(-value) %>% 
+        rename(pci = value) %>% 
+        mutate(
+          year = years_full[t],
+          pci_rank = row_number()
+        ) %>%
+        select(year, everything())
+    }
+  )
+  
+  joined_pci_r_rankings_6 <- lapply(
+    seq_along(years_full),
+    function(t) {
+      joined_pci_r_rankings[[t]] %>%
+        filter(str_length(product) == 6) %>% 
+        arrange(-value) %>% 
+        rename(pci = value) %>% 
+        mutate(
+          year = years_full[t],
+          pci_rank = row_number()
+        ) %>%
+        select(year, everything())
+    }
+  )
+  
+  joined_pci_r_rankings <- bind_rows(joined_pci_r_rankings_4, joined_pci_r_rankings_6) %>% 
+    arrange(year, pci_rank)
+  
+  fwrite(joined_pci_r_rankings, paste0(pci_dir, "/pci-reflections-joined-ranking.csv"))
+  compress_gz(paste0(pci_dir, "/pci-reflections-joined-ranking.csv"))
+  rm(joined_pci_r_rankings)
+  
+  joined_pci_e_rankings_4 <- lapply(
+    seq_along(years_full),
+    function(t) {
+      joined_pci_e_rankings[[t]] %>%
+        filter(str_length(product) == 4) %>% 
+        arrange(-value) %>% 
+        rename(pci = value) %>% 
+        mutate(
+          year = years_full[t],
+          pci_rank = row_number()
+        ) %>%
+        select(year, everything())
+    }
+  )
+  
+  joined_pci_e_rankings_6 <- lapply(
+    seq_along(years_full),
+    function(t) {
+      joined_pci_e_rankings[[t]] %>%
+        filter(str_length(product) == 6) %>% 
+        arrange(-value) %>% 
+        rename(pci = value) %>% 
+        mutate(
+          year = years_full[t],
+          pci_rank = row_number()
+        ) %>%
+        select(year, everything())
+    }
+  )
+  
+  joined_pci_e_rankings <- bind_rows(joined_pci_e_rankings_4, joined_pci_e_rankings_6) %>% 
+    arrange(year, pci_rank)
+  
+  fwrite(joined_pci_e_rankings, paste0(pci_dir, "/pci-eigenvalues-joined-ranking.csv"))
+  compress_gz(paste0(pci_dir, "/pci-eigenvalues-joined-ranking.csv"))
+  rm(joined_pci_e_rankings)
+  
+  joined_pci_f_rankings_4 <- lapply(
+    seq_along(years_full),
+    function(t) {
+      joined_pci_f_rankings[[t]] %>%
+        filter(str_length(product) == 4) %>% 
+        arrange(-value) %>% 
+        rename(pci = value) %>% 
+        mutate(
+          year = years_full[t],
+          pci_rank = row_number()
+        ) %>%
+        select(year, everything())
+    }
+  )
+  
+  joined_pci_f_rankings_6 <- lapply(
+    seq_along(years_full),
+    function(t) {
+      joined_pci_f_rankings[[t]] %>%
+        filter(str_length(product) == 6) %>% 
+        arrange(-value) %>% 
+        rename(pci = value) %>% 
+        mutate(
+          year = years_full[t],
+          pci_rank = row_number()
+        ) %>%
+        select(year, everything())
+    }
+  )
+  
+  joined_pci_f_rankings <- bind_rows(joined_pci_f_rankings_4, joined_pci_f_rankings_6) %>% 
+    arrange(year, pci_rank)
+  
+  fwrite(joined_pci_f_rankings, paste0(pci_dir, "/pci-fitness-joined-ranking.csv"))
+  compress_gz(paste0(pci_dir, "/pci-fitness-joined-ranking.csv"))
+  rm(joined_pci_f_rankings)
 }
 
 metrics()

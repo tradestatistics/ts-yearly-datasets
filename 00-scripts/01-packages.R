@@ -14,7 +14,9 @@ operating_system <- Sys.info()[['sysname']]
 if (!require("pacman")) install.packages("pacman")
 
 if (operating_system != "Windows") {
-  pacman::p_load(data.table, jsonlite, dplyr, tidyr, stringr, janitor, purrr, rlang, Matrix, RPostgreSQL, doParallel)
+  pacman::p_load(data.table, jsonlite, dplyr, tidyr, stringr, janitor, purrr, rlang, 
+                 economiccomplexity, Matrix, RPostgreSQL, doParallel)
 } else {
-  pacman::p_load(data.table, jsonlite, dplyr, tidyr, stringr, janitor, purrr, rlang, Matrix, RPostgreSQL)
+  pacman::p_load(data.table, jsonlite, dplyr, tidyr, stringr, janitor, purrr, rlang, 
+                 economiccomplexity, Matrix, RPostgreSQL)
 }

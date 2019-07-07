@@ -49,11 +49,13 @@ compute_changes <- function(d) {
 compute_tables <- function(t) {
   # PCI/ECI data ------------------------------------------------------------
   
-  eci <- fread2("05-metrics/hs-rev2007-eci/eci-joined-ranking.csv.gz")
-  pci <- fread2("05-metrics/hs-rev2007-pci/pci-joined-ranking.csv.gz", character = c("product_code"))
+  eci_f <- fread2("05-metrics/hs-rev2007-eci/eci-fitness-joined-ranking.csv.gz")
+  eci_r <- fread2("05-metrics/hs-rev2007-eci/eci-reflections-joined-ranking.csv.gz")
+  eci_e <- fread2("05-metrics/hs-rev2007-eci/eci-eigenvalues-joined-ranking.csv.gz")
   
-  pci_4 <- pci %>% filter(product_code_length == 4)
-  pci_6 <- pci %>% filter(product_code_length == 6)
+  pci_f <- fread2("05-metrics/hs-rev2007-pci/pci-fitness-joined-ranking.csv.gz", character = c("product"))
+  pci_r <- fread2("05-metrics/hs-rev2007-pci/pci-reflections-joined-ranking.csv.gz", character = c("product"))
+  pci_e <- fread2("05-metrics/hs-rev2007-pci/pci-eigenvalues-joined-ranking.csv.gz", character = c("product"))
   
   # YRPC ------------------------------------------------------------------
   
@@ -225,56 +227,123 @@ compute_tables <- function(t) {
   # YR -------------------------------------------------------------------
   
   if (!file.exists(yr_gz[t])) {
-    eci_t1 <- eci %>%
+    eci_f_t1 <- eci_f %>%
       filter(year == years_full[[t]]) %>%
-      select(-year)
-    
-    eci_4_t1 <- eci_t1 %>% 
+      select(-year) %>% 
       rename(
-        eci_4_digits_product_code = eci,
-        eci_rank_4_digits_product_code = eci_rank
+        eci_fitness_method = eci,
+        eci_rank_fitness_method = eci_rank
+      )
+    
+    eci_r_t1 <- eci_r %>%
+      filter(year == years_full[[t]]) %>%
+      select(-year) %>% 
+      rename(
+        eci_reflections_method = eci,
+        eci_rank_reflections_method = eci_rank
+      )
+    
+    eci_e_t1 <- eci_f %>%
+      filter(year == years_full[[t]]) %>%
+      select(-year) %>% 
+      rename(
+        eci_eigenvalues_method = eci,
+        eci_rank_eigenvalues_method = eci_rank
       )
     
     if (t %in% match(years_missing_t_minus_1, years_full)) {
-      eci_t2 <- eci_t1 %>%
+      eci_f_t2 <- eci_f_t1 %>%
+        select(country) %>% 
         mutate(
-          eci_rank = NA,
-          eci = NA
+          eci_fitness_method_t2 = NA,
+          eci_rank_fitness_method_t2 = NA
+        )
+      
+      eci_r_t2 <- eci_r_t1 %>%
+        select(country) %>% 
+        mutate(
+          eci_reflections_method_t2 = NA,
+          eci_rank_reflections_method_t2 = NA
+        )
+      
+      eci_e_t2 <- eci_e_t1 %>%
+        select(country) %>% 
+        mutate(
+          eci_eigenvalues_method_t2 = NA,
+          eci_rank_eigenvalues_method_t2 = NA
         )
     } else {
-      eci_t2 <- eci %>%
+      eci_f_t2 <- eci_f %>%
         filter(year == years_full[[t - 1]]) %>%
-        select(-year)
+        select(-year) %>% 
+        rename(
+          eci_fitness_method_t2 = eci,
+          eci_rank_fitness_method_t2 = eci_rank
+        )
+      
+      eci_r_t2 <- eci_r %>%
+        filter(year == years_full[[t - 1]]) %>%
+        select(-year) %>% 
+        rename(
+          eci_reflections_method_t2 = eci,
+          eci_rank_reflections_method_t2 = eci_rank
+        )
+      
+      eci_e_t2 <- eci_f %>%
+        filter(year == years_full[[t - 1]]) %>%
+        select(-year) %>% 
+        rename(
+          eci_eigenvalues_method_t2 = eci,
+          eci_rank_eigenvalues_method_t2 = eci_rank
+        )
     }
-    
-    eci_4_t2 <- eci_t2 %>% 
-      rename(
-        eci_4_digits_product_code_t2 = eci,
-        eci_rank_4_digits_product_code_t2 = eci_rank
-      )
-    
-    try(rm(eci_t2))
     
     if (any(t %in% match(years_missing_t_minus_1, years_full) | t %in% match(years_missing_t_minus_5, years_full))) {
-      eci_t3 <- eci_t1 %>%
+      eci_f_t3 <- eci_f_t1 %>%
+        select(country) %>% 
         mutate(
-          eci_rank = NA,
-          eci = NA
+          eci_fitness_method_t3 = NA,
+          eci_rank_fitness_method_t3 = NA
+        )
+      
+      eci_r_t3 <- eci_r_t1 %>%
+        select(country) %>% 
+        mutate(
+          eci_reflections_method_t3 = NA,
+          eci_rank_reflections_method_t3 = NA
+        )
+      
+      eci_e_t3 <- eci_e_t1 %>%
+        select(country) %>% 
+        mutate(
+          eci_eigenvalues_method_t3 = NA,
+          eci_rank_eigenvalues_method_t3 = NA
         )
     } else {
-      eci_t3 <- eci %>%
+      eci_f_t3 <- eci_f %>%
         filter(year == years_full[[t - 5]]) %>%
-        select(-year)
+        select(-year) %>% 
+        rename(
+          eci_fitness_method_t3 = eci,
+          eci_rank_fitness_method_t3 = eci_rank
+        )
+      
+      eci_r_t3 <- eci_r %>%
+        filter(year == years_full[[t - 5]]) %>%
+        select(-year) %>% 
+        rename(
+          eci_reflections_method_t3 = eci,
+          eci_rank_reflections_method_t3 = eci_rank
+        )
+      
+      eci_e_t3 <- eci_f %>%
+        filter(year == years_full[[t - 5]]) %>%
+        select(-year) %>% 
+        rename(
+          eci_eigenvalues_method_t3 = eci,
+          eci_rank_eigenvalues_method_t3 = eci_rank
+        )
     }
-    
-    eci_4_t3 <- eci_t3 %>% 
-      rename(
-        eci_4_digits_product_code_t3 = eci,
-        eci_rank_4_digits_product_code_t3 = eci_rank
-      )
-    
-    try(rm(eci_t3))
-    rm(eci_t1)
     
     max_exp <- yrpc_t1 %>%
       filter(product_code_length == 4) %>% 
@@ -304,13 +373,27 @@ compute_tables <- function(t) {
       summarise_trade() %>%
       ungroup() %>% 
       
-      left_join(eci_4_t1, by = c("reporter_iso" = "country_iso")) %>%
-      left_join(eci_4_t2, by = c("reporter_iso" = "country_iso")) %>%
-      left_join(eci_4_t3, by = c("reporter_iso" = "country_iso")) %>%
+      left_join(eci_f_t1, by = c("reporter_iso" = "country")) %>%
+      left_join(eci_f_t2, by = c("reporter_iso" = "country")) %>%
+      left_join(eci_f_t3, by = c("reporter_iso" = "country")) %>%
+      
+      left_join(eci_r_t1, by = c("reporter_iso" = "country")) %>%
+      left_join(eci_r_t2, by = c("reporter_iso" = "country")) %>%
+      left_join(eci_r_t3, by = c("reporter_iso" = "country")) %>%
+      
+      left_join(eci_e_t1, by = c("reporter_iso" = "country")) %>%
+      left_join(eci_e_t2, by = c("reporter_iso" = "country")) %>%
+      left_join(eci_e_t3, by = c("reporter_iso" = "country")) %>%
       
       mutate(
-        eci_rank_4_digits_product_code_delta_1_year = eci_rank_4_digits_product_code - eci_rank_4_digits_product_code_t2,
-        eci_rank_4_digits_product_code_delta_5_years = eci_rank_4_digits_product_code - eci_rank_4_digits_product_code_t3
+        eci_rank_delta_1_year_fitness_method = eci_rank_fitness_method - eci_rank_fitness_method_t2,
+        eci_rank_delta_5_years_fitness_method = eci_rank_fitness_method - eci_rank_fitness_method_t3,
+        
+        eci_rank_delta_1_year_reflections_method = eci_rank_reflections_method - eci_rank_reflections_method_t2,
+        eci_rank_delta_5_years_reflections_method = eci_rank_reflections_method - eci_rank_reflections_method_t3,
+        
+        eci_rank_delta_1_year_eigenvalues_method = eci_rank_eigenvalues_method - eci_rank_eigenvalues_method_t2,
+        eci_rank_delta_5_years_eigenvalues_method = eci_rank_eigenvalues_method - eci_rank_eigenvalues_method_t3
       ) %>%
       
       left_join(max_exp, by = "reporter_iso") %>%
@@ -321,92 +404,134 @@ compute_tables <- function(t) {
     
     fwrite(yr, yr_csv[t])
     compress_gz(yr_csv[[t]])
-    rm(yr, eci_4_t1, eci_4_t2, eci_4_t3, max_exp, max_imp)
+    rm(yr,
+       eci_f, eci_r, eci_e,
+       eci_f_t1, eci_f_t2, eci_f_t3,
+       eci_r_t1, eci_r_t2, eci_r_t3,
+       eci_e_t1, eci_e_t2, eci_e_t3,
+       max_exp, max_imp)
   }
   
   # YC -------------------------------------------------------------------
-  
+
   if (!file.exists(yc_gz[t])) {
-    pci_t1 <- pci %>%
+    pci_f_t1 <- pci_f %>%
       filter(year == years_full[[t]]) %>%
-      select(-year)
-    
-    pci_4_t1 <- pci_t1 %>% 
-      filter(product_code_length == 4) %>% 
+      select(-year) %>% 
       rename(
-        pci_4_digits_product_code = pci,
-        pci_rank_4_digits_product_code = pci_rank
-      ) %>% 
-      select(-product_code_length)
+        pci_fitness_method = pci,
+        pci_rank_fitness_method = pci_rank
+      )
     
-    pci_6_t1 <- pci_t1 %>% 
-      filter(product_code_length == 6) %>% 
+    pci_r_t1 <- pci_r %>%
+      filter(year == years_full[[t]]) %>%
+      select(-year) %>% 
       rename(
-        pci_6_digits_product_code = pci,
-        pci_rank_6_digits_product_code = pci_rank
-      ) %>% 
-      select(-product_code_length)
+        pci_reflections_method = pci,
+        pci_rank_reflections_method = pci_rank
+      )
+    
+    pci_e_t1 <- pci_e %>%
+      filter(year == years_full[[t]]) %>%
+      select(-year) %>% 
+      rename(
+        pci_eigenvalues_method = pci,
+        pci_rank_eigenvalues_method = pci_rank
+      )
     
     if (t %in% match(years_missing_t_minus_1, years_full)) {
-      pci_t2 <- pci_t1 %>%
+      pci_f_t2 <- pci_f_t1 %>%
+        select(product) %>% 
         mutate(
-          pci_rank = NA,
-          pci = NA
+          pci_fitness_method_t2 = NA,
+          pci_rank_fitness_method_t2 = NA
+        )
+      
+      pci_r_t2 <- pci_r_t1 %>%
+        select(product) %>% 
+        mutate(
+          pci_reflections_method_t2 = NA,
+          pci_rank_reflections_method_t2 = NA
+        )
+      
+      pci_e_t2 <- pci_e_t1 %>%
+        select(product) %>% 
+        mutate(
+          pci_eigenvalues_method_t2 = NA,
+          pci_rank_eigenvalues_method_t2 = NA
         )
     } else {
-      pci_t2 <- pci %>%
+      pci_f_t2 <- pci_f %>%
         filter(year == years_full[[t - 1]]) %>%
-        select(-year)
+        select(-year) %>% 
+        rename(
+          pci_fitness_method_t2 = pci,
+          pci_rank_fitness_method_t2 = pci_rank
+        )
+      
+      pci_r_t2 <- pci_r %>%
+        filter(year == years_full[[t - 1]]) %>%
+        select(-year) %>% 
+        rename(
+          pci_reflections_method_t2 = pci,
+          pci_rank_reflections_method_t2 = pci_rank
+        )
+      
+      pci_e_t2 <- pci_e %>%
+        filter(year == years_full[[t - 1]]) %>%
+        select(-year) %>% 
+        rename(
+          pci_eigenvalues_method_t2 = pci,
+          pci_rank_eigenvalues_method_t2 = pci_rank
+        )
     }
-    
-    pci_4_t2 <- pci_t2 %>% 
-      filter(product_code_length == 4) %>% 
-      rename(
-        pci_4_digits_product_code_t2 = pci,
-        pci_rank_4_digits_product_code_t2 = pci_rank
-      ) %>% 
-      select(-product_code_length)
-    
-    pci_6_t2 <- pci_t2 %>% 
-      filter(product_code_length == 6) %>% 
-      rename(
-        pci_6_digits_product_code_t2 = pci,
-        pci_rank_6_digits_product_code_t2 = pci_rank
-      ) %>% 
-      select(-product_code_length)
-    
-    try(rm(pci_t2))
     
     if (t %in% match(years_missing_t_minus_1, years_full) | t %in% match(years_missing_t_minus_5, years_full)) {
-      pci_t3 <- pci_t1 %>%
+      pci_f_t3 <- pci_f_t1 %>%
+        select(product) %>% 
         mutate(
-          pci_rank = NA,
-          pci = NA
+          pci_fitness_method_t3 = NA,
+          pci_rank_fitness_method_t3 = NA
+        )
+      
+      pci_r_t3 <- pci_r_t1 %>%
+        select(product) %>% 
+        mutate(
+          pci_reflections_method_t3 = NA,
+          pci_rank_reflections_method_t3 = NA
+        )
+      
+      pci_e_t3 <- pci_e_t1 %>%
+        select(product) %>% 
+        mutate(
+          pci_eigenvalues_method_t3 = NA,
+          pci_rank_eigenvalues_method_t3 = NA
         )
     } else {
-      pci_t3 <- pci %>%
+      pci_f_t3 <- pci_f %>%
         filter(year == years_full[[t - 5]]) %>%
-        select(-year)
+        select(-year) %>% 
+        rename(
+          pci_fitness_method_t3 = pci,
+          pci_rank_fitness_method_t3 = pci_rank
+        )
+      
+      pci_r_t3 <- pci_r %>%
+        filter(year == years_full[[t - 5]]) %>%
+        select(-year) %>% 
+        rename(
+          pci_reflections_method_t3 = pci,
+          pci_rank_reflections_method_t3 = pci_rank
+        )
+      
+      pci_e_t3 <- pci_e %>%
+        filter(year == years_full[[t - 5]]) %>%
+        select(-year) %>% 
+        rename(
+          pci_eigenvalues_method_t3 = pci,
+          pci_rank_eigenvalues_method_t3 = pci_rank
+        )
     }
-    
-    pci_4_t3 <- pci_t3 %>% 
-      filter(product_code_length == 4) %>% 
-      rename(
-        pci_4_digits_product_code_t3 = pci,
-        pci_rank_4_digits_product_code_t3 = pci_rank
-      ) %>% 
-      select(-product_code_length)
-    
-    pci_6_t3 <- pci_t3 %>% 
-      filter(product_code_length == 6) %>% 
-      rename(
-        pci_6_digits_product_code_t3 = pci,
-        pci_rank_6_digits_product_code_t3 = pci_rank
-      ) %>% 
-      select(-product_code_length)
-    
-    try(rm(pci_t3))
-    rm(pci_t1)
     
     max_exp_2 <- yrpc_t1 %>%
       group_by(reporter_iso, product_code) %>%
@@ -434,21 +559,27 @@ compute_tables <- function(t) {
       ungroup() %>% 
       mutate(product_code_length = str_length(product_code)) %>% 
       
-      left_join(pci_4_t1, by = "product_code") %>%
-      left_join(pci_6_t1, by = "product_code") %>%
+      left_join(pci_f_t1, by = c("product_code" = "product")) %>%
+      left_join(pci_f_t2, by = c("product_code" = "product")) %>%
+      left_join(pci_f_t3, by = c("product_code" = "product")) %>%
+
+      left_join(pci_r_t1, by = c("product_code" = "product")) %>%
+      left_join(pci_r_t2, by = c("product_code" = "product")) %>%
+      left_join(pci_r_t3, by = c("product_code" = "product")) %>%
       
-      left_join(pci_4_t2, by = "product_code") %>%
-      left_join(pci_6_t2, by = "product_code") %>%
-      
-      left_join(pci_4_t3, by = "product_code") %>%
-      left_join(pci_6_t3, by = "product_code") %>%
+      left_join(pci_e_t1, by = c("product_code" = "product")) %>%
+      left_join(pci_e_t2, by = c("product_code" = "product")) %>%
+      left_join(pci_e_t3, by = c("product_code" = "product")) %>%
       
       mutate(
-        pci_rank_4_digits_product_code_delta_1_year = pci_rank_4_digits_product_code - pci_rank_4_digits_product_code_t2,
-        pci_rank_6_digits_product_code_delta_1_year = pci_rank_6_digits_product_code - pci_rank_6_digits_product_code_t2,
+        pci_rank_delta_1_year_fitness_method = pci_rank_fitness_method - pci_rank_fitness_method_t2,
+        pci_rank_delta_5_years_fitness_method = pci_rank_fitness_method - pci_rank_fitness_method_t3,
         
-        pci_rank_4_digits_product_code_delta_5_years = pci_rank_4_digits_product_code - pci_rank_4_digits_product_code_t3,
-        pci_rank_6_digits_product_code_delta_5_years = pci_rank_6_digits_product_code - pci_rank_6_digits_product_code_t3
+        pci_rank_delta_1_year_reflections_method = pci_rank_reflections_method - pci_rank_reflections_method_t2,
+        pci_rank_delta_5_years_reflections_method = pci_rank_reflections_method - pci_rank_reflections_method_t3,
+        
+        pci_rank_delta_1_year_eigenvalues_method = pci_rank_eigenvalues_method - pci_rank_eigenvalues_method_t2,
+        pci_rank_delta_5_years_eigenvalues_method = pci_rank_eigenvalues_method - pci_rank_eigenvalues_method_t3
       ) %>%
       
       left_join(max_exp_2, by = "product_code") %>%

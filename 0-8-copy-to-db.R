@@ -35,10 +35,8 @@ copy_attributes <- function(overwrite = F) {
   # source("00-scripts/06-tidy-downloaded-data.R")
   # source("00-scripts/07-convert-tidy-data-codes.R")
   # source("00-scripts/08-join-converted-datasets.R")
-  # Rcpp::sourceCpp("00-scripts/09-proximity-countries-denominator.cpp")
-  # Rcpp::sourceCpp("00-scripts/10-proximity-products-denominator.cpp")
-  # source("00-scripts/11-compute-rca-and-related-metrics.R")
-  # source("00-scripts/12-create-final-tables.R")
+  # source("00-scripts/09-compute-rca-and-related-metrics.R")
+  # source("00-scripts/10-create-final-tables.R")
   
   # connection parameters ---------------------------------------------------
   
@@ -182,7 +180,9 @@ copy_attributes <- function(overwrite = F) {
         numeric = c(
           "export_value_usd",
           "import_value_usd",
-          "eci_4_digits_product_code",
+          "eci_fitness_method",
+          "eci_reflections_method",
+          "eci_eigenvalues_method",
           "top_export_trade_value_usd",
           "top_import_trade_value_usd",
           "export_value_usd_change_1_year",
@@ -209,8 +209,9 @@ copy_attributes <- function(overwrite = F) {
         numeric = c(
           "export_value_usd",
           "import_value_usd",
-          "pci_4_digits_product_code",
-          "pci_6_digits_product_code",
+          "pci_fitness_method",
+          "pci_reflections_method",
+          "pci_eigenvalues_method",
           "top_exporter_trade_value_usd",
           "top_importer_trade_value_usd",
           "export_value_usd_change_1_year",

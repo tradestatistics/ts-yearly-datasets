@@ -33,10 +33,8 @@ create_schema <- function(overwrite = F) {
   # source("00-scripts/06-tidy-downloaded-data.R")
   # source("00-scripts/07-convert-tidy-data-codes.R")
   # source("00-scripts/08-join-converted-datasets.R")
-  # Rcpp::sourceCpp("00-scripts/09-proximity-countries-denominator.cpp")
-  # Rcpp::sourceCpp("00-scripts/10-proximity-products-denominator.cpp")
-  # source("00-scripts/11-compute-rca-and-related-metrics.R")
-  # source("00-scripts/12-create-final-tables.R")
+  # source("00-scripts/09-compute-rca-and-related-metrics.R")
+  # source("00-scripts/10-create-final-tables.R")
   
   # connection parameters ---------------------------------------------------
   
@@ -67,7 +65,7 @@ create_schema <- function(overwrite = F) {
     message("Creating/Overwriting DB schema...")
     
     # Countries ---------------------------------------------------------------
-
+    
     dbSendQuery(con, "DROP TABLE IF EXISTS public.attributes_countries")
     
     dbSendQuery(
@@ -140,10 +138,18 @@ create_schema <- function(overwrite = F) {
       reporter_iso varchar(3) NOT NULL,
       export_value_usd decimal(16,2) DEFAULT NULL,
       import_value_usd decimal(16,2) DEFAULT NULL,
-      eci_4_digits_product_code float DEFAULT NULL,
-      eci_rank_4_digits_product_code integer DEFAULT NULL,
-      eci_rank_4_digits_product_code_delta_1_year integer DEFAULT NULL,
-      eci_rank_4_digits_product_code_delta_5_years integer DEFAULT NULL,
+      eci_fitness_method float DEFAULT NULL,
+      eci_rank_fitness_method integer DEFAULT NULL,
+      eci_reflections_method float DEFAULT NULL,
+      eci_rank_reflections_method integer DEFAULT NULL,
+      eci_eigenvalues_method float DEFAULT NULL,
+      eci_rank_eigenvalues_method integer DEFAULT NULL,
+      eci_rank_delta_1_year_fitness_method integer DEFAULT NULL,
+      eci_rank_delta_5_years_fitness_method integer DEFAULT NULL,
+      eci_rank_delta_1_year_reflections_method integer DEFAULT NULL,
+      eci_rank_delta_5_years_reflections_method integer DEFAULT NULL,
+      eci_rank_delta_1_year_eigenvalues_method integer DEFAULT NULL,
+      eci_rank_delta_5_years_eigenvalues_method integer DEFAULT NULL,
       top_export_product_code varchar(6) DEFAULT NULL,
       top_export_trade_value_usd decimal(16,2) DEFAULT NULL,
       top_import_product_code varchar(6) DEFAULT NULL,
@@ -219,7 +225,7 @@ create_schema <- function(overwrite = F) {
     )
     
     # Year - Reporter - Product Code ------------------------------------------
-
+    
     dbSendQuery(con, "DROP TABLE IF EXISTS public.hs07_yrc")
     
     dbSendQuery(
@@ -256,21 +262,25 @@ create_schema <- function(overwrite = F) {
     
     dbSendQuery(
       con,
-      "CREATE TABLE public.hs07_yc 
+      "CREATE TABLE public.hs07_yc
       (
       year integer NOT NULL,
       product_code varchar(6) NOT NULL,
       product_code_length integer DEFAULT NULL,
       export_value_usd decimal(16,2) DEFAULT NULL,
       import_value_usd decimal(16,2) DEFAULT NULL,
-      pci_4_digits_product_code float DEFAULT NULL,
-      pci_rank_4_digits_product_code integer DEFAULT NULL,
-      pci_6_digits_product_code float DEFAULT NULL,
-      pci_rank_6_digits_product_code integer DEFAULT NULL,
-      pci_rank_4_digits_product_code_delta_1_year integer DEFAULT NULL,
-      pci_rank_6_digits_product_code_delta_1_year integer DEFAULT NULL,
-      pci_rank_4_digits_product_code_delta_5_years integer DEFAULT NULL,
-      pci_rank_6_digits_product_code_delta_5_years integer DEFAULT NULL,
+      pci_fitness_method float DEFAULT NULL,
+      pci_rank_fitness_method integer DEFAULT NULL,
+      pci_reflections_method float DEFAULT NULL,
+      pci_rank_reflections_method integer DEFAULT NULL,
+      pci_eigenvalues_method float DEFAULT NULL,
+      pci_rank_eigenvalues_method integer DEFAULT NULL,
+      pci_rank_delta_1_year_fitness_method integer DEFAULT NULL,
+      pci_rank_delta_5_years_fitness_method integer DEFAULT NULL,
+      pci_rank_delta_1_year_reflections_method integer DEFAULT NULL,
+      pci_rank_delta_5_years_reflections_method integer DEFAULT NULL,
+      pci_rank_delta_1_year_eigenvalues_method integer DEFAULT NULL,
+      pci_rank_delta_5_years_eigenvalues_method integer DEFAULT NULL,
       top_exporter_iso varchar(3) DEFAULT NULL,
       top_exporter_trade_value_usd decimal(16,2) DEFAULT NULL,
       top_importer_iso varchar(3) DEFAULT NULL,

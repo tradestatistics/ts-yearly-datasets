@@ -5,7 +5,7 @@
 # The scripts within this project are released under GNU General Public License 3.0
 # See https://github.com/tradestatistics/ts-yearly-datasets/LICENSE for the details
 
-tables <- function(n_cores = 4) {
+tables <- function(n_cores = 3) {
   # messages ----------------------------------------------------------------
   
   message("\nCopyright (C) 2018, Mauricio \"Pacha\" Vargas\n")
@@ -27,10 +27,8 @@ tables <- function(n_cores = 4) {
   # source("00-scripts/06-tidy-downloaded-data.R")
   # source("00-scripts/07-convert-tidy-data-codes.R")
   # source("00-scripts/08-join-converted-datasets.R")
-  # Rcpp::sourceCpp("00-scripts/09-proximity-countries-denominator.cpp")
-  # Rcpp::sourceCpp("00-scripts/10-proximity-products-denominator.cpp")
-  # source("00-scripts/11-compute-rca-and-related-metrics.R")
-  source("00-scripts/12-create-final-tables.R")
+  # source("00-scripts/09-compute-rca-and-related-metrics.R")
+  source("00-scripts/10-create-final-tables.R")
   
   # codes -------------------------------------------------------------------
   

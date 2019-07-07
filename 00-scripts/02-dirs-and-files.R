@@ -84,11 +84,17 @@ rca_imports_gz <- sprintf("%s/rca-imports-%s.csv.gz", rca_imports_dir, years_ful
 
 eci_dir <- sprintf("%s/hs-rev2007-eci", metrics_dir)
 try(dir.create(eci_dir))
-eci_rankings_gz <- sprintf("%s/eci-%s.csv.gz", eci_dir, years_full)
+
+eci_rankings_r_gz <- sprintf("%s/eci-reflections-%s.csv.gz", eci_dir, years_full)
+eci_rankings_e_gz <- sprintf("%s/eci-eigenvalues-%s.csv.gz", eci_dir, years_full)
+eci_rankings_f_gz <- sprintf("%s/eci-fitness-%s.csv.gz", eci_dir, years_full)
 
 pci_dir <- sprintf("%s/hs-rev2007-pci", metrics_dir)
 try(dir.create(pci_dir))
-pci_rankings_gz <- sprintf("%s/pci-%s.csv.gz", pci_dir, years_full)
+
+pci_rankings_r_gz <- sprintf("%s/pci-reflections-%s.csv.gz", pci_dir, years_full)
+pci_rankings_e_gz <- sprintf("%s/pci-eigenvalues-%s.csv.gz", pci_dir, years_full)
+pci_rankings_f_gz <- sprintf("%s/pci-fitness-%s.csv.gz", pci_dir, years_full)
 
 proximity_countries_dir <- sprintf("%s/hs-rev2007-proximity-countries", metrics_dir)
 try(dir.create(proximity_countries_dir))
@@ -97,14 +103,6 @@ proximity_countries_gz <- sprintf("%s/proximity-countries-%s.csv.gz", proximity_
 proximity_products_dir <- sprintf("%s/hs-rev2007-proximity-products", metrics_dir)
 try(dir.create(proximity_products_dir))
 proximity_products_gz <- sprintf("%s/proximity-products-%s.csv.gz", proximity_products_dir, years_full)
-
-density_countries_dir <- sprintf("%s/hs-rev2007-density-countries", metrics_dir)
-try(dir.create(density_countries_dir))
-density_countries_gz <- sprintf("%s/density-countries-%s.csv.gz", density_countries_dir, years_full)
-
-density_products_dir <- sprintf("%s/hs-rev2007-density-products", metrics_dir)
-try(dir.create(density_products_dir))
-density_products_gz <- sprintf("%s/density-products-%s.csv.gz", density_products_dir, years_full)
 
 # 0-6-create-tables.R
 
