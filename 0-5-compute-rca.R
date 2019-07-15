@@ -7,7 +7,7 @@
 # You are welcome to redistribute it under certain conditions.
 # See https://github.com/tradestatistics/ts-yearly-datasets/LICENSE for the details.
 
-unify <- function() {
+rca <- function() {
   # messages ----------------------------------------------------------------
 
   message("Copyright (C) 2018-2019, Mauricio \"Pacha\" Vargas.
@@ -19,7 +19,7 @@ See https://github.com/tradestatistics/ts-yearly-datasets/LICENSE for the detail
   
   readline(prompt = "Press [enter] to continue if and only if you agree to the license terms")
 
-  # scripts -----------------------------------------------------------------
+  # helpers -----------------------------------------------------------------
 
   source("00-scripts/00-user-input-and-derived-classification-digits-years.R")
   source("00-scripts/01-packages.R")
@@ -29,22 +29,19 @@ See https://github.com/tradestatistics/ts-yearly-datasets/LICENSE for the detail
   source("00-scripts/05-read-extract-remove-compress.R")
   # source("00-scripts/06-tidy-downloaded-data.R")
   # source("00-scripts/07-convert-tidy-data-codes.R")
-  source("00-scripts/08-join-converted-datasets.R")
-  # source("00-scripts/09-compute-rca-and-related-metrics.R")
+  # source("00-scripts/08-join-converted-datasets.R")
+  source("00-scripts/09-compute-rca-and-related-metrics.R")
   # source("00-scripts/10-create-final-tables.R")
 
-  # convert data ------------------------------------------------------------
+  # RCA ----
 
-  if (operating_system != "Windows") {
-    mclapply(seq_along(years_full), join_datasets,
-      mc.cores = n_cores,
-      x = clean_gz_all, y = converted_gz_all, z = unified_gz
-    )
-  } else {
-    lapply(seq_along(years_full), join_datasets,
-      x = clean_gz_all, y = converted_gz_all, z = unified_gz
-    )
-  }
+  lapply(seq_along(years_full), compute_rca,
+    x = unified_gz, y = rca_exports_gz, group_field = "reporter_iso"
+  )
+
+  lapply(seq_along(years_full), compute_rca,
+    x = unified_gz, y = rca_imports_gz, group_field = "partner_iso"
+  )
 }
 
-unify()
+rca()

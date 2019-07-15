@@ -1,28 +1,29 @@
 # Open ts-yearly-datasets.Rproj before running this function
 
-# Copyright (c) 2018, Mauricio \"Pacha\" Vargas
-# This file is part of Open Trade Statistics project
-# The scripts within this project are released under GNU General Public License 3.0
-# See https://github.com/tradestatistics/ts-yearly-datasets/LICENSE for the details
+# Copyright (C) 2018-2019, Mauricio \"Pacha\" Vargas.
+# This file is part of Open Trade Statistics project.
+# The scripts within this project are released under GNU General Public License 3.0.
+# This program is free software and comes with ABSOLUTELY NO WARRANTY.
+# You are welcome to redistribute it under certain conditions.
+# See https://github.com/tradestatistics/ts-yearly-datasets/LICENSE for the details.
 
-# user input --------------------------------------------------------------
-
-ask_for_token <- 1
-ask_to_remove_old_files <- 1
-
-download <- function(n_cores = 4) {
+download <- function() {
   # messages ----------------------------------------------------------------
 
-  message("\nCopyright (C) 2018, Mauricio \"Pacha\" Vargas\n")
-  message("This file is part of Open Trade Statistics project")
-  message("\nThe scripts within this project are released under GNU General Public License 3.0")
-  message("This program comes with ABSOLUTELY NO WARRANTY.")
-  message("This is free software, and you are welcome to redistribute it under certain conditions.\n")
-  message("See https://github.com/tradestatistics/ts-yearly-datasets/LICENSE for the details\n")
+  message("Copyright (C) 2018-2019, Mauricio \"Pacha\" Vargas.
+This file is part of Open Trade Statistics project.
+The scripts within this project are released under GNU General Public License 3.0.\n
+This program is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+See https://github.com/tradestatistics/ts-yearly-datasets/LICENSE for the details.\n")
+  
   readline(prompt = "Press [enter] to continue if and only if you agree to the license terms")
 
   # scripts -----------------------------------------------------------------
 
+  ask_for_token <<- 1
+  ask_to_remove_old_files <<- 1
+  
   source("00-scripts/00-user-input-and-derived-classification-digits-years.R")
   source("00-scripts/01-packages.R")
   source("00-scripts/02-dirs-and-files.R")
@@ -42,7 +43,7 @@ download <- function(n_cores = 4) {
   )
 
   if (length(old_file) > 0) {
-    old_links <- as_tibble(fread(old_file)) %>%
+    old_download_links <- as_tibble(fread(old_file)) %>%
       mutate(
         local_file_date = gsub(".*pub-", "", file),
         local_file_date = gsub("_fmt.*", "", local_file_date),
@@ -51,7 +52,7 @@ download <- function(n_cores = 4) {
       rename(old_file = file)
   }
 
-  links <- tibble(
+  download_links <- tibble(
     year = years,
     url = paste0(
       "https://comtrade.un.org/api/get/bulk/C/A/",
@@ -68,15 +69,15 @@ download <- function(n_cores = 4) {
     filter(ps %in% years) %>%
     arrange(ps)
 
-  if (exists("old_links")) {
-    links <- links %>%
-      mutate(file = paste0(raw_dir_zip, "/", files$name)) %>%
+  if (exists("old_download_links")) {
+    download_links <- download_links %>%
       mutate(
+        file = paste0(raw_dir_zip, "/", files$name),
         server_file_date = gsub(".*pub-", "", file),
         server_file_date = gsub("_fmt.*", "", server_file_date),
         server_file_date = as.Date(server_file_date, "%Y%m%d")
       ) %>%
-      left_join(old_links %>% select(-url), by = "year") %>%
+      left_join(old_download_links %>% select(-url), by = "year") %>%
       rename(new_file = file) %>%
       mutate(
         server_file_date = as.Date(
@@ -89,56 +90,63 @@ download <- function(n_cores = 4) {
         )
       )
   } else {
-    links <- links %>%
-      mutate(file = paste0(raw_dir_zip, "/", files$name)) %>%
+    download_links <- download_links %>%
       mutate(
+        file = paste0(raw_dir_zip, "/", files$name),
+    
         server_file_date = gsub(".*pub-", "", file),
         server_file_date = gsub("_fmt.*", "", server_file_date),
-        server_file_date = as.Date(server_file_date, "%Y%m%d")
-      ) %>%
-      mutate(old_file = NA) %>% # trick in case there are no old files
-      mutate(local_file_date = server_file_date) %>%
-      mutate(server_file_date = as.Date(server_file_date + 1, origin = "1970-01-01")) %>% # trick in case there are no old files
+        server_file_date = as.Date(server_file_date, "%Y%m%d"),
+        
+        # trick in case there are no old files
+        old_file = NA,
+        
+        local_file_date = server_file_date,
+        server_file_date = as.Date(server_file_date + 1, origin = "1970-01-01")
+      ) %>% 
       rename(new_file = file)
   }
 
+  files_to_remove <- download_links %>% 
+    filter(local_file_date < server_file_date)
+    
   if (operating_system != "Windows") {
-    mclapply(seq_along(years), data_downloading, mc.cores = n_cores)
+    mclapply(seq_along(years), data_downloading, dl = download_links, mc.cores = n_cores)
   } else {
-    lapply(seq_along(years), data_downloading)
+    lapply(seq_along(years), data_downloading, dl = download_links)
   }
 
-  links <- links %>%
-    mutate(url = str_replace(url, "token=*", "token=REPLACE_TOKEN")) %>%
+  download_links <- download_links %>%
+    mutate(url = str_replace(url, token, "REPLACE_TOKEN")) %>%
     select(year, url, new_file, local_file_date) %>%
     rename(file = new_file)
 
   try(file.remove(old_file))
-  fwrite(links, paste0(raw_dir, "/downloaded-files-", Sys.Date(), ".csv"))
+  fwrite(download_links, paste0(raw_dir, "/downloaded-files-", Sys.Date(), ".csv"))
 
   # re-compress -------------------------------------------------------------
 
+  raw_zip <- list.files(
+    path = raw_dir_zip,
+    pattern = "\\.zip",
+    full.names = T
+  ) %>%
+    grep(paste(paste0("ps-", files_to_remove$year), collapse = "|"), ., 
+         value = TRUE)
+  
   lapply(
-    seq_along(raw_zip),
+    seq_along(files_to_remove$year),
     function(t) {
-      gz <- raw_zip[t] %>% str_replace("/zip/", "/gz/") %>% str_replace("zip$", "csv.gz")
+      gz <- raw_zip[t] %>% str_replace("/zip/", "/gz/") %>% 
+        str_replace("zip$", "csv.gz")
 
-      if (!file.exists(gz)) {
-        x <- raw_zip[t]
-        extract(x, y = raw_dir_gz)
+      if (file.exists(gz)) {
+        try(file.remove(gz))
       }
-    }
-  )
-
-  raw_csv <- list.files(path = raw_dir_gz, pattern = "csv$", full.names = T)
-
-  lapply(
-    seq_along(raw_csv),
-    function(t) {
-      x <- raw_csv[t]
-      y <- str_replace(raw_csv[t], "csv$", "csv.gz")
-      if (!file.exists(y)) {
-        compress_gz(x)
+      
+      if (!file.exists(gz)) {
+        extract(raw_zip[t], raw_dir_gz)
+        compress_gz(str_replace(gz, "csv.gz", "csv"))
       }
     }
   )

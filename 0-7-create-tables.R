@@ -1,19 +1,22 @@
 # Open ts-yearly-data.Rproj before running this function
 
-# Copyright (c) 2018, Mauricio \"Pacha\" Vargas
-# This file is part of Open Trade Statistics project
-# The scripts within this project are released under GNU General Public License 3.0
-# See https://github.com/tradestatistics/ts-yearly-datasets/LICENSE for the details
+# Copyright (C) 2018-2019, Mauricio \"Pacha\" Vargas.
+# This file is part of Open Trade Statistics project.
+# The scripts within this project are released under GNU General Public License 3.0.
+# This program is free software and comes with ABSOLUTELY NO WARRANTY.
+# You are welcome to redistribute it under certain conditions.
+# See https://github.com/tradestatistics/ts-yearly-datasets/LICENSE for the details.
 
-tables <- function(n_cores = 3) {
+tables <- function() {
   # messages ----------------------------------------------------------------
 
-  message("\nCopyright (C) 2018, Mauricio \"Pacha\" Vargas\n")
-  message("This file is part of Open Trade Statistics project")
-  message("\nThe scripts within this project are released under GNU General Public License 3.0")
-  message("This program comes with ABSOLUTELY NO WARRANTY.")
-  message("This is free software, and you are welcome to redistribute it under certain conditions.\n")
-  message("See https://github.com/tradestatistics/ts-yearly-datasets/LICENSE for the details\n")
+  message("Copyright (C) 2018-2019, Mauricio \"Pacha\" Vargas.
+This file is part of Open Trade Statistics project.
+The scripts within this project are released under GNU General Public License 3.0.\n
+This program is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+See https://github.com/tradestatistics/ts-yearly-datasets/LICENSE for the details.\n")
+  
   readline(prompt = "Press [enter] to continue if and only if you agree to the license terms")
 
   # helpers -----------------------------------------------------------------

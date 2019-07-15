@@ -1,31 +1,34 @@
 # Open ts-yearly-data.Rproj before running this function
 
-# Copyright (c) 2018, Mauricio \"Pacha\" Vargas
-# This file is part of Open Trade Statistics project
-# The scripts within this project are released under GNU General Public License 3.0
-# See https://github.com/tradestatistics/ts-yearly-datasets/LICENSE for the details
+# Copyright (C) 2018-2019, Mauricio \"Pacha\" Vargas.
+# This file is part of Open Trade Statistics project.
+# The scripts within this project are released under GNU General Public License 3.0.
+# This program is free software and comes with ABSOLUTELY NO WARRANTY.
+# You are welcome to redistribute it under certain conditions.
+# See https://github.com/tradestatistics/ts-yearly-datasets/LICENSE for the details.
 
-copy_attributes <- function(overwrite = F) {
+copy_to_db <- function(overwrite = F) {
   # messages ----------------------------------------------------------------
-
-  message("\nCopyright (C) 2018, Mauricio \"Pacha\" Vargas\n")
-  message("This file is part of Open Trade Statistics project")
-  message("\nThe scripts within this project are released under GNU General Public License 3.0")
-  message("This program comes with ABSOLUTELY NO WARRANTY.")
-  message("This is free software, and you are welcome to redistribute it under certain conditions.\n")
-  message("See https://github.com/tradestatistics/ts-yearly-datasets/LICENSE for the details\n")
+  
+  message("Copyright (C) 2018-2019, Mauricio \"Pacha\" Vargas.
+          This file is part of Open Trade Statistics project.
+          The scripts within this project are released under GNU General Public License 3.0.\n
+          This program is free software and comes with ABSOLUTELY NO WARRANTY.
+          You are welcome to redistribute it under certain conditions.
+          See https://github.com/tradestatistics/ts-yearly-datasets/LICENSE for the details.\n")
+  
   readline(prompt = "Press [enter] to continue if and only if you agree to the license terms")
-
+  
   credentials <- menu(
     c("yes", "no"),
     title = "Have you stored the host, user password and DB name safely in your .Renviron file?",
     graphics = F
   )
-
+  
   stopifnot(credentials == 1)
-
+  
   # helpers -----------------------------------------------------------------
-
+  
   source("00-scripts/00-user-input-and-derived-classification-digits-years.R")
   source("00-scripts/01-packages.R")
   source("00-scripts/02-dirs-and-files.R")
@@ -37,16 +40,16 @@ copy_attributes <- function(overwrite = F) {
   # source("00-scripts/08-join-converted-datasets.R")
   # source("00-scripts/09-compute-rca-and-related-metrics.R")
   # source("00-scripts/10-create-final-tables.R")
-
+  
   # connection parameters ---------------------------------------------------
-
+  
   drv <- dbDriver("PostgreSQL") # choose the driver
-
+  
   dbusr <- Sys.getenv("dbusr")
   dbpwd <- Sys.getenv("dbpwd")
   dbhost <- Sys.getenv("dbhost")
   dbname <- Sys.getenv("dbname")
-
+  
   con <- dbConnect(
     drv,
     host = dbhost,
@@ -55,47 +58,47 @@ copy_attributes <- function(overwrite = F) {
     password = dbpwd,
     dbname = dbname
   )
-
+  
   # attributes --------------------------------------------------------------
-
+  
   message("Copying attributes...")
-
+  
   # countries attributes
-
+  
   obs_attributes_countries <- as.numeric(dbGetQuery(con, "SELECT COUNT(*) FROM public.attributes_countries"))
-
+  
   if (obs_attributes_countries == 0) {
-    attributes_countries <- fread2(paste0(tables_dir, "/attributes_countries.csv.gz"))
+    attributes_countries <- fread2(paste0(tables_dir, "/0-attributes/attributes_countries.csv.gz"))
     dbWriteTable(con, "attributes_countries", attributes_countries, append = TRUE, overwrite = overwrite, row.names = FALSE)
   }
-
+  
   # products attributes
-
+  
   obs_attributes_products <- as.numeric(dbGetQuery(con, "SELECT COUNT(*) FROM public.attributes_products"))
-
+  
   if (obs_attributes_products == 0) {
-    attributes_products <- fread2(paste0(tables_dir, "/attributes_products.csv.gz"), character = c("product_code", "group_code"))
+    attributes_products <- fread2(paste0(tables_dir, "/0-attributes/attributes_products.csv.gz"), character = c("product_code", "group_code"))
     dbWriteTable(con, "attributes_products", attributes_products, append = TRUE, overwrite = overwrite, row.names = FALSE)
   }
-
+  
   obs_attributes_products_shortnames <- as.numeric(dbGetQuery(con, "SELECT COUNT(*) FROM public.attributes_products_shortnames"))
-
+  
   if (obs_attributes_products_shortnames == 0) {
-    attributes_products_shortnames <- fread2(paste0(tables_dir, "/attributes_products_shortnames.csv.gz"), character = "product_code")
+    attributes_products_shortnames <- fread2(paste0(tables_dir, "/0-attributes/attributes_products_shortnames.csv.gz"), character = "product_code")
     dbWriteTable(con, "attributes_products_shortnames", attributes_products_shortnames, append = TRUE, overwrite = overwrite, row.names = FALSE)
   }
-
+  
   # communities attributes
-
+  
   obs_attributes_communities <- as.numeric(dbGetQuery(con, "SELECT COUNT(*) FROM public.attributes_communities"))
-
+  
   if (obs_attributes_communities == 0) {
-    attributes_communities <- fread2(paste0(tables_dir, "/attributes_communities.csv.gz"), character = c("product_code", "community_code"))
+    attributes_communities <- fread2(paste0(tables_dir, "/0-attributes/attributes_communities.csv.gz"), character = c("product_code", "community_code"))
     dbWriteTable(con, "attributes_communities", attributes_communities, append = TRUE, overwrite = overwrite, row.names = FALSE)
   }
-
+  
   # data --------------------------------------------------------------------
-
+  
   lapply(
     seq_along(years_full),
     function(t) {
@@ -119,7 +122,7 @@ copy_attributes <- function(overwrite = F) {
       rm(yrpc)
     }
   )
-
+  
   lapply(
     seq_along(years_full),
     function(t) {
@@ -142,7 +145,7 @@ copy_attributes <- function(overwrite = F) {
       rm(yrp)
     }
   )
-
+  
   lapply(
     seq_along(years_full),
     function(t) {
@@ -170,7 +173,7 @@ copy_attributes <- function(overwrite = F) {
       rm(yrc)
     }
   )
-
+  
   lapply(
     seq_along(years_full),
     function(t) {
@@ -199,7 +202,7 @@ copy_attributes <- function(overwrite = F) {
       rm(yr)
     }
   )
-
+  
   lapply(
     seq_along(years_full),
     function(t) {
@@ -230,4 +233,4 @@ copy_attributes <- function(overwrite = F) {
   )
 }
 
-copy_attributes()
+copy_to_db()

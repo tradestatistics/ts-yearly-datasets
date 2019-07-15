@@ -1,9 +1,11 @@
 # Open ts-yearly-datasets.Rproj before running this function
 
-# Copyright (c) 2018, Mauricio \"Pacha\" Vargas
-# This file is part of Open Trade Statistics project
-# The scripts within this project are released under GNU General Public License 3.0
-# See https://github.com/tradestatistics/ts-yearly-datasets/LICENSE for the details
+# Copyright (C) 2018-2019, Mauricio \"Pacha\" Vargas.
+# This file is part of Open Trade Statistics project.
+# The scripts within this project are released under GNU General Public License 3.0.
+# This program is free software and comes with ABSOLUTELY NO WARRANTY.
+# You are welcome to redistribute it under certain conditions.
+# See https://github.com/tradestatistics/ts-yearly-datasets/LICENSE for the details.
 
 compute_tidy_data <- function(t) {
   if (!file.exists(clean_gz[t])) {
@@ -45,7 +47,10 @@ compute_tidy_data <- function(t) {
       ) %>%
       mutate(
         reporter_iso = str_to_lower(reporter_iso),
-        partner_iso = str_to_lower(partner_iso)
+        partner_iso = str_to_lower(partner_iso),
+        
+        reporter_iso = ifelse(reporter_iso == "rou", "rom", reporter_iso),
+        partner_iso = ifelse(partner_iso == "rou", "rom", partner_iso)
       ) %>%
       filter(
         reporter_iso %in% country_codes,
