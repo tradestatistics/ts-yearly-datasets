@@ -124,7 +124,7 @@ See https://github.com/tradestatistics/ts-yearly-datasets/LICENSE for the detail
       product_code varchar(6) NOT NULL,
       community_code varchar(2) DEFAULT NULL,
       community_name varchar(255) DEFAULT NULL,
-      community_colour varchar(7) DEFAULT NULL,
+      community_color varchar(7) DEFAULT NULL,
       CONSTRAINT hs07_attributes_communities_pk PRIMARY KEY (product_code),
       CONSTRAINT hs07_attributes_communities_attributes_products_fk FOREIGN KEY (product_code) REFERENCES public.attributes_products (product_code)
       )"

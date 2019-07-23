@@ -97,10 +97,10 @@ See https://github.com/tradestatistics/ts-yearly-datasets/LICENSE for the detail
     ) %>%
     select(product_code, community_code, community_name)
 
-  colours <- product_names_3 %>%
+  colors <- product_names_3 %>%
     select(community_code) %>%
     distinct() %>%
-    mutate(community_colour = c(
+    mutate(community_color = c(
       "#74c0e2", "#406662", "#549e95", "#8abdb6", "#bcd8af",
       "#a8c380", "#ede788", "#d6c650", "#dc8e7a", "#d05555",
       "#bf3251", "#872a41", "#993f7b", "#7454a6", "#a17cb0",
@@ -119,7 +119,7 @@ See https://github.com/tradestatistics/ts-yearly-datasets/LICENSE for the detail
   }
 
   attributes_communities <- product_names_3 %>%
-    left_join(colours)
+    left_join(colors)
 
   if (!file.exists(paste0(attributes_dir, "/attributes_communities.csv.gz"))) {
     fwrite(attributes_communities, paste0(attributes_dir, "/attributes_communities.csv"))
