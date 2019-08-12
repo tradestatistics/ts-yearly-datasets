@@ -245,7 +245,7 @@ compute_tables <- function(t) {
         eci_rank_reflections_method = eci_rank
       )
 
-    eci_e_t1 <- eci_f %>%
+    eci_e_t1 <- eci_e %>%
       filter(year == years_full[[t]]) %>%
       select(-year) %>%
       rename(
@@ -291,7 +291,7 @@ compute_tables <- function(t) {
           eci_rank_reflections_method_t2 = eci_rank
         )
 
-      eci_e_t2 <- eci_f %>%
+      eci_e_t2 <- eci_e %>%
         filter(year == years_full[[t - 1]]) %>%
         select(-year) %>%
         rename(
@@ -338,7 +338,7 @@ compute_tables <- function(t) {
           eci_rank_reflections_method_t3 = eci_rank
         )
 
-      eci_e_t3 <- eci_f %>%
+      eci_e_t3 <- eci_e %>%
         filter(year == years_full[[t - 5]]) %>%
         select(-year) %>%
         rename(

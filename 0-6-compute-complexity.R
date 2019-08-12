@@ -33,6 +33,14 @@ See https://github.com/tradestatistics/ts-yearly-datasets/LICENSE for the detail
   source("00-scripts/09-compute-rca-and-related-metrics.R")
   # source("00-scripts/10-create-final-tables.R")
 
+  # Ask to compute 6 digits pci ----
+  
+  compute_pci6 <- menu(
+    c("yes", "no"),
+    title = "Compute 6 digits pci?",
+    graphics = F
+  )
+  
   # RCA based measures ----
 
   ranking_1 <<- as_tibble(fread("../atlas-data/2-scraped-tables/ranking-1-economic-complexity-index.csv")) %>%

@@ -175,11 +175,11 @@ See https://github.com/tradestatistics/ts-yearly-datasets/LICENSE for the detail
 
   # tables ------------------------------------------------------------------
 
-  if (operating_system != "Windows") {
-    mclapply(seq_along(years_full), compute_tables, mc.cores = n_cores)
-  } else {
+  #if (operating_system != "Windows") {
+  #  mclapply(seq_along(years_full), compute_tables, mc.cores = n_cores)
+  #} else {
     lapply(seq_along(years_full), compute_tables)
-  }
+  #}
 }
 
 tables()
