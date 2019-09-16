@@ -73,48 +73,16 @@ compute_tidy_data <- function(t) {
 
     rm(clean_data)
 
-    exports_model <- exports %>%
+    exports_conciliated <- exports %>%
       full_join(exports_mirrored, by = c("reporter_iso", "partner_iso", "product_code")) %>%
       rowwise() %>%
       mutate(trade_value_usd = max(trade_value_usd.x, trade_value_usd.y, na.rm = T)) %>%
       ungroup() %>%
-      mutate(product_code_parent = str_sub(product_code, 1, 4)) %>%
-      group_by(reporter_iso, partner_iso, product_code_parent) %>%
-      mutate(parent_count = n()) %>%
-      ungroup() %>%
-      select(reporter_iso, partner_iso, product_code, product_code_parent, parent_count, trade_value_usd)
+      select(reporter_iso, partner_iso, product_code, trade_value_usd)
 
     rm(exports, exports_mirrored)
 
-    exports_model_unrepeated_parent <- exports_model %>%
-      filter(parent_count == 1)
-
-    exports_model_repeated_parent <- exports_model %>%
-      filter(
-        parent_count > 1,
-        str_length(product_code) %in% c(5, 6)
-      )
-
-    exports_model_repeated_parent_summary <- exports_model_repeated_parent %>%
-      group_by(reporter_iso, partner_iso, product_code_parent) %>%
-      summarise(trade_value_usd = sum(trade_value_usd, na.rm = T)) %>%
-      ungroup() %>%
-      rename(product_code = product_code_parent)
-
-    exports_model <- exports_model_unrepeated_parent %>%
-      bind_rows(exports_model_repeated_parent) %>%
-      bind_rows(exports_model_repeated_parent_summary) %>%
-      arrange(reporter_iso, partner_iso, product_code) %>%
-      mutate(
-        year = years[t],
-        product_code_length = str_length(product_code)
-      ) %>%
-      select(year, reporter_iso, partner_iso, product_code, product_code_length, trade_value_usd) %>%
-      filter(trade_value_usd > 0)
-
-    rm(exports_model_unrepeated_parent, exports_model_repeated_parent, exports_model_repeated_parent_summary)
-
-    fwrite(exports_model, str_replace(clean_gz[t], ".gz", ""))
+    fwrite(exports_conciliated, str_replace(clean_gz[t], ".gz", ""))
     compress_gz(str_replace(clean_gz[t], ".gz", ""))
   } else {
     messageline()

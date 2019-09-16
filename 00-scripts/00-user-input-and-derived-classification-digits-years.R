@@ -63,11 +63,13 @@ if (dataset < 5) {
 
 # number of digits --------------------------------------------------------
 
-if (classification == "sitc") {
-  J <- c(4, 5)
-} else {
-  J <- c(4, 6)
-}
+# if (classification == "sitc") {
+#   J <- c(4, 5)
+# } else {
+#   J <- c(4, 6)
+# }
+
+J <- 4
 
 # years by classification -------------------------------------------------
 
