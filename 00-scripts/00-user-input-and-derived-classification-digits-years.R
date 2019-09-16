@@ -51,7 +51,9 @@ if (exists("ask_to_remove_from_db")) {
   )
 }
 
-n_cores <- readline(prompt = "How many cores to use?: ")
+if (exists("ask_number_of_cores")) {
+  n_cores <- readline(prompt = "How many cores to use?: ")
+}
 
 # classification ----------------------------------------------------------
 

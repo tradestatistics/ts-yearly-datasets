@@ -21,6 +21,8 @@ See https://github.com/tradestatistics/ts-yearly-datasets/LICENSE for the detail
 
   # scripts -----------------------------------------------------------------
 
+  ask_number_of_cores <<- 1
+  
   source("00-scripts/00-user-input-and-derived-classification-digits-years.R")
   source("00-scripts/01-packages.R")
   source("00-scripts/02-dirs-and-files.R")

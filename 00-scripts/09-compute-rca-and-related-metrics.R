@@ -89,195 +89,95 @@ compute_complexity_measures <- function(x, yr, ye, yf, zr, ze, zf, q, w, t) {
     mutate(export_rca = ifelse(export_rca > 1, 1, 0)) %>%
     select(-year)
   
-  rca_4 <- rca_data %>%
-    filter(str_length(product_code) == 4)
-  
-  if (compute_pci6 == 1) {
-    rca_6 <- rca_data %>%
-      filter(str_length(product_code) == 6)
-  }
-  
-  rm(rca_data)
-  
   # ECI/PCI 4 digits ----
   
+  names(rca_data) <- c("country", "product", "value")
+  
   if (!file.exists(yr[t])) {
-    reflections_4 <- complexity_measures(
-      revealed_comparative_advantage = rca_4,
-      country = "country_iso",
-      product = "product_code",
+    reflections <- ec_complexity_measures(
+      rca = rca_data,
       method = "reflections",
-      value = "export_rca",
-      tbl_output = TRUE
+      tbl = TRUE
     )
   }
   
   if (!file.exists(ye[t])) {
-    eigenvalues_4 <- complexity_measures(
-      revealed_comparative_advantage = rca_4,
-      country = "country_iso",
-      product = "product_code",
+    eigenvalues <- ec_complexity_measures(
+      rca = rca_data,
       method = "eigenvalues",
-      value = "export_rca",
-      tbl_output = TRUE
+      tbl = TRUE
     )
   }
   
   if (!file.exists(yf[t])) {
-    fitness_4 <- complexity_measures(
-      revealed_comparative_advantage = rca_4,
-      country = "country_iso",
-      product = "product_code",
+    fitness <- ec_complexity_measures(
+      rca = rca_data,
       method = "fitness",
-      value = "export_rca",
-      tbl_output = TRUE
+      tbl = TRUE
     )
-  }
-  
-  # ECI/PCI 6 digits ----
-  
-  if (compute_pci6 == 1) {
-    if (!file.exists(yr[t])) {
-      reflections_6 <- complexity_measures(
-        revealed_comparative_advantage = rca_6,
-        country = "country_iso",
-        product = "product_code",
-        method = "reflections",
-        value = "export_rca",
-        tbl_output = TRUE
-      )
-    }
-    
-    if (!file.exists(ye[t])) {
-      eigenvalues_6 <- complexity_measures(
-        revealed_comparative_advantage = rca_6,
-        country = "country_iso",
-        product = "product_code",
-        method = "eigenvalues",
-        value = "export_rca",
-        tbl_output = TRUE
-      )
-    }
-    
-    if (!file.exists(yf[t])) {
-      fitness_6 <- complexity_measures(
-        revealed_comparative_advantage = rca_6,
-        country = "country_iso",
-        product = "product_code",
-        method = "fitness",
-        value = "export_rca",
-        tbl_output = TRUE
-      )
-    }
   }
   
   # save ECI ----
   
   if (!file.exists(yr[t])) {
-    fwrite(reflections_4$economic_complexity_index, str_replace(yr[t], ".gz", ""))
+    fwrite(reflections$complexity_index_c, str_replace(yr[t], ".gz", ""))
     compress_gz(str_replace(yr[t], ".gz", ""))
   }
   
   if (!file.exists(ye[t])) {
-    fwrite(eigenvalues_4$economic_complexity_index, str_replace(ye[t], ".gz", ""))
+    fwrite(eigenvalues$complexity_index_c, str_replace(ye[t], ".gz", ""))
     compress_gz(str_replace(ye[t], ".gz", ""))
   }
   
   if (!file.exists(yf[t])) {
-    fwrite(fitness_4$economic_complexity_index, str_replace(yf[t], ".gz", ""))
+    fwrite(fitness$complexity_index_c, str_replace(yf[t], ".gz", ""))
     compress_gz(str_replace(yf[t], ".gz", ""))
   }
   
-  # save PCI 4/6 digits ----
+  # save PCI ----
   
-  if (compute_pci6 == 1) {
-    if (!file.exists(zr[t])) {
-      fwrite(
-        bind_rows(
-          reflections_4$product_complexity_index,
-          reflections_6$product_complexity_index
-        ),
-        str_replace(zr[t], ".gz", "")
-      )
-      compress_gz(str_replace(zr[t], ".gz", ""))
-    }
-    
-    if (!file.exists(ze[t])) {
-      fwrite(
-        bind_rows(
-          eigenvalues_4$product_complexity_index,
-          eigenvalues_6$product_complexity_index
-        ),
-        str_replace(ze[t], ".gz", "")
-      )
-      compress_gz(str_replace(ze[t], ".gz", ""))
-    }
-    
-    if (!file.exists(zf[t])) {
-      fwrite(
-        bind_rows(
-          fitness_4$product_complexity_index,
-          fitness_6$product_complexity_index
-        ),
-        str_replace(zf[t], ".gz", "")
-      )
-      compress_gz(str_replace(zf[t], ".gz", ""))
-    }
-    
-    rm(
-      fitness_4, fitness_6,
-      reflections_4, reflections_6,
-      eigenvalues_4, eigenvalues_6
+  if (!file.exists(zr[t])) {
+    fwrite(
+      reflections$complexity_index_p,
+      str_replace(zr[t], ".gz", "")
     )
-  } else {
-    if (!file.exists(zr[t])) {
-      fwrite(
-        reflections_4$product_complexity_index,
-        str_replace(zr[t], ".gz", "")
-      )
-      compress_gz(str_replace(zr[t], ".gz", ""))
-    }
-    
-    if (!file.exists(ze[t])) {
-      fwrite(
-        eigenvalues_4$product_complexity_index,
-        str_replace(ze[t], ".gz", "")
-      )
-      compress_gz(str_replace(ze[t], ".gz", ""))
-    }
-    
-    if (!file.exists(zf[t])) {
-      fwrite(
-        fitness_4$product_complexity_index,
-        str_replace(zf[t], ".gz", "")
-      )
-      compress_gz(str_replace(zf[t], ".gz", ""))
-    }
-    
-    rm(fitness_4, reflections_4, eigenvalues_4, rca_6)
+    compress_gz(str_replace(zr[t], ".gz", ""))
   }
   
-  # proximity 4 digits ----
+  if (!file.exists(ze[t])) {
+    fwrite(
+      eigenvalues$complexity_index_p,
+      str_replace(ze[t], ".gz", "")
+    )
+    compress_gz(str_replace(ze[t], ".gz", ""))
+  }
+  
+  if (!file.exists(zf[t])) {
+    fwrite(
+      fitness$complexity_index_p,
+      str_replace(zf[t], ".gz", "")
+    )
+    compress_gz(str_replace(zf[t], ".gz", ""))
+  }
+  
+  # proximity ----
   
   if (!file.exists(q[t]) | !file.exists(w[t])) {
-    proximity_4 <- proximity(
-      revealed_comparative_advantage = rca_4,
-      country = "country_iso",
-      product = "product_code",
-      value = "export_rca",
-      diversity = fitness_4$diversity,
-      ubiquity = fitness_4$ubiquity,
-      tbl_output = TRUE
+    proximity <- ec_proximity(
+      rca = rca_data,
+      d = fitness$diversity,
+      u = fitness$ubiquity,
+      tbl = TRUE
     )
   }
   
   if (!file.exists(q[t])) {
-    fwrite(proximity_4$proximity_countries, str_replace(q[t], ".gz", ""))
+    fwrite(proximity$proximity_c, str_replace(q[t], ".gz", ""))
     compress_gz(str_replace(q[t], ".gz", ""))
   }
   
   if (!file.exists(w[t])) {
-    fwrite(proximity_4$proximity_products, str_replace(w[t], ".gz", ""))
+    fwrite(proximity$proximity_p, str_replace(w[t], ".gz", ""))
     compress_gz(str_replace(w[t], ".gz", ""))
   }
 }
