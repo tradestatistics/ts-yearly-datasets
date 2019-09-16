@@ -10,13 +10,11 @@ packrat/
 *.csv
 *.csv.gz
 *.tar.gz
-01-raw-data/
-02-clean-data/
-03-converted-data/
+01-raw-data
+02-clean-data
+03-converted-data
 04-unified-data
-05-metrics/
-05-tables/
-06-tables/
+05-metrics
 06-tables
 packrat/
 packrat/lib*/
