@@ -10,15 +10,23 @@
 # user input --------------------------------------------------------------
 
 if (exists("ask_for_token")) {
-  token <- menu(
+  has_token <- menu(
     c("yes", "no"),
-    title = "Have you safely stored your token in your .Renviron file?",
+    title = "Have you safely stored your token in your .Rprofile file?",
     graphics = F
   )
 
-  stopifnot(token == 1)
+  stopifnot(has_token == 1)
+}
 
-  token <- Sys.getenv("token")
+if (exists("ask_for_db_access")) {
+  credentials <- menu(
+    c("yes", "no"),
+    title = "Have you stored the host, user password and DB name safely in your .Renviron file?",
+    graphics = F
+  )
+  
+  stopifnot(credentials == 1)
 }
 
 dataset <- menu(
@@ -31,6 +39,14 @@ if (exists("ask_to_remove_old_files")) {
   remove_old_files <- menu(
     c("yes", "no"),
     title = "Remove old files (y/n):",
+    graphics = F
+  )
+}
+
+if (exists("ask_to_remove_from_db")) {
+  remove_from_db <- menu(
+    c("yes", "no"),
+    title = "Remove outdated records from DB (y/n):",
     graphics = F
   )
 }
@@ -96,10 +112,10 @@ if (dataset == 8) {
   classification2 <- "S4"
 }
 
-years <- revision2:2017
-years_full <- 1962:2017
+years <- revision2:2018
+years_full <- 1962:2018
 
 years_missing_t_minus_1 <- 1962
 years_missing_t_minus_2 <- 1963
 years_missing_t_minus_5 <- 1963:1966
-years_with_two_previous_recordings <- 1967:2017
+years_with_two_previous_recordings <- 1967:2018

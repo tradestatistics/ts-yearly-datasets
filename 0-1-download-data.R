@@ -23,6 +23,8 @@ See https://github.com/tradestatistics/ts-yearly-datasets/LICENSE for the detail
 
   ask_for_token <<- 1
   ask_to_remove_old_files <<- 1
+  ask_for_db_access <<- 1
+  ask_to_remove_from_db <<- 1
   
   source("00-scripts/00-user-input-and-derived-classification-digits-years.R")
   source("00-scripts/01-packages.R")
@@ -30,11 +32,6 @@ See https://github.com/tradestatistics/ts-yearly-datasets/LICENSE for the detail
   source("00-scripts/03-misc.R")
   source("00-scripts/04-download-raw-data.R")
   source("00-scripts/05-read-extract-remove-compress.R")
-  # source("00-scripts/06-tidy-downloaded-data.R")
-  # source("00-scripts/07-convert-tidy-data-codes.R")
-  # source("00-scripts/08-join-converted-datasets.R")
-  # source("00-scripts/09-compute-rca-and-related-metrics.R")
-  # source("00-scripts/10-create-final-tables.R")
 
   # download data -----------------------------------------------------------
 
@@ -60,7 +57,7 @@ See https://github.com/tradestatistics/ts-yearly-datasets/LICENSE for the detail
       "/ALL/",
       classification2,
       "?token=",
-      Sys.getenv("token")
+      token
     ),
     file = NA
   )
@@ -117,10 +114,12 @@ See https://github.com/tradestatistics/ts-yearly-datasets/LICENSE for the detail
   }
 
   download_links <- download_links %>%
-    mutate(url = str_replace(url, token, "REPLACE_TOKEN")) %>%
     select(year, url, new_file, local_file_date) %>%
     rename(file = new_file)
-
+  
+  download_links <- download_links %>% 
+    mutate(url = str_replace_all(url, "token=.*", "token=REPLACE_TOKEN"))
+  
   try(file.remove(old_file))
   fwrite(download_links, paste0(raw_dir, "/downloaded-files-", Sys.Date(), ".csv"))
 
@@ -139,17 +138,40 @@ See https://github.com/tradestatistics/ts-yearly-datasets/LICENSE for the detail
     function(t) {
       gz <- raw_zip[t] %>% str_replace("/zip/", "/gz/") %>% 
         str_replace("zip$", "csv.gz")
-
-      if (file.exists(gz)) {
-        try(file.remove(gz))
-      }
       
       if (!file.exists(gz)) {
         extract(raw_zip[t], raw_dir_gz)
         compress_gz(str_replace(gz, "csv.gz", "csv"))
       }
+      
+      try(
+        file.remove(
+          files_to_remove$old_file[t] %>% str_replace("/zip/", "/gz/") %>% 
+            str_replace("zip$", "csv.gz")
+        )
+      )
     }
   )
+
+  if (remove_old_files == 1) {
+    lapply(c(clean_gz, converted_gz, unified_gz), remove_outdated)
+    lapply(c(eci_rankings_f_gz, eci_rankings_r_gz, eci_rankings_e_gz), remove_outdated)
+    lapply(c(pci_rankings_f_gz, pci_rankings_r_gz, pci_rankings_e_gz), remove_outdated)
+    lapply(c(proximity_countries_gz, proximity_products_gz), remove_outdated)
+    lapply(c(rca_exports_gz, rca_imports_gz), remove_outdated)
+    lapply(c(yrpc_gz, yrp_gz, yrc_gz, yr_gz, yc_gz), remove_outdated)
+  }
+  
+  remove_outdated_2(c(rca_exports_gz, rca_imports_gz), files_to_remove$year + 1)
+  remove_outdated_2(c(rca_exports_gz, rca_imports_gz), files_to_remove$year + 2)
+  
+  if (remove_from_db == 1) {
+    dbGetQuery(con, glue_sql("DELETE FROM public.hs07_yrpc WHERE year IN ({files_to_remove$year*})", .con = con))
+    dbGetQuery(con, glue_sql("DELETE FROM public.hs07_yrp WHERE year IN ({files_to_remove$year*})", .con = con))
+    dbGetQuery(con, glue_sql("DELETE FROM public.hs07_yrc WHERE year IN ({files_to_remove$year*})", .con = con))
+    dbGetQuery(con, glue_sql("DELETE FROM public.hs07_yr WHERE year IN ({files_to_remove$year*})", .con = con))
+    dbGetQuery(con, glue_sql("DELETE FROM public.hs07_yc WHERE year IN ({files_to_remove$year*})", .con = con))
+  }
 }
 
 download()

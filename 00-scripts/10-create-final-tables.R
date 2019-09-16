@@ -21,33 +21,6 @@ summarise_trade <- function(d) {
     )
 }
 
-compute_changes <- function(d) {
-  d %>%
-    mutate(
-      export_value_usd = ifelse(export_value_usd == 0, NA, export_value_usd),
-      import_value_usd = ifelse(import_value_usd == 0, NA, import_value_usd),
-
-      export_value_usd_t2 = ifelse(export_value_usd_t2 == 0, NA, export_value_usd_t2),
-      import_value_usd_t2 = ifelse(import_value_usd_t2 == 0, NA, import_value_usd_t2),
-
-      export_value_usd_t3 = ifelse(export_value_usd_t3 == 0, NA, export_value_usd_t3),
-      import_value_usd_t3 = ifelse(import_value_usd_t3 == 0, NA, import_value_usd_t3)
-    ) %>%
-    mutate(
-      export_value_usd_change_1_year = export_value_usd - export_value_usd_t2,
-      export_value_usd_change_5_years = export_value_usd - export_value_usd_t3,
-
-      export_value_usd_percentage_change_1_year = export_value_usd_change_1_year / export_value_usd_t2,
-      export_value_usd_percentage_change_5_years = export_value_usd_change_5_years / export_value_usd_t3,
-
-      import_value_usd_change_1_year = import_value_usd - import_value_usd_t2,
-      import_value_usd_change_5_years = import_value_usd - import_value_usd_t3,
-
-      import_value_usd_percentage_change_1_year = import_value_usd_change_1_year / import_value_usd_t2,
-      import_value_usd_percentage_change_5_years = import_value_usd_change_5_years / import_value_usd_t3
-    )
-}
-
 compute_tables <- function(t) {
   # PCI/ECI data ------------------------------------------------------------
 
@@ -130,8 +103,7 @@ compute_tables <- function(t) {
     compress_gz(yrpc_internal_csv[t])
 
     yrpc <- yrpc_t1 %>%
-      compute_changes() %>%
-      select(year, matches("iso"), matches("product"), export_value_usd, import_value_usd, matches("change"))
+      select(year, matches("iso"), matches("product"), export_value_usd, import_value_usd)
 
     fwrite(yrpc, yrpc_csv[[t]])
     compress_gz(yrpc_csv[[t]])
@@ -154,8 +126,7 @@ compute_tables <- function(t) {
 
     if (!file.exists(yrpc_gz[t])) {
       yrpc <- yrpc_t1 %>%
-        compute_changes() %>%
-        select(year, matches("iso"), matches("product"), export_value_usd, import_value_usd, matches("change"))
+        select(year, matches("iso"), matches("product"), export_value_usd, import_value_usd)
 
       fwrite(yrpc, yrpc_csv[[t]])
       compress_gz(yrpc_csv[[t]])
@@ -170,10 +141,8 @@ compute_tables <- function(t) {
       filter(product_code_length == 4) %>%
       group_by(year, reporter_iso, partner_iso) %>%
       summarise_trade() %>%
-      ungroup() %>%
-      compute_changes() %>%
-      select(-c(ends_with("_t2"), ends_with("_t3")))
-
+      ungroup()
+    
     fwrite(yrp, yrp_csv[[t]])
     compress_gz(yrp_csv[[t]])
     rm(yrp)
@@ -217,10 +186,8 @@ compute_tables <- function(t) {
       left_join(rca_exp_6, by = c("reporter_iso" = "country_iso", "product_code")) %>%
       left_join(rca_imp_4, by = c("reporter_iso" = "country_iso", "product_code")) %>%
       left_join(rca_imp_6, by = c("reporter_iso" = "country_iso", "product_code")) %>%
-      compute_changes() %>%
-      select(year, reporter_iso, product_code, product_code_length, everything()) %>%
-      select(-c(ends_with("_t2"), ends_with("_t3")))
-
+      select(year, reporter_iso, product_code, product_code_length, everything())
+    
     fwrite(yrc, yrc_csv[[t]])
     compress_gz(yrc_csv[[t]])
     rm(yrc)
@@ -394,10 +361,8 @@ compute_tables <- function(t) {
         eci_rank_delta_5_years_eigenvalues_method = eci_rank_eigenvalues_method - eci_rank_eigenvalues_method_t3
       ) %>%
       left_join(max_exp, by = "reporter_iso") %>%
-      left_join(max_imp, by = "reporter_iso") %>%
-      compute_changes() %>%
-      select(-c(ends_with("_t2"), ends_with("_t3")))
-
+      left_join(max_imp, by = "reporter_iso")
+    
     fwrite(yr, yr_csv[t])
     compress_gz(yr_csv[[t]])
     rm(
@@ -577,10 +542,8 @@ compute_tables <- function(t) {
       ) %>%
       left_join(max_exp_2, by = "product_code") %>%
       left_join(max_imp_2, by = "product_code") %>%
-      compute_changes() %>%
-      select(year, product_code, product_code_length, export_value_usd, import_value_usd, starts_with("pci_"), everything()) %>%
-      select(-c(ends_with("_t2"), ends_with("_t3")))
-
+      select(year, product_code, product_code_length, export_value_usd, import_value_usd, starts_with("pci_"), everything())
+    
     fwrite(yc, yc_csv[[t]])
     compress_gz(yc_csv[[t]])
   }

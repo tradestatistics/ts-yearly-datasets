@@ -10,3 +10,16 @@
 messageline <- function() {
   message(rep("-", 60))
 }
+
+# connection parameters ---------------------------------------------------
+
+drv <- dbDriver("PostgreSQL") # choose the driver
+
+con <- dbConnect(
+  drv,
+  host = dbhost,
+  port = 5432,
+  user = dbusr,
+  password = dbpwd,
+  dbname = dbname
+)

@@ -19,15 +19,10 @@ See https://github.com/tradestatistics/ts-yearly-datasets/LICENSE for the detail
   
   readline(prompt = "Press [enter] to continue if and only if you agree to the license terms")
 
-  credentials <- menu(c("yes", "no"),
-    title = "Have you stored the host, user password and DB name safely in your .Renviron file?",
-    graphics = F
-  )
+  # scripts -----------------------------------------------------------------
 
-  stopifnot(credentials == 1)
-
-  # helpers -----------------------------------------------------------------
-
+  ask_for_db_access <<- 1
+  
   source("00-scripts/00-user-input-and-derived-classification-digits-years.R")
   source("00-scripts/01-packages.R")
   source("00-scripts/02-dirs-and-files.R")
@@ -39,24 +34,6 @@ See https://github.com/tradestatistics/ts-yearly-datasets/LICENSE for the detail
   # source("00-scripts/08-join-converted-datasets.R")
   # source("00-scripts/09-compute-rca-and-related-metrics.R")
   # source("00-scripts/10-create-final-tables.R")
-
-  # connection parameters ---------------------------------------------------
-
-  drv <- dbDriver("PostgreSQL") # choose the driver
-
-  dbusr <- Sys.getenv("dbusr")
-  dbpwd <- Sys.getenv("dbpwd")
-  dbhost <- Sys.getenv("dbhost")
-  dbname <- Sys.getenv("dbname")
-
-  con <- dbConnect(
-    drv,
-    host = dbhost,
-    port = 5432,
-    user = dbusr,
-    password = dbpwd,
-    dbname = dbname
-  )
 
   # List tables associated with the public schema
   db_tables <- dbGetQuery(con, "SELECT table_name FROM information_schema.tables WHERE table_schema='public'")
@@ -148,24 +125,10 @@ See https://github.com/tradestatistics/ts-yearly-datasets/LICENSE for the detail
       eci_rank_reflections_method integer DEFAULT NULL,
       eci_eigenvalues_method float DEFAULT NULL,
       eci_rank_eigenvalues_method integer DEFAULT NULL,
-      eci_rank_delta_1_year_fitness_method integer DEFAULT NULL,
-      eci_rank_delta_5_years_fitness_method integer DEFAULT NULL,
-      eci_rank_delta_1_year_reflections_method integer DEFAULT NULL,
-      eci_rank_delta_5_years_reflections_method integer DEFAULT NULL,
-      eci_rank_delta_1_year_eigenvalues_method integer DEFAULT NULL,
-      eci_rank_delta_5_years_eigenvalues_method integer DEFAULT NULL,
       top_export_product_code varchar(6) DEFAULT NULL,
       top_export_trade_value_usd decimal(16,2) DEFAULT NULL,
       top_import_product_code varchar(6) DEFAULT NULL,
       top_import_trade_value_usd decimal(16,2) DEFAULT NULL,
-      export_value_usd_change_1_year decimal DEFAULT NULL,
-      export_value_usd_change_5_years decimal DEFAULT NULL,
-      export_value_usd_percentage_change_1_year float DEFAULT NULL,
-      export_value_usd_percentage_change_5_years float DEFAULT NULL,
-      import_value_usd_change_1_year decimal DEFAULT NULL,
-      import_value_usd_change_5_years decimal DEFAULT NULL,
-      import_value_usd_percentage_change_1_year float DEFAULT NULL,
-      import_value_usd_percentage_change_5_years float DEFAULT NULL,
       CONSTRAINT hs07_yr_pk PRIMARY KEY (year, reporter_iso),
       CONSTRAINT hs07_yr_attributes_countries_fk FOREIGN KEY (reporter_iso) REFERENCES public.attributes_countries (country_iso)
       )"
@@ -184,14 +147,6 @@ See https://github.com/tradestatistics/ts-yearly-datasets/LICENSE for the detail
       partner_iso varchar(3) NOT NULL,
       export_value_usd decimal(16,2) DEFAULT NULL,
       import_value_usd decimal(16,2) DEFAULT NULL,
-      export_value_usd_change_1_year decimal DEFAULT NULL,
-      export_value_usd_change_5_years decimal DEFAULT NULL,
-      export_value_usd_percentage_change_1_year float DEFAULT NULL,
-      export_value_usd_percentage_change_5_years float DEFAULT NULL,
-      import_value_usd_change_1_year decimal DEFAULT NULL,
-      import_value_usd_change_5_years decimal DEFAULT NULL,
-      import_value_usd_percentage_change_1_year float DEFAULT NULL,
-      import_value_usd_percentage_change_5_years float DEFAULT NULL,
       CONSTRAINT hs07_yrp_pk PRIMARY KEY (year, reporter_iso, partner_iso),
       CONSTRAINT hs07_yrp_attributes_countries_id_fk FOREIGN KEY (reporter_iso) REFERENCES public.attributes_countries (country_iso),
       CONSTRAINT hs07_yrp_attributes_countries_id_fk_2 FOREIGN KEY (partner_iso) REFERENCES public.attributes_countries (country_iso)
@@ -213,14 +168,6 @@ See https://github.com/tradestatistics/ts-yearly-datasets/LICENSE for the detail
       product_code_length integer DEFAULT NULL,
       export_value_usd decimal(16,2) DEFAULT NULL,
       import_value_usd decimal(16,2) DEFAULT NULL,
-      export_value_usd_change_1_year decimal DEFAULT NULL,
-      export_value_usd_change_5_years decimal DEFAULT NULL,
-      export_value_usd_percentage_change_1_year float DEFAULT NULL,
-      export_value_usd_percentage_change_5_years float DEFAULT NULL,
-      import_value_usd_change_1_year decimal DEFAULT NULL,
-      import_value_usd_change_5_years decimal DEFAULT NULL,
-      import_value_usd_percentage_change_1_year float DEFAULT NULL,
-      import_value_usd_percentage_change_5_years float DEFAULT NULL,
       CONSTRAINT hs07_yrpc_pk PRIMARY KEY (year, reporter_iso, partner_iso, product_code),
       CONSTRAINT hs07_yrpc_attributes_countries_fk FOREIGN KEY (reporter_iso) REFERENCES public.attributes_countries (country_iso),
       CONSTRAINT hs07_yrpc_attributes_countries_fk_2 FOREIGN KEY (partner_iso) REFERENCES public.attributes_countries (country_iso),
@@ -246,14 +193,6 @@ See https://github.com/tradestatistics/ts-yearly-datasets/LICENSE for the detail
       export_rca_6_digits_product_code float DEFAULT NULL,
       import_rca_4_digits_product_code float DEFAULT NULL,
       import_rca_6_digits_product_code float DEFAULT NULL,
-      export_value_usd_change_1_year decimal DEFAULT NULL,
-      export_value_usd_change_5_years decimal DEFAULT NULL,
-      export_value_usd_percentage_change_1_year float DEFAULT NULL,
-      export_value_usd_percentage_change_5_years float DEFAULT NULL,
-      import_value_usd_change_1_year decimal DEFAULT NULL,
-      import_value_usd_change_5_years decimal DEFAULT NULL,
-      import_value_usd_percentage_change_1_year float DEFAULT NULL,
-      import_value_usd_percentage_change_5_years float DEFAULT NULL,
       CONSTRAINT hs07_yrc_pk PRIMARY KEY (year, reporter_iso, product_code),
       CONSTRAINT hs07_yrc_attributes_countries_fk FOREIGN KEY (reporter_iso) REFERENCES public.attributes_countries (country_iso),
       CONSTRAINT hs07_yrc_attributes_product_names_fk_2 FOREIGN KEY (product_code) REFERENCES public.attributes_products (product_code)
@@ -279,24 +218,10 @@ See https://github.com/tradestatistics/ts-yearly-datasets/LICENSE for the detail
       pci_rank_reflections_method integer DEFAULT NULL,
       pci_eigenvalues_method float DEFAULT NULL,
       pci_rank_eigenvalues_method integer DEFAULT NULL,
-      pci_rank_delta_1_year_fitness_method integer DEFAULT NULL,
-      pci_rank_delta_5_years_fitness_method integer DEFAULT NULL,
-      pci_rank_delta_1_year_reflections_method integer DEFAULT NULL,
-      pci_rank_delta_5_years_reflections_method integer DEFAULT NULL,
-      pci_rank_delta_1_year_eigenvalues_method integer DEFAULT NULL,
-      pci_rank_delta_5_years_eigenvalues_method integer DEFAULT NULL,
       top_exporter_iso varchar(3) DEFAULT NULL,
       top_exporter_trade_value_usd decimal(16,2) DEFAULT NULL,
       top_importer_iso varchar(3) DEFAULT NULL,
       top_importer_trade_value_usd decimal(16,2) DEFAULT NULL,
-      export_value_usd_change_1_year decimal DEFAULT NULL,
-      export_value_usd_change_5_years decimal DEFAULT NULL,
-      export_value_usd_percentage_change_1_year float DEFAULT NULL,
-      export_value_usd_percentage_change_5_years float DEFAULT NULL,
-      import_value_usd_change_1_year decimal DEFAULT NULL,
-      import_value_usd_change_5_years decimal DEFAULT NULL,
-      import_value_usd_percentage_change_1_year float DEFAULT NULL,
-      import_value_usd_percentage_change_5_years float DEFAULT NULL,
       CONSTRAINT hs07_yc_pk PRIMARY KEY (year, product_code),
       CONSTRAINT hs07_yc_attributes_product_names_fk FOREIGN KEY (product_code) REFERENCES public.attributes_products (product_code)
       )"

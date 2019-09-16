@@ -19,15 +19,9 @@ copy_to_db <- function(overwrite = F) {
   
   readline(prompt = "Press [enter] to continue if and only if you agree to the license terms")
   
-  credentials <- menu(
-    c("yes", "no"),
-    title = "Have you stored the host, user password and DB name safely in your .Renviron file?",
-    graphics = F
-  )
+  # scripts -----------------------------------------------------------------
   
-  stopifnot(credentials == 1)
-  
-  # helpers -----------------------------------------------------------------
+  ask_for_db_access <<- 1
   
   source("00-scripts/00-user-input-and-derived-classification-digits-years.R")
   source("00-scripts/01-packages.R")
@@ -40,24 +34,6 @@ copy_to_db <- function(overwrite = F) {
   # source("00-scripts/08-join-converted-datasets.R")
   # source("00-scripts/09-compute-rca-and-related-metrics.R")
   # source("00-scripts/10-create-final-tables.R")
-  
-  # connection parameters ---------------------------------------------------
-  
-  drv <- dbDriver("PostgreSQL") # choose the driver
-  
-  dbusr <- Sys.getenv("dbusr")
-  dbpwd <- Sys.getenv("dbpwd")
-  dbhost <- Sys.getenv("dbhost")
-  dbname <- Sys.getenv("dbname")
-  
-  con <- dbConnect(
-    drv,
-    host = dbhost,
-    port = 5432,
-    user = dbusr,
-    password = dbpwd,
-    dbname = dbname
-  )
   
   # attributes --------------------------------------------------------------
   
@@ -107,15 +83,7 @@ copy_to_db <- function(overwrite = F) {
         character = "product_code",
         numeric = c(
           "export_value_usd",
-          "import_value_usd",
-          "export_value_usd_change_1_year",
-          "export_value_usd_change_5_years",
-          "export_value_usd_percentage_change_1_year",
-          "export_value_usd_percentage_change_5_years",
-          "import_value_usd_change_1_year",
-          "import_value_usd_change_5_years",
-          "import_value_usd_percentage_change_1_year",
-          "import_value_usd_percentage_change_5_years"
+          "import_value_usd"
         )
       )
       dbWriteTable(con, "hs07_yrpc", yrpc, append = TRUE, overwrite = overwrite, row.names = FALSE)
@@ -130,15 +98,7 @@ copy_to_db <- function(overwrite = F) {
         yrp_gz[t],
         numeric = c(
           "export_value_usd",
-          "import_value_usd",
-          "export_value_usd_change_1_year",
-          "export_value_usd_change_5_years",
-          "export_value_usd_percentage_change_1_year",
-          "export_value_usd_percentage_change_5_years",
-          "import_value_usd_change_1_year",
-          "import_value_usd_change_5_years",
-          "import_value_usd_percentage_change_1_year",
-          "import_value_usd_percentage_change_5_years"
+          "import_value_usd"
         )
       )
       dbWriteTable(con, "hs07_yrp", yrp, append = TRUE, overwrite = overwrite, row.names = FALSE)
@@ -158,15 +118,7 @@ copy_to_db <- function(overwrite = F) {
           "export_rca_4_digits_product_code",
           "export_rca_6_digits_product_code",
           "import_rca_4_digits_product_code",
-          "import_rca_6_digits_product_code",
-          "export_value_usd_change_1_year",
-          "export_value_usd_change_5_years",
-          "export_value_usd_percentage_change_1_year",
-          "export_value_usd_percentage_change_5_years",
-          "import_value_usd_change_1_year",
-          "import_value_usd_change_5_years",
-          "import_value_usd_percentage_change_1_year",
-          "import_value_usd_percentage_change_5_years"
+          "import_rca_6_digits_product_code"
         )
       )
       dbWriteTable(con, "hs07_yrc", yrc, append = TRUE, overwrite = overwrite, row.names = FALSE)
@@ -187,15 +139,7 @@ copy_to_db <- function(overwrite = F) {
           "eci_reflections_method",
           "eci_eigenvalues_method",
           "top_export_trade_value_usd",
-          "top_import_trade_value_usd",
-          "export_value_usd_change_1_year",
-          "export_value_usd_change_5_years",
-          "export_value_usd_percentage_change_1_year",
-          "export_value_usd_percentage_change_5_years",
-          "import_value_usd_change_1_year",
-          "import_value_usd_change_5_years",
-          "import_value_usd_percentage_change_1_year",
-          "import_value_usd_percentage_change_5_years"
+          "top_import_trade_value_usd"
         )
       )
       dbWriteTable(con, "hs07_yr", yr, append = TRUE, overwrite = overwrite, row.names = FALSE)
@@ -216,15 +160,7 @@ copy_to_db <- function(overwrite = F) {
           "pci_reflections_method",
           "pci_eigenvalues_method",
           "top_exporter_trade_value_usd",
-          "top_importer_trade_value_usd",
-          "export_value_usd_change_1_year",
-          "export_value_usd_change_5_years",
-          "export_value_usd_percentage_change_1_year",
-          "export_value_usd_percentage_change_5_years",
-          "import_value_usd_change_1_year",
-          "import_value_usd_change_5_years",
-          "import_value_usd_percentage_change_1_year",
-          "import_value_usd_percentage_change_5_years"
+          "top_importer_trade_value_usd"
         )
       )
       dbWriteTable(con, "hs07_yc", yc, append = TRUE, overwrite = overwrite, row.names = FALSE)
