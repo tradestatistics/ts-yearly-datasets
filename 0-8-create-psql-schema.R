@@ -27,13 +27,6 @@ See https://github.com/tradestatistics/ts-yearly-datasets/LICENSE for the detail
   source("00-scripts/01-packages.R")
   source("00-scripts/02-dirs-and-files.R")
   source("00-scripts/03-misc.R")
-  # source("00-scripts/04-download-raw-data.R")
-  # source("00-scripts/05-read-extract-remove-compress.R")
-  # source("00-scripts/06-tidy-downloaded-data.R")
-  # source("00-scripts/07-convert-tidy-data-codes.R")
-  # source("00-scripts/08-join-converted-datasets.R")
-  # source("00-scripts/09-compute-rca-and-related-metrics.R")
-  # source("00-scripts/10-create-final-tables.R")
 
   # List tables associated with the public schema
   db_tables <- dbGetQuery(con, "SELECT table_name FROM information_schema.tables WHERE table_schema='public'")
@@ -70,7 +63,7 @@ See https://github.com/tradestatistics/ts-yearly-datasets/LICENSE for the detail
       con,
       "CREATE TABLE public.attributes_products 
       (
-      product_code varchar(6) DEFAULT '' PRIMARY KEY NOT NULL,
+      product_code varchar(4) DEFAULT '' PRIMARY KEY NOT NULL,
       product_fullname_english varchar(255) DEFAULT NULL,
       group_code varchar(2) DEFAULT NULL,
       group_name varchar(255) DEFAULT NULL
@@ -98,7 +91,7 @@ See https://github.com/tradestatistics/ts-yearly-datasets/LICENSE for the detail
       con,
       "CREATE TABLE public.attributes_communities 
       (
-      product_code varchar(6) NOT NULL,
+      product_code varchar(4) NOT NULL,
       community_code varchar(2) DEFAULT NULL,
       community_name varchar(255) DEFAULT NULL,
       community_color varchar(7) DEFAULT NULL,
@@ -125,13 +118,23 @@ See https://github.com/tradestatistics/ts-yearly-datasets/LICENSE for the detail
       eci_rank_reflections_method integer DEFAULT NULL,
       eci_eigenvalues_method float DEFAULT NULL,
       eci_rank_eigenvalues_method integer DEFAULT NULL,
-      top_export_product_code varchar(6) DEFAULT NULL,
+      top_export_product_code varchar(4) DEFAULT NULL,
       top_export_trade_value_usd decimal(16,2) DEFAULT NULL,
-      top_import_product_code varchar(6) DEFAULT NULL,
+      top_import_product_code varchar(4) DEFAULT NULL,
       top_import_trade_value_usd decimal(16,2) DEFAULT NULL,
       CONSTRAINT hs07_yr_pk PRIMARY KEY (year, reporter_iso),
       CONSTRAINT hs07_yr_attributes_countries_fk FOREIGN KEY (reporter_iso) REFERENCES public.attributes_countries (country_iso)
       )"
+    )
+    
+    dbSendQuery(
+      con,
+      "CREATE INDEX CONCURRENTLY hs07_yr_y_ind ON public.hs07_yr (year)"
+    )
+    
+    dbSendQuery(
+      con,
+      "CREATE INDEX CONCURRENTLY hs07_yr_yr_ind ON public.hs07_yr (year, reporter_iso)"
     )
 
     # Year - Reporter - Partner -----------------------------------------------
@@ -152,6 +155,26 @@ See https://github.com/tradestatistics/ts-yearly-datasets/LICENSE for the detail
       CONSTRAINT hs07_yrp_attributes_countries_id_fk_2 FOREIGN KEY (partner_iso) REFERENCES public.attributes_countries (country_iso)
       )"
     )
+    
+    dbSendQuery(
+      con,
+      "CREATE INDEX CONCURRENTLY hs07_yrp_y_ind ON public.hs07_yrp (year)"
+    )
+    
+    dbSendQuery(
+      con,
+      "CREATE INDEX CONCURRENTLY hs07_yrp_yr_ind ON public.hs07_yrp (year, reporter_iso)"
+    )
+    
+    dbSendQuery(
+      con,
+      "CREATE INDEX CONCURRENTLY hs07_yrp_yp_ind ON public.hs07_yrp (year, partner_iso)"
+    )
+    
+    dbSendQuery(
+      con,
+      "CREATE INDEX CONCURRENTLY hs07_yrp_yrp_ind ON public.hs07_yrp (year, reporter_iso, partner_iso)"
+    )
 
     # Year - Reporter - Partner - Product Code --------------------------------
 
@@ -164,8 +187,7 @@ See https://github.com/tradestatistics/ts-yearly-datasets/LICENSE for the detail
       year integer NOT NULL,
       reporter_iso varchar(3) NOT NULL,
       partner_iso varchar(3) NOT NULL,
-      product_code varchar(6) NOT NULL,
-      product_code_length integer DEFAULT NULL,
+      product_code varchar(4) NOT NULL,
       export_value_usd decimal(16,2) DEFAULT NULL,
       import_value_usd decimal(16,2) DEFAULT NULL,
       CONSTRAINT hs07_yrpc_pk PRIMARY KEY (year, reporter_iso, partner_iso, product_code),
@@ -173,6 +195,41 @@ See https://github.com/tradestatistics/ts-yearly-datasets/LICENSE for the detail
       CONSTRAINT hs07_yrpc_attributes_countries_fk_2 FOREIGN KEY (partner_iso) REFERENCES public.attributes_countries (country_iso),
       CONSTRAINT hs07_yrpc_attributes_product_names_fk_3 FOREIGN KEY (product_code) REFERENCES public.attributes_products (product_code)
       )"
+    )
+    
+    dbSendQuery(
+      con,
+      "CREATE INDEX CONCURRENTLY hs07_yrpc_y_ind ON public.hs07_yrpc (year)"
+    )
+    
+    dbSendQuery(
+      con,
+      "CREATE INDEX CONCURRENTLY hs07_yrpc_yr_ind ON public.hs07_yrpc (year, reporter_iso)"
+    )
+    
+    dbSendQuery(
+      con,
+      "CREATE INDEX CONCURRENTLY hs07_yrpc_yp_ind ON public.hs07_yrpc (year, partner_iso)"
+    )
+    
+    dbSendQuery(
+      con,
+      "CREATE INDEX CONCURRENTLY hs07_yrpc_yrp_ind ON public.hs07_yrpc (year, reporter_iso, partner_iso)"
+    )
+    
+    dbSendQuery(
+      con,
+      "CREATE INDEX CONCURRENTLY hs07_yrpc_yrc_ind ON public.hs07_yrpc (year, reporter_iso, product_code)"
+    )
+    
+    dbSendQuery(
+      con,
+      "CREATE INDEX CONCURRENTLY hs07_yrpc_ypc_ind ON public.hs07_yrpc (year, partner_iso, product_code)"
+    )
+    
+    dbSendQuery(
+      con,
+      "CREATE INDEX CONCURRENTLY hs07_yrpc_yrpc_ind ON public.hs07_yrpc (year, reporter_iso, partner_iso, product_code)"
     )
 
     # Year - Reporter - Product Code ------------------------------------------
@@ -185,18 +242,35 @@ See https://github.com/tradestatistics/ts-yearly-datasets/LICENSE for the detail
       (
       year integer NOT NULL,
       reporter_iso varchar(3) NOT NULL,
-      product_code varchar(6) NOT NULL,
-      product_code_length integer DEFAULT NULL,
+      product_code varchar(4) NOT NULL,
       export_value_usd decimal(16,2) DEFAULT NULL,
       import_value_usd decimal(16,2) DEFAULT NULL,
-      export_rca_4_digits_product_code float DEFAULT NULL,
-      export_rca_6_digits_product_code float DEFAULT NULL,
-      import_rca_4_digits_product_code float DEFAULT NULL,
-      import_rca_6_digits_product_code float DEFAULT NULL,
+      export_rca float DEFAULT NULL,
+      import_rca float DEFAULT NULL,
       CONSTRAINT hs07_yrc_pk PRIMARY KEY (year, reporter_iso, product_code),
       CONSTRAINT hs07_yrc_attributes_countries_fk FOREIGN KEY (reporter_iso) REFERENCES public.attributes_countries (country_iso),
       CONSTRAINT hs07_yrc_attributes_product_names_fk_2 FOREIGN KEY (product_code) REFERENCES public.attributes_products (product_code)
       )"
+    )
+    
+    dbSendQuery(
+      con,
+      "CREATE INDEX CONCURRENTLY hs07_yrc_y_ind ON public.hs07_yrc (year)"
+    )
+    
+    dbSendQuery(
+      con,
+      "CREATE INDEX CONCURRENTLY hs07_yrc_yr_ind ON public.hs07_yrc (year, reporter_iso)"
+    )
+    
+    dbSendQuery(
+      con,
+      "CREATE INDEX CONCURRENTLY hs07_yrc_yc_ind ON public.hs07_yrc (year, product_code)"
+    )
+    
+    dbSendQuery(
+      con,
+      "CREATE INDEX CONCURRENTLY hs07_yrc_yrc_ind ON public.hs07_yrc (year, reporter_iso, product_code)"
     )
 
     # Year - Product Code -----------------------------------------------------
@@ -208,8 +282,7 @@ See https://github.com/tradestatistics/ts-yearly-datasets/LICENSE for the detail
       "CREATE TABLE public.hs07_yc
       (
       year integer NOT NULL,
-      product_code varchar(6) NOT NULL,
-      product_code_length integer DEFAULT NULL,
+      product_code varchar(4) NOT NULL,
       export_value_usd decimal(16,2) DEFAULT NULL,
       import_value_usd decimal(16,2) DEFAULT NULL,
       pci_fitness_method float DEFAULT NULL,
@@ -225,6 +298,16 @@ See https://github.com/tradestatistics/ts-yearly-datasets/LICENSE for the detail
       CONSTRAINT hs07_yc_pk PRIMARY KEY (year, product_code),
       CONSTRAINT hs07_yc_attributes_product_names_fk FOREIGN KEY (product_code) REFERENCES public.attributes_products (product_code)
       )"
+    )
+    
+    dbSendQuery(
+      con,
+      "CREATE INDEX CONCURRENTLY hs07_yc_y_ind ON public.hs07_yc (year)"
+    )
+    
+    dbSendQuery(
+      con,
+      "CREATE INDEX CONCURRENTLY hs07_yc_yc_ind ON public.hs07_yc (year, product_code)"
     )
   }
 }
