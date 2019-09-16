@@ -21,16 +21,13 @@ See https://github.com/tradestatistics/ts-yearly-datasets/LICENSE for the detail
 
   # helpers -----------------------------------------------------------------
 
+  ask_number_of_cores <<- 1
+  
   source("00-scripts/00-user-input-and-derived-classification-digits-years.R")
   source("00-scripts/01-packages.R")
   source("00-scripts/02-dirs-and-files.R")
   source("00-scripts/03-misc.R")
-  # source("00-scripts/04-download-raw-data.R")
   source("00-scripts/05-read-extract-remove-compress.R")
-  # source("00-scripts/06-tidy-downloaded-data.R")
-  # source("00-scripts/07-convert-tidy-data-codes.R")
-  # source("00-scripts/08-join-converted-datasets.R")
-  # source("00-scripts/09-compute-rca-and-related-metrics.R")
   source("00-scripts/10-create-final-tables.R")
 
   # codes -------------------------------------------------------------------
@@ -175,11 +172,11 @@ See https://github.com/tradestatistics/ts-yearly-datasets/LICENSE for the detail
 
   # tables ------------------------------------------------------------------
 
-  #if (operating_system != "Windows") {
-  #  mclapply(seq_along(years_full), compute_tables, mc.cores = n_cores)
-  #} else {
+  if (operating_system != "Windows") {
+    mclapply(seq_along(years_full), compute_tables, mc.cores = n_cores)
+  } else {
     lapply(seq_along(years_full), compute_tables)
-  #}
+  }
 }
 
 tables()

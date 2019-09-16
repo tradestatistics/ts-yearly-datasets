@@ -120,9 +120,6 @@ try(dir.create(attributes_dir))
 yrpc_dir <- paste0(tables_dir, "/1-yrpc")
 try(dir.create(yrpc_dir))
 
-yrpc_internal_dir <- paste0(tables_dir, "/1-yrpc-internal")
-try(dir.create(yrpc_internal_dir))
-
 yrp_dir <- paste0(tables_dir, "/2-yrp")
 try(dir.create(yrp_dir))
 
@@ -140,12 +137,6 @@ yrpc_gz <- unified_gz %>%
   gsub("1-yrpc/hs-rev2007/hs-rev2007", "1-yrpc/yrpc", .)
 
 yrpc_csv <- yrpc_gz %>% gsub(".gz", "", .)
-
-yrpc_internal_gz <- unified_gz %>%
-  gsub(unified_dir, yrpc_internal_dir, .) %>%
-  gsub("1-yrpc-internal/hs-rev2007/hs-rev2007", "1-yrpc-internal/yrpc", .)
-
-yrpc_internal_csv <- yrpc_internal_gz %>% gsub(".gz", "", .)
 
 yrp_gz <- unified_gz %>%
   gsub(unified_dir, yrp_dir, .) %>%
