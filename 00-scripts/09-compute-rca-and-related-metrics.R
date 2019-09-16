@@ -18,61 +18,37 @@ compute_rca <- function(x, y, t, group_field) {
     ))
     
     trade_t1 <- fread2(x[t], character = "product_code", numeric = "trade_value_usd") %>%
-      group_by(year, !!sym(group_field), product_code, product_code_length) %>%
+      group_by(!!sym(group_field), product_code) %>%
       summarise(trade_value_usd_t1 = sum(trade_value_usd, na.rm = T)) %>%
       ungroup()
     
-    trade_t1_4 <- filter(trade_t1, product_code_length == 4)
-    trade_t1_6 <- filter(trade_t1, product_code_length == 6)
-    rm(trade_t1)
-    
     if (years_full[t] <= years_missing_t_minus_1) {
-      trade_t1_4 <- trade_t1_4 %>%
-        mutate(trade_value_usd_t2 = NA)
-      
-      trade_t1_6 <- trade_t1_6 %>%
+      trade_t1 <- trade_t1 %>%
         mutate(trade_value_usd_t2 = NA)
     } else {
       trade_t2 <- fread2(x[t - 1], character = "product_code", numeric = "trade_value_usd") %>%
-        group_by(!!sym(group_field), product_code, product_code_length) %>%
+        group_by(!!sym(group_field), product_code) %>%
         summarise(trade_value_usd_t2 = sum(trade_value_usd, na.rm = T)) %>%
         ungroup()
       
-      trade_t2_4 <- trade_t2 %>% filter(product_code_length == 4)
-      trade_t2_6 <- trade_t2 %>% filter(product_code_length == 6)
-      rm(trade_t2)
-      
-      trade_t1_4 <- trade_t1_4 %>%
-        left_join(trade_t2_4, by = c(group_field, "product_code"))
-      
-      trade_t1_6 <- trade_t1_6 %>%
-        left_join(trade_t2_6, by = c(group_field, "product_code"))
+      trade_t1 <- trade_t1 %>%
+        left_join(trade_t2, by = c(group_field, "product_code"))
     }
     
     if (years_full[t] <= years_missing_t_minus_2) {
-      trade_t1_4 <- trade_t1_4 %>%
-        mutate(trade_value_usd_t3 = NA)
-      
-      trade_t1_6 <- trade_t1_6 %>%
+      trade_t1 <- trade_t1 %>%
         mutate(trade_value_usd_t3 = NA)
     } else {
       trade_t3 <- fread2(x[t - 2], character = "product_code", numeric = "trade_value_usd") %>%
-        group_by(!!sym(group_field), product_code, product_code_length) %>%
+        group_by(!!sym(group_field), product_code) %>%
         summarise(trade_value_usd_t3 = sum(trade_value_usd, na.rm = T)) %>%
         ungroup()
       
-      trade_t3_4 <- trade_t3 %>% filter(product_code_length == 4)
-      trade_t3_6 <- trade_t3 %>% filter(product_code_length == 6)
-      rm(trade_t3)
-      
-      trade_t1_4 <- trade_t1_4 %>%
-        left_join(trade_t3_4, by = c(group_field, "product_code"))
-      
-      trade_t1_6 <- trade_t1_6 %>%
-        left_join(trade_t3_6, by = c(group_field, "product_code"))
+      trade_t1 <- trade_t1 %>%
+        left_join(trade_t3, by = c(group_field, "product_code"))
     }
     
-    trade_t1_4 <- trade_t1_4 %>%
+    trade_t1 <- trade_t1 %>%
       rowwise() %>% # To apply a weighted mean by rows with 1 weight = 1 column
       mutate(
         xcp = weighted.mean( # x = value, c = country, p = product
@@ -93,31 +69,6 @@ compute_rca <- function(x, y, t, group_field) {
       rename(!!sym(group_field) := country, product_code = product) %>%
       mutate(year = years_full[t]) %>%
       select(year, !!sym(group_field), product_code, value)
-    
-    trade_t1_6 <- trade_t1_6 %>%
-      rowwise() %>% # To apply a weighted mean by rows with 1 weight = 1 column
-      mutate(
-        xcp = weighted.mean( # x = value, c = country, p = product
-          x = c(trade_value_usd_t1, trade_value_usd_t3, trade_value_usd_t3),
-          w = c(2, 1, 1),
-          na.rm = TRUE
-        )
-      ) %>%
-      ungroup() %>%
-      select(-c(trade_value_usd_t1, trade_value_usd_t2, trade_value_usd_t3)) %>%
-      revealed_comparative_advantage(
-        country = group_field,
-        product = "product_code",
-        value = "xcp",
-        discrete = F,
-        tbl_output = T
-      ) %>%
-      rename(!!sym(group_field) := country, product_code = product) %>%
-      mutate(year = years_full[t]) %>%
-      select(year, !!sym(group_field), product_code, value)
-    
-    trade_t1 <- bind_rows(trade_t1_4, trade_t1_6) %>% arrange(!!sym(group_field), product_code)
-    rm(trade_t1_4, trade_t1_6)
     
     if (group_field == "reporter_iso") {
       names(trade_t1) <- c("year", "country_iso", "product_code", "export_rca")
