@@ -27,13 +27,7 @@ copy_to_db <- function(overwrite = F) {
   source("00-scripts/01-packages.R")
   source("00-scripts/02-dirs-and-files.R")
   source("00-scripts/03-misc.R")
-  # source("00-scripts/04-download-raw-data.R")
   source("00-scripts/05-read-extract-remove-compress.R")
-  # source("00-scripts/06-tidy-downloaded-data.R")
-  # source("00-scripts/07-convert-tidy-data-codes.R")
-  # source("00-scripts/08-join-converted-datasets.R")
-  # source("00-scripts/09-compute-rca-and-related-metrics.R")
-  # source("00-scripts/10-create-final-tables.R")
   
   # attributes --------------------------------------------------------------
   
@@ -54,6 +48,7 @@ copy_to_db <- function(overwrite = F) {
   
   if (obs_attributes_products == 0) {
     attributes_products <- fread2(paste0(tables_dir, "/0-attributes/attributes_products.csv.gz"), character = c("product_code", "group_code"))
+    attributes_products <- filter(attributes_products, str_length(product_code) == 4)
     dbWriteTable(con, "attributes_products", attributes_products, append = TRUE, overwrite = overwrite, row.names = FALSE)
   }
   
@@ -70,6 +65,7 @@ copy_to_db <- function(overwrite = F) {
   
   if (obs_attributes_communities == 0) {
     attributes_communities <- fread2(paste0(tables_dir, "/0-attributes/attributes_communities.csv.gz"), character = c("product_code", "community_code"))
+    attributes_communities <- filter(attributes_communities, str_length(product_code) == 4)
     dbWriteTable(con, "attributes_communities", attributes_communities, append = TRUE, overwrite = overwrite, row.names = FALSE)
   }
   
@@ -78,93 +74,133 @@ copy_to_db <- function(overwrite = F) {
   lapply(
     seq_along(years_full),
     function(t) {
-      yrpc <- fread2(
-        yrpc_gz[t],
-        character = "product_code",
-        numeric = c(
-          "export_value_usd",
-          "import_value_usd"
+      obs_yrpc <- as.numeric(dbGetQuery(con, sprintf("SELECT COUNT(year) FROM public.hs07_yrpc WHERE year = %s", years_full[t])))
+      
+      if (obs_yrpc == 0) {
+        message(sprintf("Copying year %s to table YRPC...", years_full[t]))
+        yrpc <- fread2(
+          yrpc_gz[t],
+          character = "product_code",
+          numeric = c(
+            "export_value_usd",
+            "import_value_usd"
+          )
         )
-      )
-      dbWriteTable(con, "hs07_yrpc", yrpc, append = TRUE, overwrite = overwrite, row.names = FALSE)
-      rm(yrpc)
+        
+        dbWriteTable(con, "hs07_yrpc", yrpc, append = TRUE, overwrite = overwrite, row.names = FALSE)
+        rm(yrpc)
+      } else {
+        message(sprintf("Skipping year %s. Already exists in table YRPC.", years_full[t]))
+      }
     }
   )
   
   lapply(
     seq_along(years_full),
     function(t) {
-      yrp <- fread2(
-        yrp_gz[t],
-        numeric = c(
-          "export_value_usd",
-          "import_value_usd"
+      obs_yrp <- as.numeric(dbGetQuery(con, sprintf("SELECT COUNT(year) FROM public.hs07_yrp WHERE year = %s", years_full[t])))
+      
+      if (obs_yrp == 0) {
+        message(sprintf("Copying year %s to table YRP...", years_full[t]))
+        
+        yrp <- fread2(
+          yrp_gz[t],
+          numeric = c(
+            "export_value_usd",
+            "import_value_usd"
+          )
         )
-      )
-      dbWriteTable(con, "hs07_yrp", yrp, append = TRUE, overwrite = overwrite, row.names = FALSE)
-      rm(yrp)
+        
+        dbWriteTable(con, "hs07_yrp", yrp, append = TRUE, overwrite = overwrite, row.names = FALSE)
+        rm(yrp)
+      } else {
+        message(sprintf("Skipping year %s. Already exists in table YRP.", years_full[t]))
+      }
     }
   )
   
   lapply(
     seq_along(years_full),
     function(t) {
-      yrc <- fread2(
-        yrc_gz[t],
-        character = "product_code",
-        numeric = c(
-          "export_value_usd",
-          "import_value_usd",
-          "export_rca_4_digits_product_code",
-          "export_rca_6_digits_product_code",
-          "import_rca_4_digits_product_code",
-          "import_rca_6_digits_product_code"
+      obs_yrc <- as.numeric(dbGetQuery(con, sprintf("SELECT COUNT(year) FROM public.hs07_yrc WHERE year = %s", years_full[t])))
+      
+      if (obs_yrc == 0) {
+        message(sprintf("Copying year %s to table YRP...", years_full[t]))
+        
+        yrc <- fread2(
+          yrc_gz[t],
+          character = "product_code",
+          numeric = c(
+            "export_value_usd",
+            "import_value_usd",
+            "export_rca",
+            "import_rca"
+          )
         )
-      )
-      dbWriteTable(con, "hs07_yrc", yrc, append = TRUE, overwrite = overwrite, row.names = FALSE)
-      rm(yrc)
+        
+        dbWriteTable(con, "hs07_yrc", yrc, append = TRUE, overwrite = overwrite, row.names = FALSE)
+        rm(yrc)
+      } else {
+        message(sprintf("Skipping year %s. Already exists in table YRC.", years_full[t]))
+      }
     }
   )
   
   lapply(
     seq_along(years_full),
     function(t) {
-      yr <- fread2(
-        yr_gz[t],
-        character = c("top_export_product_code", "top_import_product_code"),
-        numeric = c(
-          "export_value_usd",
-          "import_value_usd",
-          "eci_fitness_method",
-          "eci_reflections_method",
-          "eci_eigenvalues_method",
-          "top_export_trade_value_usd",
-          "top_import_trade_value_usd"
+      obs_yr <- as.numeric(dbGetQuery(con, sprintf("SELECT COUNT(year) FROM public.hs07_yr WHERE year = %s", years_full[t])))
+      
+      if (obs_yr == 0) {
+        message(sprintf("Copying year %s to table YR...", years_full[t]))
+        
+        yr <- fread2(
+          yr_gz[t],
+          character = c("top_export_product_code", "top_import_product_code"),
+          numeric = c(
+            "export_value_usd",
+            "import_value_usd",
+            "eci_fitness_method",
+            "eci_reflections_method",
+            "eci_eigenvalues_method",
+            "top_export_trade_value_usd",
+            "top_import_trade_value_usd"
+          )
         )
-      )
-      dbWriteTable(con, "hs07_yr", yr, append = TRUE, overwrite = overwrite, row.names = FALSE)
-      rm(yr)
+        
+        dbWriteTable(con, "hs07_yr", yr, append = TRUE, overwrite = overwrite, row.names = FALSE)
+        rm(yr)
+      } else {
+        message(sprintf("Skipping year %s. Already exists in table YR.", years_full[t]))
+      }
     }
   )
   
   lapply(
     seq_along(years_full),
     function(t) {
-      yc <- fread2(
-        yc_gz[t],
-        character = "product_code",
-        numeric = c(
-          "export_value_usd",
-          "import_value_usd",
-          "pci_fitness_method",
-          "pci_reflections_method",
-          "pci_eigenvalues_method",
-          "top_exporter_trade_value_usd",
-          "top_importer_trade_value_usd"
+      obs_yc <- as.numeric(dbGetQuery(con, sprintf("SELECT COUNT(year) FROM public.hs07_yc WHERE year = %s", years_full[t])))
+      
+      if (obs_yc == 0) {
+        yc <- fread2(
+          yc_gz[t],
+          character = "product_code",
+          numeric = c(
+            "export_value_usd",
+            "import_value_usd",
+            "pci_fitness_method",
+            "pci_reflections_method",
+            "pci_eigenvalues_method",
+            "top_exporter_trade_value_usd",
+            "top_importer_trade_value_usd"
+          )
         )
-      )
-      dbWriteTable(con, "hs07_yc", yc, append = TRUE, overwrite = overwrite, row.names = FALSE)
-      rm(yc)
+        
+        dbWriteTable(con, "hs07_yc", yc, append = TRUE, overwrite = overwrite, row.names = FALSE)
+        rm(yc)
+      } else {
+        message(sprintf("Skipping year %s. Already exists in table YC.", years_full[t]))
+      }
     }
   )
 }

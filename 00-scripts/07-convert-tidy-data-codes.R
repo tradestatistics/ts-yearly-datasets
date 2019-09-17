@@ -43,7 +43,7 @@ convert_codes <- function(t, x, y) {
       select(-product_code) %>%
       rename(product_code = converted_code_parent) %>%
       group_by(reporter_iso, partner_iso, product_code) %>%
-      mutate(trade_value_usd = sum(trade_value_usd, na.rm = T)) %>% 
+      summarise(trade_value_usd = sum(trade_value_usd, na.rm = T)) %>% 
       select(reporter_iso, partner_iso, product_code, trade_value_usd) %>% 
       filter(trade_value_usd > 0)
 

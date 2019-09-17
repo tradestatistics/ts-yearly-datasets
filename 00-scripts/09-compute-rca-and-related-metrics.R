@@ -59,12 +59,12 @@ compute_rca <- function(x, y, t, group_field) {
       ) %>%
       ungroup() %>%
       select(-c(trade_value_usd_t1, trade_value_usd_t2, trade_value_usd_t3)) %>%
-      revealed_comparative_advantage(
-        country = group_field,
-        product = "product_code",
-        value = "xcp",
+      ec_rca(
+        c = group_field,
+        p = "product_code",
+        v = "xcp",
         discrete = F,
-        tbl_output = T
+        tbl = T
       ) %>%
       rename(!!sym(group_field) := country, product_code = product) %>%
       mutate(year = years_full[t]) %>%

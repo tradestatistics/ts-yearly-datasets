@@ -9,39 +9,39 @@
 
 create_schema <- function(overwrite = F) {
   # messages ----------------------------------------------------------------
-
+  
   message("Copyright (C) 2018-2019, Mauricio \"Pacha\" Vargas.
-This file is part of Open Trade Statistics project.
-The scripts within this project are released under GNU General Public License 3.0.\n
-This program is free software and comes with ABSOLUTELY NO WARRANTY.
-You are welcome to redistribute it under certain conditions.
-See https://github.com/tradestatistics/ts-yearly-datasets/LICENSE for the details.\n")
+          This file is part of Open Trade Statistics project.
+          The scripts within this project are released under GNU General Public License 3.0.\n
+          This program is free software and comes with ABSOLUTELY NO WARRANTY.
+          You are welcome to redistribute it under certain conditions.
+          See https://github.com/tradestatistics/ts-yearly-datasets/LICENSE for the details.\n")
   
   readline(prompt = "Press [enter] to continue if and only if you agree to the license terms")
-
+  
   # scripts -----------------------------------------------------------------
-
+  
   ask_for_db_access <<- 1
   
   source("00-scripts/00-user-input-and-derived-classification-digits-years.R")
   source("00-scripts/01-packages.R")
   source("00-scripts/02-dirs-and-files.R")
   source("00-scripts/03-misc.R")
-
+  
   # List tables associated with the public schema
   db_tables <- dbGetQuery(con, "SELECT table_name FROM information_schema.tables WHERE table_schema='public'")
-
+  
   if (nrow(db_tables) > 0 & overwrite == F) {
     messageline()
     message("The DB schema is not empty so it won't be replaced.")
   } else {
     messageline()
     message("Creating/Overwriting DB schema...")
-
+    
     # Countries ---------------------------------------------------------------
-
+    
     dbSendQuery(con, "DROP TABLE IF EXISTS public.attributes_countries")
-
+    
     dbSendQuery(
       con,
       "CREATE TABLE public.attributes_countries
@@ -54,11 +54,11 @@ See https://github.com/tradestatistics/ts-yearly-datasets/LICENSE for the detail
       eu28_member integer DEFAULT NULL
       )"
     )
-
+    
     # Product names -----------------------------------------------------------
-
+    
     dbSendQuery(con, "DROP TABLE IF EXISTS public.attributes_products")
-
+    
     dbSendQuery(
       con,
       "CREATE TABLE public.attributes_products 
@@ -69,9 +69,9 @@ See https://github.com/tradestatistics/ts-yearly-datasets/LICENSE for the detail
       group_name varchar(255) DEFAULT NULL
       )"
     )
-
+    
     dbSendQuery(con, "DROP TABLE IF EXISTS public.attributes_products_shortnames")
-
+    
     dbSendQuery(
       con,
       "CREATE TABLE public.attributes_products_shortnames 
@@ -82,11 +82,11 @@ See https://github.com/tradestatistics/ts-yearly-datasets/LICENSE for the detail
       CONSTRAINT hs07_attributes_products_shortnames_attributes_products_pk FOREIGN KEY (product_code) REFERENCES public.attributes_products (product_code)
       )"
     )
-
+    
     # Communities -------------------------------------------------------------
-
+    
     dbSendQuery(con, "DROP TABLE IF EXISTS public.attributes_communities")
-
+    
     dbSendQuery(
       con,
       "CREATE TABLE public.attributes_communities 
@@ -99,11 +99,11 @@ See https://github.com/tradestatistics/ts-yearly-datasets/LICENSE for the detail
       CONSTRAINT hs07_attributes_communities_attributes_products_fk FOREIGN KEY (product_code) REFERENCES public.attributes_products (product_code)
       )"
     )
-
+    
     # Year - Reporter ---------------------------------------------------------
-
+    
     dbSendQuery(con, "DROP TABLE IF EXISTS public.hs07_yr")
-
+    
     dbSendQuery(
       con,
       "CREATE TABLE public.hs07_yr 
@@ -129,18 +129,13 @@ See https://github.com/tradestatistics/ts-yearly-datasets/LICENSE for the detail
     
     dbSendQuery(
       con,
-      "CREATE INDEX CONCURRENTLY hs07_yr_y_ind ON public.hs07_yr (year)"
+      "CREATE INDEX CONCURRENTLY hs07_yr_idx_y ON public.hs07_yr (year)"
     )
     
-    dbSendQuery(
-      con,
-      "CREATE INDEX CONCURRENTLY hs07_yr_yr_ind ON public.hs07_yr (year, reporter_iso)"
-    )
-
     # Year - Reporter - Partner -----------------------------------------------
-
+    
     dbSendQuery(con, "DROP TABLE IF EXISTS public.hs07_yrp")
-
+    
     dbSendQuery(
       con,
       "CREATE TABLE public.hs07_yrp 
@@ -158,28 +153,23 @@ See https://github.com/tradestatistics/ts-yearly-datasets/LICENSE for the detail
     
     dbSendQuery(
       con,
-      "CREATE INDEX CONCURRENTLY hs07_yrp_y_ind ON public.hs07_yrp (year)"
+      "CREATE INDEX CONCURRENTLY hs07_yrp_idx_y ON public.hs07_yrp (year)"
     )
     
     dbSendQuery(
       con,
-      "CREATE INDEX CONCURRENTLY hs07_yrp_yr_ind ON public.hs07_yrp (year, reporter_iso)"
+      "CREATE INDEX CONCURRENTLY hs07_yrp_idx_yr ON public.hs07_yrp (year, reporter_iso)"
     )
     
     dbSendQuery(
       con,
-      "CREATE INDEX CONCURRENTLY hs07_yrp_yp_ind ON public.hs07_yrp (year, partner_iso)"
+      "CREATE INDEX CONCURRENTLY hs07_yrp_idx_yp ON public.hs07_yrp (year, partner_iso)"
     )
     
-    dbSendQuery(
-      con,
-      "CREATE INDEX CONCURRENTLY hs07_yrp_yrp_ind ON public.hs07_yrp (year, reporter_iso, partner_iso)"
-    )
-
     # Year - Reporter - Partner - Product Code --------------------------------
-
+    
     dbSendQuery(con, "DROP TABLE IF EXISTS public.hs07_yrpc")
-
+    
     dbSendQuery(
       con,
       "CREATE TABLE public.hs07_yrpc 
@@ -199,43 +189,38 @@ See https://github.com/tradestatistics/ts-yearly-datasets/LICENSE for the detail
     
     dbSendQuery(
       con,
-      "CREATE INDEX CONCURRENTLY hs07_yrpc_y_ind ON public.hs07_yrpc (year)"
+      "CREATE INDEX CONCURRENTLY hs07_yrpc_idx_y ON public.hs07_yrpc (year)"
     )
     
     dbSendQuery(
       con,
-      "CREATE INDEX CONCURRENTLY hs07_yrpc_yr_ind ON public.hs07_yrpc (year, reporter_iso)"
+      "CREATE INDEX CONCURRENTLY hs07_yrpc_idx_yr ON public.hs07_yrpc (year, reporter_iso)"
     )
     
     dbSendQuery(
       con,
-      "CREATE INDEX CONCURRENTLY hs07_yrpc_yp_ind ON public.hs07_yrpc (year, partner_iso)"
+      "CREATE INDEX CONCURRENTLY hs07_yrpc_idx_yp ON public.hs07_yrpc (year, partner_iso)"
     )
     
     dbSendQuery(
       con,
-      "CREATE INDEX CONCURRENTLY hs07_yrpc_yrp_ind ON public.hs07_yrpc (year, reporter_iso, partner_iso)"
+      "CREATE INDEX CONCURRENTLY hs07_yrpc_idx_yrp ON public.hs07_yrpc (year, reporter_iso, partner_iso)"
     )
     
     dbSendQuery(
       con,
-      "CREATE INDEX CONCURRENTLY hs07_yrpc_yrc_ind ON public.hs07_yrpc (year, reporter_iso, product_code)"
+      "CREATE INDEX CONCURRENTLY hs07_yrpc_idx_yrc ON public.hs07_yrpc (year, reporter_iso, product_code)"
     )
     
     dbSendQuery(
       con,
-      "CREATE INDEX CONCURRENTLY hs07_yrpc_ypc_ind ON public.hs07_yrpc (year, partner_iso, product_code)"
+      "CREATE INDEX CONCURRENTLY hs07_yrpc_idx_ypc ON public.hs07_yrpc (year, partner_iso, product_code)"
     )
     
-    dbSendQuery(
-      con,
-      "CREATE INDEX CONCURRENTLY hs07_yrpc_yrpc_ind ON public.hs07_yrpc (year, reporter_iso, partner_iso, product_code)"
-    )
-
     # Year - Reporter - Product Code ------------------------------------------
-
+    
     dbSendQuery(con, "DROP TABLE IF EXISTS public.hs07_yrc")
-
+    
     dbSendQuery(
       con,
       "CREATE TABLE public.hs07_yrc 
@@ -255,28 +240,23 @@ See https://github.com/tradestatistics/ts-yearly-datasets/LICENSE for the detail
     
     dbSendQuery(
       con,
-      "CREATE INDEX CONCURRENTLY hs07_yrc_y_ind ON public.hs07_yrc (year)"
+      "CREATE INDEX CONCURRENTLY hs07_yrc_idx_y ON public.hs07_yrc (year)"
     )
     
     dbSendQuery(
       con,
-      "CREATE INDEX CONCURRENTLY hs07_yrc_yr_ind ON public.hs07_yrc (year, reporter_iso)"
+      "CREATE INDEX CONCURRENTLY hs07_yrc_idx_yr ON public.hs07_yrc (year, reporter_iso)"
     )
     
     dbSendQuery(
       con,
-      "CREATE INDEX CONCURRENTLY hs07_yrc_yc_ind ON public.hs07_yrc (year, product_code)"
+      "CREATE INDEX CONCURRENTLY hs07_yrc_idx_yc ON public.hs07_yrc (year, product_code)"
     )
     
-    dbSendQuery(
-      con,
-      "CREATE INDEX CONCURRENTLY hs07_yrc_yrc_ind ON public.hs07_yrc (year, reporter_iso, product_code)"
-    )
-
     # Year - Product Code -----------------------------------------------------
-
+    
     dbSendQuery(con, "DROP TABLE IF EXISTS public.hs07_yc")
-
+    
     dbSendQuery(
       con,
       "CREATE TABLE public.hs07_yc
@@ -302,12 +282,7 @@ See https://github.com/tradestatistics/ts-yearly-datasets/LICENSE for the detail
     
     dbSendQuery(
       con,
-      "CREATE INDEX CONCURRENTLY hs07_yc_y_ind ON public.hs07_yc (year)"
-    )
-    
-    dbSendQuery(
-      con,
-      "CREATE INDEX CONCURRENTLY hs07_yc_yc_ind ON public.hs07_yc (year, product_code)"
+      "CREATE INDEX CONCURRENTLY hs07_yc_idx_y ON public.hs07_yc (year)"
     )
   }
 }
