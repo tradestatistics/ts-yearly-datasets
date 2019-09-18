@@ -32,7 +32,8 @@ compute_tables <- function(t) {
     message(paste("Creating YRPC table for the year", years_full[t]))
 
     exports <- fread2(unified_gz[t], character = "product_code") %>%
-      rename(export_value_usd = trade_value_usd)
+      rename(export_value_usd = trade_value_usd) %>% 
+      select(-c(year, product_code_length))
 
     imports <- exports
     names(imports) <- c("partner_iso", "reporter_iso", "product_code", "import_value_usd")

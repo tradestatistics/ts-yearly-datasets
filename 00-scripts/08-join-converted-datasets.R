@@ -146,10 +146,12 @@ join_datasets <- function(x, y, z, t) {
       complementary_files <- c(complementary_files, rep(0, 5 - length(complementary_files)))
     }
 
-    data <- fread2(leading_file, character = "product_code", numeric = "trade_value_usd")
+    data <- fread2(leading_file, character = "product_code", numeric = "trade_value_usd") %>% 
+      filter(product_code_length == 4)
 
     if (complementary_files[1] != 0) {
       data2 <- fread2(complementary_files[1], character = "product_code", numeric = "trade_value_usd") %>%
+        filter(product_code_length == 4) %>% 
         anti_join(data, by = c("reporter_iso", "partner_iso"))
     } else {
       data2 <- NULL
@@ -157,6 +159,7 @@ join_datasets <- function(x, y, z, t) {
 
     if (complementary_files[2] != 0) {
       data3 <- fread2(complementary_files[2], character = "product_code", numeric = "trade_value_usd") %>%
+        filter(product_code_length == 4) %>% 
         anti_join(data, by = c("reporter_iso", "partner_iso")) %>%
         anti_join(data2, by = c("reporter_iso", "partner_iso"))
     } else {
@@ -165,6 +168,7 @@ join_datasets <- function(x, y, z, t) {
 
     if (complementary_files[3] != 0) {
       data4 <- fread2(complementary_files[3], character = "product_code", numeric = "trade_value_usd") %>%
+        filter(product_code_length == 4) %>% 
         anti_join(data, by = c("reporter_iso", "partner_iso")) %>%
         anti_join(data2, by = c("reporter_iso", "partner_iso")) %>%
         anti_join(data3, by = c("reporter_iso", "partner_iso"))
@@ -174,6 +178,7 @@ join_datasets <- function(x, y, z, t) {
 
     if (complementary_files[4] != 0) {
       data5 <- fread2(complementary_files[4], character = "product_code", numeric = "trade_value_usd") %>%
+        filter(product_code_length == 4) %>% 
         anti_join(data, by = c("reporter_iso", "partner_iso")) %>%
         anti_join(data2, by = c("reporter_iso", "partner_iso")) %>%
         anti_join(data3, by = c("reporter_iso", "partner_iso")) %>%
@@ -184,6 +189,7 @@ join_datasets <- function(x, y, z, t) {
 
     if (complementary_files[5] != 0) {
       data6 <- fread2(complementary_files[5], character = "product_code", numeric = "trade_value_usd") %>%
+        filter(product_code_length == 4) %>% 
         anti_join(data, by = c("reporter_iso", "partner_iso")) %>%
         anti_join(data2, by = c("reporter_iso", "partner_iso")) %>%
         anti_join(data3, by = c("reporter_iso", "partner_iso")) %>%
