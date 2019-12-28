@@ -26,14 +26,65 @@ See https://github.com/tradestatistics/ts-yearly-datasets/LICENSE for the detail
   ask_for_db_access <<- 1
   ask_to_remove_from_db <<- 1
   
-  ask_number_of_cores <<- 1
+  # ask_number_of_cores <<- 1
   
-  source("00-scripts/00-user-input-and-derived-classification-digits-years.R")
-  source("00-scripts/01-packages.R")
-  source("00-scripts/02-dirs-and-files.R")
-  source("00-scripts/03-misc.R")
-  source("00-scripts/04-download-raw-data.R")
-  source("00-scripts/05-read-extract-remove-compress.R")
+  source("00-common-scripts/00-user-input-and-derived-classification-digits-years.R")
+  source("00-common-scripts/01-packages.R")
+  source("00-common-scripts/02-dirs-and-files.R")
+  
+  # functions ---------------------------------------------------------------
+
+  data_downloading <- function(t,dl) {
+    if (remove_old_files == 1 &
+        (dl$local_file_date[t] < dl$server_file_date[t]) &
+        !is.na(dl$old_file[t])) {
+      try(file.remove(dl$old_file[t]))
+    }
+    if (!file.exists(dl$new_file[t])) {
+      message(paste("Downloading", dl$new_file[t]))
+      if (dl$local_file_date[t] < dl$server_file_date[t]) {
+        Sys.sleep(sample(seq(5, 10, by = 1), 1))
+        try(
+          download.file(dl$url[t],
+                        dl$new_file[t],
+                        method = "wget",
+                        quiet = T,
+                        extra = "--no-check-certificate"
+          )
+        )
+        
+        if (file.size(dl$new_file[t]) == 0) {
+          fs <- 1
+        } else {
+          fs <- 0
+        }
+        
+        while (fs > 0) {
+          try(
+            download.file(dl$url[t],
+                          dl$new_file[t],
+                          method = "wget",
+                          quiet = T,
+                          extra = "--no-check-certificate"
+            )
+          )
+          
+          if (file.size(dl$new_file[t]) == 0) {
+            fs <- fs + 1
+          } else {
+            fs <- 0
+          }
+        }
+      } else {
+        message(paste(
+          "Existing data is not older than server data. Skipping",
+          dl$new_file[t]
+        ))
+      }
+    } else {
+      message(paste(dl$new_file[t], "exists. Skiping."))
+    }
+  }
 
   # download data -----------------------------------------------------------
 
@@ -108,12 +159,15 @@ See https://github.com/tradestatistics/ts-yearly-datasets/LICENSE for the detail
 
   files_to_remove <- download_links %>% 
     filter(local_file_date < server_file_date)
+  
+  years_to_remove <- files_to_remove$year
+  years_to_remove_2 <- unique(c(years_to_remove, years_to_remove + 1, years_to_remove + 2))
     
-  if (operating_system != "Windows") {
-    mclapply(seq_along(years), data_downloading, dl = download_links, mc.cores = n_cores)
-  } else {
+  # if (operating_system != "Windows") {
+  #   mclapply(seq_along(years), data_downloading, dl = download_links, mc.cores = n_cores)
+  # } else {
     lapply(seq_along(years), data_downloading, dl = download_links)
-  }
+  # }
 
   download_links <- download_links %>%
     select(year, url, new_file, local_file_date) %>%
@@ -132,11 +186,11 @@ See https://github.com/tradestatistics/ts-yearly-datasets/LICENSE for the detail
     pattern = "\\.zip",
     full.names = T
   ) %>%
-    grep(paste(paste0("ps-", files_to_remove$year), collapse = "|"), ., 
+    grep(paste(paste0("ps-", years_to_remove), collapse = "|"), ., 
          value = TRUE)
   
   lapply(
-    seq_along(files_to_remove$year),
+    seq_along(years_to_remove),
     function(t) {
       gz <- raw_zip[t] %>% str_replace("/zip/", "/gz/") %>% 
         str_replace("zip$", "csv.gz")
@@ -156,24 +210,50 @@ See https://github.com/tradestatistics/ts-yearly-datasets/LICENSE for the detail
   )
 
   if (remove_old_files == 1) {
-    lapply(c(clean_gz, converted_gz, unified_gz), remove_outdated)
-    lapply(c(eci_rankings_f_gz, eci_rankings_r_gz, eci_rankings_e_gz), remove_outdated)
-    lapply(c(pci_rankings_f_gz, pci_rankings_r_gz, pci_rankings_e_gz), remove_outdated)
-    lapply(c(proximity_countries_gz, proximity_products_gz), remove_outdated)
-    lapply(c(rca_exports_gz, rca_imports_gz), remove_outdated)
-    lapply(c(yrpc_gz, yrp_gz, yrc_gz, yr_gz, yc_gz), remove_outdated)
+    remove_outdated(
+      c(clean_gz, converted_gz,
+        gsub(paste0(classification, "-rev", revision), "hs-rev2007", unified_gz)),
+      years_to_remove_2
+    )
+    
+    remove_outdated(
+      c(rca_exports_gz, rca_imports_gz),
+      years_to_remove_2
+    )
+    
+    remove_outdated(
+      c(proximity_countries_gz, proximity_products_gz),
+      years_to_remove_2
+    )
+    
+    remove_outdated(
+      c(eci_rankings_f_gz, eci_rankings_r_gz, eci_rankings_e_gz),
+      years_to_remove_2
+    )
+    
+    remove_outdated(
+      c(pci_rankings_f_gz, pci_rankings_r_gz, pci_rankings_e_gz),
+      years_to_remove_2
+    )
+    
+    remove_outdated(
+      c(eci_files, pci_files),
+      "*"
+    )
+    
+    remove_outdated(
+      c(yrpc_gz, yrp_gz, yrc_gz, yr_gz, yc_gz),
+      years_to_remove_2
+    )
   }
   
-  remove_outdated_2(c(rca_exports_gz, rca_imports_gz), files_to_remove$year + 1)
-  remove_outdated_2(c(rca_exports_gz, rca_imports_gz), files_to_remove$year + 2)
-  
-  if (remove_from_db == 1) {
-    dbGetQuery(con, glue_sql("DELETE FROM public.hs07_yrpc WHERE year IN ({files_to_remove$year*})", .con = con))
-    dbGetQuery(con, glue_sql("DELETE FROM public.hs07_yrp WHERE year IN ({files_to_remove$year*})", .con = con))
-    dbGetQuery(con, glue_sql("DELETE FROM public.hs07_yrc WHERE year IN ({files_to_remove$year*})", .con = con))
-    dbGetQuery(con, glue_sql("DELETE FROM public.hs07_yr WHERE year IN ({files_to_remove$year*})", .con = con))
-    dbGetQuery(con, glue_sql("DELETE FROM public.hs07_yc WHERE year IN ({files_to_remove$year*})", .con = con))
-  }
+  # if (remove_from_db == 1) {
+  #   dbGetQuery(con, glue_sql("DELETE FROM public.hs07_yrpc WHERE year IN ({years_to_remove_2*})", .con = con))
+  #   dbGetQuery(con, glue_sql("DELETE FROM public.hs07_yrp WHERE year IN ({years_to_remove_2*})", .con = con))
+  #   dbGetQuery(con, glue_sql("DELETE FROM public.hs07_yrc WHERE year IN ({years_to_remove_2*})", .con = con))
+  #   dbGetQuery(con, glue_sql("DELETE FROM public.hs07_yr WHERE year IN ({years_to_remove_2*})", .con = con))
+  #   dbGetQuery(con, glue_sql("DELETE FROM public.hs07_yc WHERE year IN ({years_to_remove_2*})", .con = con))
+  # }
 }
 
 download()

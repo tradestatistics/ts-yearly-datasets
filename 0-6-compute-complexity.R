@@ -87,10 +87,6 @@ See https://github.com/tradestatistics/ts-yearly-datasets/LICENSE for the detail
     fitness = map2(eci_rankings_f_gz, years_full, tidy_eci)
   )
   
-  eci_files <- c("/eci-reflections-joined-ranking.csv",
-                 "/eci-eigenvalues-joined-ranking.csv",
-                 "/eci-fitness-joined-ranking.csv")
-  
   write_eci <- function(x,y) {
     d <- bind_rows(joined_eci_ranking[[x]])
     fwrite(d, paste0(eci_dir, y))
@@ -119,10 +115,6 @@ See https://github.com/tradestatistics/ts-yearly-datasets/LICENSE for the detail
     eigenvalues = map2(pci_rankings_e_gz, years_full, tidy_pci),
     fitness = map2(pci_rankings_f_gz, years_full, tidy_pci)
   )
-  
-  pci_files <- c("/pci-reflections-joined-ranking.csv",
-                 "/pci-eigenvalues-joined-ranking.csv",
-                 "/pci-fitness-joined-ranking.csv")
   
   write_pci <- function(x,y) {
     d <- bind_rows(joined_pci_ranking[[x]])
