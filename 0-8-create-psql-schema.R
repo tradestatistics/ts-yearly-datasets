@@ -23,10 +23,11 @@ create_schema <- function(overwrite = F) {
   
   ask_for_db_access <<- 1
   
-  source("00-scripts/00-user-input-and-derived-classification-digits-years.R")
-  source("00-scripts/01-packages.R")
-  source("00-scripts/02-dirs-and-files.R")
-  source("00-scripts/03-misc.R")
+  source("99-user-input.R")
+  source("99-input-based-parameters.R")
+  source("99-packages.R")
+  source("99-funs.R")
+  source("99-dirs-and-files.R")
   
   # List tables associated with the public schema
   db_tables <- dbGetQuery(con, "SELECT table_name FROM information_schema.tables WHERE table_schema='public'")

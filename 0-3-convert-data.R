@@ -21,7 +21,7 @@ See https://github.com/tradestatistics/ts-yearly-datasets/LICENSE for the detail
 
   # scripts -----------------------------------------------------------------
 
-  # ask_number_of_cores <<- 1
+  ask_number_of_cores <<- 1
   # ask_convert <<- 1
   dataset2 <- 4
   
@@ -147,20 +147,20 @@ See https://github.com/tradestatistics/ts-yearly-datasets/LICENSE for the detail
   
   # convert data ------------------------------------------------------------
 
-  # if (operating_system != "Windows") {
-  #   mclapply(seq_along(converted_rds),
-  #            convert_codes,
-  #            mc.cores = n_cores,
-  #            x = clean_rds,
-  #            y = converted_rds
-  #   )
-  # } else {
+  if (operating_system != "Windows") {
+    mclapply(seq_along(converted_rds),
+             convert_codes,
+             mc.cores = n_cores,
+             x = clean_rds,
+             y = converted_rds
+    )
+  } else {
     lapply(seq_along(converted_rds), 
            convert_codes,
            x = clean_rds, 
            y = converted_rds
     )
-  # }
+  }
 }
 
 convert()

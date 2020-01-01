@@ -23,11 +23,11 @@ copy_to_db <- function(overwrite = F) {
   
   ask_for_db_access <<- 1
   
-  source("00-scripts/00-user-input-and-derived-classification-digits-years.R")
-  source("00-scripts/01-packages.R")
-  source("00-scripts/02-dirs-and-files.R")
-  source("00-scripts/03-misc.R")
-  source("00-scripts/05-read-extract-remove-compress.R")
+  source("99-user-input.R")
+  source("99-input-based-parameters.R")
+  source("99-packages.R")
+  source("99-funs.R")
+  source("99-dirs-and-files.R")
   
   # attributes --------------------------------------------------------------
   
@@ -38,7 +38,7 @@ copy_to_db <- function(overwrite = F) {
   obs_attributes_countries <- as.numeric(dbGetQuery(con, "SELECT COUNT(*) FROM public.attributes_countries"))
   
   if (obs_attributes_countries == 0) {
-    attributes_countries <- fread2(paste0(tables_dir, "/0-attributes/attributes_countries.csv.gz"))
+    attributes_countries <- readRDS(paste0(tables_dir, "/0-attributes/attributes_countries.rds"))
     dbWriteTable(con, "attributes_countries", attributes_countries, append = TRUE, overwrite = overwrite, row.names = FALSE)
   }
   
@@ -47,15 +47,15 @@ copy_to_db <- function(overwrite = F) {
   obs_attributes_products <- as.numeric(dbGetQuery(con, "SELECT COUNT(*) FROM public.attributes_products"))
   
   if (obs_attributes_products == 0) {
-    attributes_products <- fread2(paste0(tables_dir, "/0-attributes/attributes_products.csv.gz"), character = c("product_code", "group_code"))
-    attributes_products <- filter(attributes_products, str_length(product_code) == 4)
+    attributes_products <- readRDS(paste0(tables_dir, "/0-attributes/attributes_products.rds")) %>% 
+      filter(str_length(product_code) == 4)
     dbWriteTable(con, "attributes_products", attributes_products, append = TRUE, overwrite = overwrite, row.names = FALSE)
   }
   
   obs_attributes_products_shortnames <- as.numeric(dbGetQuery(con, "SELECT COUNT(*) FROM public.attributes_products_shortnames"))
   
   if (obs_attributes_products_shortnames == 0) {
-    attributes_products_shortnames <- fread2(paste0(tables_dir, "/0-attributes/attributes_products_shortnames.csv.gz"), character = "product_code")
+    attributes_products_shortnames <- readRDS(paste0(tables_dir, "/0-attributes/attributes_products_shortnames.rds"))
     dbWriteTable(con, "attributes_products_shortnames", attributes_products_shortnames, append = TRUE, overwrite = overwrite, row.names = FALSE)
   }
   
@@ -64,8 +64,8 @@ copy_to_db <- function(overwrite = F) {
   obs_attributes_communities <- as.numeric(dbGetQuery(con, "SELECT COUNT(*) FROM public.attributes_communities"))
   
   if (obs_attributes_communities == 0) {
-    attributes_communities <- fread2(paste0(tables_dir, "/0-attributes/attributes_communities.csv.gz"), character = c("product_code", "community_code"))
-    attributes_communities <- filter(attributes_communities, str_length(product_code) == 4)
+    attributes_communities <- readRDS(paste0(tables_dir, "/0-attributes/attributes_communities.rds")) %>% 
+      filter(str_length(product_code) == 4)
     dbWriteTable(con, "attributes_communities", attributes_communities, append = TRUE, overwrite = overwrite, row.names = FALSE)
   }
   
@@ -78,15 +78,7 @@ copy_to_db <- function(overwrite = F) {
       
       if (obs_yrpc == 0) {
         message(sprintf("Copying year %s to table YRPC...", years_full[t]))
-        yrpc <- fread2(
-          yrpc_gz[t],
-          character = "product_code",
-          numeric = c(
-            "export_value_usd",
-            "import_value_usd"
-          )
-        )
-        
+        yrpc <- readRDS(yrpc_rds[t])
         dbWriteTable(con, "hs07_yrpc", yrpc, append = TRUE, overwrite = overwrite, row.names = FALSE)
         rm(yrpc)
       } else {
@@ -103,14 +95,7 @@ copy_to_db <- function(overwrite = F) {
       if (obs_yrp == 0) {
         message(sprintf("Copying year %s to table YRP...", years_full[t]))
         
-        yrp <- fread2(
-          yrp_gz[t],
-          numeric = c(
-            "export_value_usd",
-            "import_value_usd"
-          )
-        )
-        
+        yrp <- readRDS(yrp_rds[t])
         dbWriteTable(con, "hs07_yrp", yrp, append = TRUE, overwrite = overwrite, row.names = FALSE)
         rm(yrp)
       } else {
@@ -127,17 +112,7 @@ copy_to_db <- function(overwrite = F) {
       if (obs_yrc == 0) {
         message(sprintf("Copying year %s to table YRP...", years_full[t]))
         
-        yrc <- fread2(
-          yrc_gz[t],
-          character = "product_code",
-          numeric = c(
-            "export_value_usd",
-            "import_value_usd",
-            "export_rca",
-            "import_rca"
-          )
-        )
-        
+        yrc <- readRDS(yrc_rds[t])
         dbWriteTable(con, "hs07_yrc", yrc, append = TRUE, overwrite = overwrite, row.names = FALSE)
         rm(yrc)
       } else {
@@ -154,20 +129,7 @@ copy_to_db <- function(overwrite = F) {
       if (obs_yr == 0) {
         message(sprintf("Copying year %s to table YR...", years_full[t]))
         
-        yr <- fread2(
-          yr_gz[t],
-          character = c("top_export_product_code", "top_import_product_code"),
-          numeric = c(
-            "export_value_usd",
-            "import_value_usd",
-            "eci_fitness_method",
-            "eci_reflections_method",
-            "eci_eigenvalues_method",
-            "top_export_trade_value_usd",
-            "top_import_trade_value_usd"
-          )
-        )
-        
+        yr <- readRDS(yr_rds[t])
         dbWriteTable(con, "hs07_yr", yr, append = TRUE, overwrite = overwrite, row.names = FALSE)
         rm(yr)
       } else {
@@ -182,20 +144,9 @@ copy_to_db <- function(overwrite = F) {
       obs_yc <- as.numeric(dbGetQuery(con, sprintf("SELECT COUNT(year) FROM public.hs07_yc WHERE year = %s", years_full[t])))
       
       if (obs_yc == 0) {
-        yc <- fread2(
-          yc_gz[t],
-          character = "product_code",
-          numeric = c(
-            "export_value_usd",
-            "import_value_usd",
-            "pci_fitness_method",
-            "pci_reflections_method",
-            "pci_eigenvalues_method",
-            "top_exporter_trade_value_usd",
-            "top_importer_trade_value_usd"
-          )
-        )
+        message(sprintf("Copying year %s to table YC...", years_full[t]))
         
+        yc <- readRDS(yc_rds[t])
         dbWriteTable(con, "hs07_yc", yc, append = TRUE, overwrite = overwrite, row.names = FALSE)
         rm(yc)
       } else {

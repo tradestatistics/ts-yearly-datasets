@@ -21,7 +21,7 @@ See https://github.com/tradestatistics/ts-yearly-datasets/LICENSE for the detail
 
   # scripts -----------------------------------------------------------------
 
-  # ask_number_of_cores <<- 1
+  ask_number_of_cores <<- 1
   
   source("99-user-input.R")
   source("99-input-based-parameters.R")
@@ -149,11 +149,11 @@ See https://github.com/tradestatistics/ts-yearly-datasets/LICENSE for the detail
   messageline()
   message("Rearranging files. Please wait...")
 
-  # if (operating_system != "Windows") {
-  #   mclapply(seq_along(raw_zip), compute_tidy_data, mc.cores = n_cores)
-  # } else {
+  if (operating_system != "Windows") {
+    mclapply(seq_along(raw_zip), compute_tidy_data, mc.cores = n_cores)
+  } else {
     lapply(seq_along(raw_zip), compute_tidy_data)
-  # }
+  }
 }
 
 clean()

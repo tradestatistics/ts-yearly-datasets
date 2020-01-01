@@ -23,13 +23,259 @@ See https://github.com/tradestatistics/ts-yearly-datasets/LICENSE for the detail
 
   ask_number_of_cores <<- 1
   
-  source("00-scripts/00-user-input-and-derived-classification-digits-years.R")
-  source("00-scripts/01-packages.R")
-  source("00-scripts/02-dirs-and-files.R")
-  source("00-scripts/03-misc.R")
-  source("00-scripts/05-read-extract-remove-compress.R")
-  source("00-scripts/10-create-final-tables.R")
+  source("99-user-input.R")
+  source("99-input-based-parameters.R")
+  source("99-packages.R")
+  source("99-funs.R")
+  source("99-dirs-and-files.R")
+  
+  # functions ---------------------------------------------------------------
 
+  summarise_trade <- function(d) {
+    d %>%
+      summarise(
+        export_value_usd = sum(export_value_usd, na.rm = T),
+        import_value_usd = sum(import_value_usd, na.rm = T)
+      )
+  }
+  
+  compute_tables <- function(t) {
+    # PCI/ECI data ------------------------------------------------------------
+    
+    eci_f <- readRDS("05-metrics/hs-rev2007-eci/eci-fitness-joined-ranking.rds")
+    eci_r <- readRDS("05-metrics/hs-rev2007-eci/eci-reflections-joined-ranking.rds")
+    eci_e <- readRDS("05-metrics/hs-rev2007-eci/eci-eigenvalues-joined-ranking.rds")
+    
+    pci_f <- readRDS("05-metrics/hs-rev2007-pci/pci-fitness-joined-ranking.rds")
+    pci_r <- readRDS("05-metrics/hs-rev2007-pci/pci-reflections-joined-ranking.rds")
+    pci_e <- readRDS("05-metrics/hs-rev2007-pci/pci-eigenvalues-joined-ranking.rds")
+    
+    # YRPC ------------------------------------------------------------------
+    
+    if (!file.exists(yrpc_rds[t])) {
+      message(paste("Creating YRPC table for the year", years_full[t]))
+      
+      exports <- readRDS(unified_rds[t]) %>%
+        rename(export_value_usd = trade_value_usd) %>% 
+        select(-c(year, product_code_length))
+      
+      imports <- exports
+      names(imports) <- c("partner_iso", "reporter_iso", "product_code", "import_value_usd")
+      
+      yrpc <- full_join(exports, imports, by = c("reporter_iso", "partner_iso", "product_code")) %>% 
+        mutate(year = years_full[t]) %>%
+        select(year, matches("iso"), matches("product"), export_value_usd, import_value_usd)
+      
+      yrpc <- yrpc %>%
+        rowwise() %>% 
+        mutate(trade_balance = sum(export_value_usd, import_value_usd, na.rm = T)) %>% 
+        ungroup() %>% 
+        filter(trade_balance > 0) %>% 
+        select(-trade_balance)
+      
+      rm(exports, imports)
+      
+      saveRDS(yrpc, yrpc_rds[[t]])
+    } else {
+      message(paste("Reading YRPC table for the year", years_full[t]))
+      
+      yrpc <- readRDS(yrpc_rds[t])
+    }
+    
+    # YRP ------------------------------------------------------------------
+    
+    if (!file.exists(yrp_rds[t])) {
+      yrp <- yrpc %>%
+        group_by(year, reporter_iso, partner_iso) %>%
+        summarise_trade() %>%
+        ungroup()
+      
+      yrp <- yrp %>% 
+        rowwise() %>% 
+        mutate(trade_balance = sum(export_value_usd, import_value_usd, na.rm = T)) %>% 
+        ungroup() %>% 
+        filter(trade_balance > 0) %>% 
+        select(-trade_balance)
+      
+      saveRDS(yrp, yrp_rds[[t]])
+      rm(yrp)
+    }
+    
+    # YRC ------------------------------------------------------------------
+    
+    if (!file.exists(yrc_rds[t])) {
+      rca_exp <- readRDS(rca_exports_rds[[t]]) %>%
+        select(-year)
+      
+      rca_imp <- readRDS(rca_imports_rds[[t]]) %>%
+        select(-year)
+      
+      yrc <- yrpc %>%
+        group_by(year, reporter_iso, product_code) %>%
+        summarise_trade() %>%
+        ungroup()
+      
+      yrc <- yrc %>% 
+        rowwise() %>% 
+        mutate(trade_balance = sum(export_value_usd, import_value_usd, na.rm = T)) %>% 
+        ungroup() %>% 
+        filter(trade_balance > 0) %>% 
+        select(-trade_balance)
+      
+      yrc <- yrc %>% 
+        left_join(rca_exp, by = c("reporter_iso" = "country_iso", "product_code")) %>%
+        left_join(rca_imp, by = c("reporter_iso" = "country_iso", "product_code")) %>%
+        select(year, reporter_iso, product_code, everything())
+      
+      saveRDS(yrc, yrc_rds[[t]])
+      rm(yrc)
+    }
+    
+    # YR -------------------------------------------------------------------
+    
+    if (!file.exists(yr_rds[t])) {
+      eci_f <- eci_f %>%
+        filter(year == years_full[[t]]) %>%
+        select(-year) %>%
+        rename(
+          eci_fitness_method = eci,
+          eci_rank_fitness_method = eci_rank
+        )
+      
+      eci_r <- eci_r %>%
+        filter(year == years_full[[t]]) %>%
+        select(-year) %>%
+        rename(
+          eci_reflections_method = eci,
+          eci_rank_reflections_method = eci_rank
+        )
+      
+      eci_e <- eci_e %>%
+        filter(year == years_full[[t]]) %>%
+        select(-year) %>%
+        rename(
+          eci_eigenvalues_method = eci,
+          eci_rank_eigenvalues_method = eci_rank
+        )
+      
+      max_exp <- yrpc %>%
+        group_by(reporter_iso, product_code) %>%
+        summarise(export_value_usd = sum(export_value_usd, na.rm = T)) %>%
+        group_by(reporter_iso) %>%
+        slice(which.max(export_value_usd)) %>%
+        rename(
+          top_export_product_code = product_code,
+          top_export_trade_value_usd = export_value_usd
+        )
+      
+      max_imp <- yrpc %>%
+        group_by(reporter_iso, product_code) %>%
+        summarise(import_value_usd = sum(import_value_usd, na.rm = T)) %>%
+        group_by(reporter_iso) %>%
+        slice(which.max(import_value_usd)) %>%
+        rename(
+          top_import_product_code = product_code,
+          top_import_trade_value_usd = import_value_usd
+        )
+      
+      yr <- yrpc %>%
+        group_by(year, reporter_iso) %>%
+        summarise_trade() %>%
+        ungroup()
+      
+      yr <- yr %>% 
+        rowwise() %>% 
+        mutate(trade_balance = sum(export_value_usd, import_value_usd, na.rm = T)) %>% 
+        ungroup() %>% 
+        filter(trade_balance > 0) %>% 
+        select(-trade_balance)
+      
+      yr <- yr %>% 
+        left_join(eci_f, by = c("reporter_iso" = "country")) %>%
+        left_join(eci_r, by = c("reporter_iso" = "country")) %>%
+        left_join(eci_e, by = c("reporter_iso" = "country")) %>%
+        left_join(max_exp, by = "reporter_iso") %>%
+        left_join(max_imp, by = "reporter_iso")
+      
+      saveRDS(yr, yr_rds[t])
+      rm(
+        yr,
+        eci_f, eci_r, eci_e,
+        max_exp, max_imp
+      )
+    }
+    
+    # YC -------------------------------------------------------------------
+    
+    if (!file.exists(yc_rds[t])) {
+      pci_f <- pci_f %>%
+        filter(year == years_full[[t]]) %>%
+        select(-year) %>%
+        rename(
+          pci_fitness_method = pci,
+          pci_rank_fitness_method = pci_rank
+        )
+      
+      pci_r <- pci_r %>%
+        filter(year == years_full[[t]]) %>%
+        select(-year) %>%
+        rename(
+          pci_reflections_method = pci,
+          pci_rank_reflections_method = pci_rank
+        )
+      
+      pci_e <- pci_e %>%
+        filter(year == years_full[[t]]) %>%
+        select(-year) %>%
+        rename(
+          pci_eigenvalues_method = pci,
+          pci_rank_eigenvalues_method = pci_rank
+        )
+      
+      max_exp_2 <- yrpc %>%
+        group_by(reporter_iso, product_code) %>%
+        summarise(export_value_usd = sum(export_value_usd, na.rm = T)) %>%
+        group_by(product_code) %>%
+        slice(which.max(export_value_usd)) %>%
+        rename(
+          top_exporter_iso = reporter_iso,
+          top_exporter_trade_value_usd = export_value_usd
+        )
+      
+      max_imp_2 <- yrpc %>%
+        group_by(reporter_iso, product_code) %>%
+        summarise(import_value_usd = sum(import_value_usd, na.rm = T)) %>%
+        group_by(product_code) %>%
+        slice(which.max(import_value_usd)) %>%
+        rename(
+          top_importer_iso = reporter_iso,
+          top_importer_trade_value_usd = import_value_usd
+        )
+      
+      yc <- yrpc %>%
+        group_by(year, product_code) %>%
+        summarise_trade() %>%
+        ungroup()
+      
+      yc <- yc %>% 
+        rowwise() %>% 
+        mutate(trade_balance = sum(export_value_usd, import_value_usd, na.rm = T)) %>% 
+        ungroup() %>% 
+        filter(trade_balance > 0) %>% 
+        select(-trade_balance)
+      
+      yc <- yc %>% 
+        left_join(pci_f, by = c("product_code" = "product")) %>%
+        left_join(pci_r, by = c("product_code" = "product")) %>%
+        left_join(pci_e, by = c("product_code" = "product")) %>%
+        left_join(max_exp_2, by = "product_code") %>%
+        left_join(max_imp_2, by = "product_code") %>%
+        select(year, product_code, export_value_usd, import_value_usd, starts_with("pci_"), everything())
+      
+      saveRDS(yc, yc_rds[[t]])
+    }
+  }
+  
   # codes -------------------------------------------------------------------
 
   load("../comtrade-codes/01-2-tidy-country-data/country-codes.RData")
@@ -64,9 +310,8 @@ See https://github.com/tradestatistics/ts-yearly-datasets/LICENSE for the detail
     distinct(country_iso, .keep_all = T) %>%
     select(-country_abbreviation)
 
-  if (!file.exists(paste0(attributes_dir, "/attributes_countries.csv.gz"))) {
-    fwrite(attributes_countries, paste0(attributes_dir, "/attributes_countries.csv"))
-    compress_gz(paste0(attributes_dir, "/attributes_countries.csv"))
+  if (!file.exists(paste0(attributes_dir, "/attributes_countries.rds"))) {
+    saveRDS(attributes_countries, paste0(attributes_dir, "/attributes_countries.rds"))
   }
 
   product_names <- product_codes %>%
@@ -110,17 +355,15 @@ See https://github.com/tradestatistics/ts-yearly-datasets/LICENSE for the detail
 
   rm(product_names_2)
 
-  if (!file.exists(paste0(attributes_dir, "/attributes_products.csv.gz"))) {
-    fwrite(attributes_products, paste0(attributes_dir, "/attributes_products.csv"))
-    compress_gz(paste0(attributes_dir, "/attributes_products.csv"))
+  if (!file.exists(paste0(attributes_dir, "/attributes_products.rds"))) {
+    saveRDS(attributes_products, paste0(attributes_dir, "/attributes_products.rds"))
   }
 
   attributes_communities <- product_names_3 %>%
     left_join(colors)
 
-  if (!file.exists(paste0(attributes_dir, "/attributes_communities.csv.gz"))) {
-    fwrite(attributes_communities, paste0(attributes_dir, "/attributes_communities.csv"))
-    compress_gz(paste0(attributes_dir, "/attributes_communities.csv"))
+  if (!file.exists(paste0(attributes_dir, "/attributes_communities.rds"))) {
+    saveRDS(attributes_communities, paste0(attributes_dir, "/attributes_communities.rds"))
   }
 
   rm(product_names_3)
@@ -163,9 +406,8 @@ See https://github.com/tradestatistics/ts-yearly-datasets/LICENSE for the detail
     arrange(product_code) %>%
     select(-product_fullname_english)
 
-  if (!file.exists(paste0(attributes_dir, "/attributes_products_shortnames.csv.gz"))) {
-    fwrite(attributes_products_shortnames, paste0(attributes_dir, "/attributes_products_shortnames.csv"))
-    compress_gz(paste0(attributes_dir, "/attributes_products_shortnames.csv"))
+  if (!file.exists(paste0(attributes_dir, "/attributes_products_shortnames.rds"))) {
+    saveRDS(attributes_products_shortnames, paste0(attributes_dir, "/attributes_products_shortnames.rds"))
   }
 
   rm(attributes_products_shortnames_complete, attributes_products_shortnames_nas)

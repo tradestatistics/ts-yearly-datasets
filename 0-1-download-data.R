@@ -26,7 +26,7 @@ See https://github.com/tradestatistics/ts-yearly-datasets/LICENSE for the detail
   ask_for_db_access <<- 1
   ask_to_remove_from_db <<- 1
   
-  # ask_number_of_cores <<- 1
+  ask_number_of_cores <<- 1
   
   source("99-user-input.R")
   source("99-input-based-parameters.R")
@@ -264,13 +264,13 @@ See https://github.com/tradestatistics/ts-yearly-datasets/LICENSE for the detail
     )
   }
   
-  # if (remove_from_db == 1) {
-  #   dbGetQuery(con, glue_sql("DELETE FROM public.hs07_yrpc WHERE year IN ({years_to_remove_2*})", .con = con))
-  #   dbGetQuery(con, glue_sql("DELETE FROM public.hs07_yrp WHERE year IN ({years_to_remove_2*})", .con = con))
-  #   dbGetQuery(con, glue_sql("DELETE FROM public.hs07_yrc WHERE year IN ({years_to_remove_2*})", .con = con))
-  #   dbGetQuery(con, glue_sql("DELETE FROM public.hs07_yr WHERE year IN ({years_to_remove_2*})", .con = con))
-  #   dbGetQuery(con, glue_sql("DELETE FROM public.hs07_yc WHERE year IN ({years_to_remove_2*})", .con = con))
-  # }
+  if (remove_from_db == 1) {
+    dbGetQuery(con, glue_sql("DELETE FROM public.hs07_yrpc WHERE year IN ({years_to_remove_2*})", .con = con))
+    dbGetQuery(con, glue_sql("DELETE FROM public.hs07_yrp WHERE year IN ({years_to_remove_2*})", .con = con))
+    dbGetQuery(con, glue_sql("DELETE FROM public.hs07_yrc WHERE year IN ({years_to_remove_2*})", .con = con))
+    dbGetQuery(con, glue_sql("DELETE FROM public.hs07_yr WHERE year IN ({years_to_remove_2*})", .con = con))
+    dbGetQuery(con, glue_sql("DELETE FROM public.hs07_yc WHERE year IN ({years_to_remove_2*})", .con = con))
+  }
 }
 
 download()

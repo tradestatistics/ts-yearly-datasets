@@ -250,16 +250,16 @@ See https://github.com/tradestatistics/ts-yearly-datasets/LICENSE for the detail
   
   # convert data ------------------------------------------------------------
 
-  # if (operating_system != "Windows") {
-  #   mclapply(seq_along(years_full), join_datasets,
-  #     mc.cores = n_cores,
-  #     x = clean_rds_all, y = converted_rds_all, z = unified_rds
-  #   )
-  # } else {
+  if (operating_system != "Windows") {
+    mclapply(seq_along(years_full), join_datasets,
+      mc.cores = n_cores,
+      x = clean_rds_all, y = converted_rds_all, z = unified_rds
+    )
+  } else {
     lapply(seq_along(years_full), join_datasets,
       x = clean_rds_all, y = converted_rds_all, z = unified_rds
     )
-  # }
+  }
 }
 
 unify()

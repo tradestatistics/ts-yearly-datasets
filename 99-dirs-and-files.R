@@ -145,32 +145,22 @@ yrpc_rds <- unified_rds %>%
   gsub(paste0("/1-yrpc/", classification, "-rev", revision), "/1-yrpc", .) %>% 
   gsub(paste0("/1-yrpc/", classification, "-rev", revision), "/1-yrpc/yrpc", .)
 
-yrpc_csv <- yrpc_rds %>% gsub(".rds", "", .)
-
 yrp_rds <- unified_rds %>%
   gsub(unified_dir, yrp_dir, .) %>%
   gsub(paste0("/2-yrp/", classification, "-rev", revision), "/2-yrp", .) %>% 
   gsub(paste0("/2-yrp/", classification, "-rev", revision), "/2-yrp/yrp", .)
-
-yrp_csv <- yrp_rds %>% gsub(".rds", "", .)
 
 yrc_rds <- unified_rds %>%
   gsub(unified_dir, yrc_dir, .) %>%
   gsub(paste0("/3-yrc/", classification, "-rev", revision), "/3-yrc", .) %>% 
   gsub(paste0("/3-yrc/", classification, "-rev", revision), "/3-yrc/yrc", .)
 
-yrc_csv <- yrc_rds %>% gsub(".rds", "", .)
-
 yr_rds <- unified_rds %>%
   gsub(unified_dir, yr_dir, .) %>%
   gsub(paste0("/4-yr/", classification, "-rev", revision), "/4-yr", .) %>% 
   gsub(paste0("/4-yr/", classification, "-rev", revision), "/4-yr/yr", .)
 
-yr_csv <- yr_rds %>% gsub(".rds", "", .)
-
 yc_rds <- unified_rds %>%
   gsub(unified_dir, yc_dir, .) %>%
   gsub(paste0("/5-yc/", classification, "-rev", revision), "/5-yc", .) %>% 
   gsub(paste0("/5-yc/", classification, "-rev", revision), "/5-yc/yc", .)
-
-yc_csv <- yc_rds %>% gsub(".rds", "", .)
