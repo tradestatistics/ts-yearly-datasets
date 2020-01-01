@@ -22,57 +22,60 @@ See https://github.com/tradestatistics/ts-yearly-datasets/LICENSE for the detail
   # scripts -----------------------------------------------------------------
 
   # ask_number_of_cores <<- 1
+  # ask_convert <<- 1
+  dataset2 <- 4
   
-  source("00-common-scripts/00-user-input-and-derived-classification-digits-years.R")
-  source("00-common-scripts/01-packages.R")
-  source("00-common-scripts/02-dirs-and-files.R")
+  source("99-user-input.R")
+  source("99-input-based-parameters.R")
+  source("99-packages.R")
+  source("99-funs.R")
+  source("99-dirs-and-files.R")
 
+  # product codes -----------------------------------------------------------
+
+  load("../comtrade-codes/02-2-tidy-product-data/product-conversion.RData")
+  
+  product_conversion <- product_conversion %>%
+    select(!!sym(c2[dataset]), !!sym(c2[dataset2])) %>%
+    arrange(!!sym(c2[dataset]), !!sym(c2[dataset2])) %>%
+    filter(
+      !(!!sym(c2[dataset]) %in% c("NULL")),
+      !(!!sym(c2[dataset2]) %in% c("NULL")),
+      str_length(!!sym(c2[dataset])) %in% 4:6,
+      str_length(!!sym(c2[dataset2])) %in% c(4, 6)
+    ) %>%
+    distinct(!!sym(c2[dataset]), .keep_all = T) %>%
+    mutate(
+      original_code_parent = str_sub(!!sym(c2[dataset]), 1, 4),
+      converted_code_parent = str_sub(!!sym(c2[dataset2]), 1, 4)
+    )
+  
+  product_conversion_missing_parent_codes <- product_conversion %>%
+    select(original_code_parent, converted_code_parent) %>%
+    distinct(original_code_parent, .keep_all = T) %>%
+    anti_join(product_conversion, by = c("original_code_parent" = c2[dataset]))
+  
   # functions ---------------------------------------------------------------
-
+  
   convert_codes <- function(t, x, y) {
-    ## product codes -----------------------------------------------------------
-    
-    load("../comtrade-codes/02-2-tidy-product-data/product-conversion.RData")
-    
-    # convert data ------------------------------------------------------------
-    
-    convert_to <- c2[4]
-    
-    product_conversion <- product_conversion %>%
-      select(!!sym(c2[dataset]), !!sym(convert_to)) %>%
-      arrange(!!sym(c2[dataset]), !!sym(convert_to)) %>%
-      filter(
-        !(!!sym(c2[dataset]) %in% c("NULL")),
-        !(!!sym(convert_to) %in% c("NULL")),
-        str_length(!!sym(c2[dataset])) %in% 4:6,
-        str_length(!!sym(convert_to)) %in% c(4, 6)
-      ) %>%
-      distinct(!!sym(c2[dataset]), .keep_all = T) %>%
-      mutate(
-        original_code_parent = str_sub(!!sym(c2[dataset]), 1, 4),
-        converted_code_parent = str_sub(!!sym(convert_to), 1, 4)
-      )
-    
-    product_conversion_missing_parent_codes <- product_conversion %>%
-      select(original_code_parent, converted_code_parent) %>%
-      distinct(original_code_parent, .keep_all = T) %>%
-      anti_join(product_conversion, by = c("original_code_parent" = c2[dataset]))
-    
     if (!file.exists(y[t])) {
-      data <- fread2(x[t], character = "product_code", numeric = "trade_value_usd") %>%
+      messageline()
+      message(paste("Converting", x[t]))
+      
+      data <- readRDS(x[t]) %>%
         select(-year) %>%
         mutate(product_code_parent = str_sub(product_code, 1, 4)) %>%
-        left_join(product_conversion %>% select(!!sym(c2[dataset]), !!sym(convert_to)), by = c("product_code" = c2[dataset])) %>%
+        left_join(product_conversion %>% select(!!sym(c2[dataset]), !!sym(c2[dataset2])), by = c("product_code" = c2[dataset])) %>%
         left_join(product_conversion_missing_parent_codes, by = c("product_code_parent" = "original_code_parent")) %>%
         mutate(
-          !!sym(convert_to) := if_else(is.na(!!sym(convert_to)), converted_code_parent, !!sym(convert_to)),
-          !!sym(convert_to) := if_else(is.na(!!sym(convert_to)), "9999", !!sym(convert_to)),
-          !!sym(convert_to) := if_else(str_sub(!!sym(convert_to), 1, 4) == "9999", "9999", !!sym(convert_to)),
-          converted_code_parent = str_sub(!!sym(convert_to), 1, 4)
+          !!sym(c2[dataset2]) := if_else(is.na(!!sym(c2[dataset2])), converted_code_parent, !!sym(c2[dataset2])),
+          !!sym(c2[dataset2]) := if_else(is.na(!!sym(c2[dataset2])), "9999", !!sym(c2[dataset2])),
+          !!sym(c2[dataset2]) := if_else(str_sub(!!sym(c2[dataset2]), 1, 4) == "9999", "9999", !!sym(c2[dataset2])),
+          converted_code_parent = str_sub(!!sym(c2[dataset2]), 1, 4)
         ) %>%
         select(-c(product_code, product_code_length, product_code_parent)) %>%
         rename(
-          product_code = !!sym(convert_to),
+          product_code = !!sym(c2[dataset2]),
           product_code_parent = converted_code_parent
         ) %>%
         group_by(reporter_iso, partner_iso, product_code_parent) %>%
@@ -138,25 +141,24 @@ See https://github.com/tradestatistics/ts-yearly-datasets/LICENSE for the detail
       
       rm(data_unrepeated_parent_tidy, data_repeated_parent_tidy)
       
-      fwrite(data, str_replace(y[t], ".gz", ""))
-      compress_gz(str_replace(y[t], ".gz", ""))
+      saveRDS(data, y[t])
     }
   }
   
   # convert data ------------------------------------------------------------
 
   # if (operating_system != "Windows") {
-  #   mclapply(seq_along(converted_gz),
+  #   mclapply(seq_along(converted_rds),
   #            convert_codes,
   #            mc.cores = n_cores,
-  #            x = clean_gz,
-  #            y = converted_gz
+  #            x = clean_rds,
+  #            y = converted_rds
   #   )
   # } else {
-    lapply(seq_along(converted_gz), 
+    lapply(seq_along(converted_rds), 
            convert_codes,
-           x = clean_gz, 
-           y = converted_gz
+           x = clean_rds, 
+           y = converted_rds
     )
   # }
 }

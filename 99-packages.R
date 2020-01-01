@@ -20,11 +20,9 @@ if (operating_system != "Windows") {
     data.table, jsonlite, dplyr, tidyr, stringr, janitor, purrr, rlang,
     economiccomplexity, Matrix, RPostgreSQL, glue, doParallel
   )
-  pacman::p_load_gh("pachamaltese/pachamisc")
 } else {
   pacman::p_load(
     data.table, jsonlite, dplyr, tidyr, stringr, janitor, purrr, rlang,
     economiccomplexity, Matrix, RPostgreSQL, glue
   )
-  pacman::p_load_gh("pachamaltese/pachamisc")
 }

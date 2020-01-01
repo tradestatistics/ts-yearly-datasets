@@ -28,9 +28,11 @@ See https://github.com/tradestatistics/ts-yearly-datasets/LICENSE for the detail
   
   # ask_number_of_cores <<- 1
   
-  source("00-common-scripts/00-user-input-and-derived-classification-digits-years.R")
-  source("00-common-scripts/01-packages.R")
-  source("00-common-scripts/02-dirs-and-files.R")
+  source("99-user-input.R")
+  source("99-input-based-parameters.R")
+  source("99-packages.R")
+  source("99-funs.R")
+  source("99-dirs-and-files.R")
   
   # functions ---------------------------------------------------------------
 
@@ -192,47 +194,62 @@ See https://github.com/tradestatistics/ts-yearly-datasets/LICENSE for the detail
   lapply(
     seq_along(years_to_remove),
     function(t) {
-      gz <- raw_zip[t] %>% str_replace("/zip/", "/gz/") %>% 
-        str_replace("zip$", "csv.gz")
+      rds <- raw_zip[t] %>% 
+        str_replace("/zip/", "/rds/") %>% 
+        str_replace("zip$", "rds")
       
-      if (!file.exists(gz)) {
-        extract(raw_zip[t], raw_dir_gz)
-        compress_gz(str_replace(gz, "csv.gz", "csv"))
+      if (!file.exists(rds)) {
+        extract(raw_zip[t], raw_dir_rds)
+        
+        d <- fread(
+          input = gsub("\\.rds", "\\.csv", rds),
+          colClasses = list(
+            character = "Commodity Code",
+            numeric = c("Trade Value (US$)", "Qty", "Netweight (kg)")
+          ))
+        
+        saveRDS(d, file = rds)
+        
+        rm(d)
+        file_remove(gsub("\\.rds", "\\.csv", rds))
       }
       
-      try(
-        file.remove(
-          files_to_remove$old_file[t] %>% str_replace("/zip/", "/gz/") %>% 
-            str_replace("zip$", "csv.gz")
+      if (remove_old_files == 1) {
+        try(
+          file.remove(
+            files_to_remove$old_file[t] %>% 
+              str_replace("/zip/", "/rds/") %>% 
+              str_replace("zip$", "rds")
+          )
         )
-      )
+      }
     }
   )
 
   if (remove_old_files == 1) {
     remove_outdated(
-      c(clean_gz, converted_gz,
-        gsub(paste0(classification, "-rev", revision), "hs-rev2007", unified_gz)),
+      c(clean_rds, converted_rds,
+        gsub(paste0(classification, "-rev", revision), "hs-rev2007", unified_rds)),
       years_to_remove_2
     )
     
     remove_outdated(
-      c(rca_exports_gz, rca_imports_gz),
+      c(rca_exports_rds, rca_imports_rds),
       years_to_remove_2
     )
     
     remove_outdated(
-      c(proximity_countries_gz, proximity_products_gz),
+      c(proximity_countries_rds, proximity_products_rds),
       years_to_remove_2
     )
     
     remove_outdated(
-      c(eci_rankings_f_gz, eci_rankings_r_gz, eci_rankings_e_gz),
+      c(eci_rankings_f_rds, eci_rankings_r_rds, eci_rankings_e_rds),
       years_to_remove_2
     )
     
     remove_outdated(
-      c(pci_rankings_f_gz, pci_rankings_r_gz, pci_rankings_e_gz),
+      c(pci_rankings_f_rds, pci_rankings_r_rds, pci_rankings_e_rds),
       years_to_remove_2
     )
     
@@ -242,7 +259,7 @@ See https://github.com/tradestatistics/ts-yearly-datasets/LICENSE for the detail
     )
     
     remove_outdated(
-      c(yrpc_gz, yrp_gz, yrc_gz, yr_gz, yc_gz),
+      c(yrpc_rds, yrp_rds, yrc_rds, yr_rds, yc_rds),
       years_to_remove_2
     )
   }

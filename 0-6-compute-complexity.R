@@ -23,55 +23,141 @@ See https://github.com/tradestatistics/ts-yearly-datasets/LICENSE for the detail
 
   ask_number_of_cores <<- 1
   
-  source("00-scripts/00-user-input-and-derived-classification-digits-years.R")
-  source("00-scripts/01-packages.R")
-  source("00-scripts/02-dirs-and-files.R")
-  source("00-scripts/03-misc.R")
-  source("00-scripts/05-read-extract-remove-compress.R")
-  source("00-scripts/09-compute-rca-and-related-metrics.R")
+  source("99-user-input.R")
+  source("99-input-based-parameters.R")
+  source("99-packages.R")
+  source("99-funs.R")
+  source("99-dirs-and-files.R")
 
+  # functions ---------------------------------------------------------------
+
+  compute_complexity_measures <- function(x, yr, ye, yf, zr, ze, zf, q, w, t) {
+    # RCA data ----
+    
+    rca_data <- readRDS(x[t]) %>%
+      inner_join(select(ranking_1, reporter_iso), by = c("country_iso" = "reporter_iso")) %>%
+      mutate(export_rca = ifelse(export_rca > 1, 1, 0)) %>%
+      select(-year)
+    
+    # ECI/PCI 4 digits ----
+    
+    names(rca_data) <- c("country", "product", "value")
+    
+    if (!file.exists(yr[t])) {
+      reflections <- ec_complexity_measures(
+        rca = rca_data,
+        method = "reflections",
+        tbl = TRUE
+      )
+    }
+    
+    if (!file.exists(ye[t])) {
+      eigenvalues <- ec_complexity_measures(
+        rca = rca_data,
+        method = "eigenvalues",
+        tbl = TRUE
+      )
+    }
+    
+    if (!file.exists(yf[t])) {
+      fitness <- ec_complexity_measures(
+        rca = rca_data,
+        method = "fitness",
+        tbl = TRUE
+      )
+    }
+    
+    # save ECI ----
+    
+    if (!file.exists(yr[t])) {
+      saveRDS(reflections$complexity_index_c, yr[t])
+    }
+    
+    if (!file.exists(ye[t])) {
+      saveRDS(eigenvalues$complexity_index_c, ye[t])
+    }
+    
+    if (!file.exists(yf[t])) {
+      saveRDS(fitness$complexity_index_c, yf[t])
+    }
+    
+    # save PCI ----
+    
+    if (!file.exists(zr[t])) {
+      saveRDS(reflections$complexity_index_p, zr[t])
+    }
+    
+    if (!file.exists(ze[t])) {
+      saveRDS(eigenvalues$complexity_index_p, ze[t])
+    }
+    
+    if (!file.exists(zf[t])) {
+      saveRDS(fitness$complexity_index_p, zf[t])
+    }
+    
+    # proximity ----
+    
+    if (!file.exists(q[t]) | !file.exists(w[t])) {
+      proximity <- ec_proximity(
+        rca = rca_data,
+        d = fitness$diversity,
+        u = fitness$ubiquity,
+        tbl = TRUE
+      )
+    }
+    
+    if (!file.exists(q[t])) {
+      saveRDS(proximity$proximity_c, q[t])
+    }
+    
+    if (!file.exists(w[t])) {
+      saveRDS(proximity$proximity_p, w[t])
+    }
+  }
+  
   # RCA based measures ----
 
-  ranking_1 <<- as_tibble(fread("../atlas-data/2-scraped-tables/ranking-1-economic-complexity-index.csv")) %>%
+  ranking_1 <<- fread("../atlas-data/2-scraped-tables/ranking-1-economic-complexity-index.csv") %>%
     mutate(
       iso_code = tolower(iso_code),
       iso_code = ifelse(iso_code == "rou", "rom", iso_code)
     ) %>%
-    rename(reporter_iso = iso_code)
+    rename(reporter_iso = iso_code) %>% 
+    as_tibble()
 
   if (operating_system != "Windows") {
     mclapply(seq_along(years_full),
       compute_complexity_measures,
-      x = rca_exports_gz,
-      yr = eci_rankings_r_gz,
-      ye = eci_rankings_e_gz,
-      yf = eci_rankings_f_gz,
-      zr = pci_rankings_r_gz,
-      ze = pci_rankings_e_gz,
-      zf = pci_rankings_f_gz,
-      q = proximity_countries_gz,
-      w = proximity_products_gz,
+      x = rca_exports_rds,
+      yr = eci_rankings_r_rds,
+      ye = eci_rankings_e_rds,
+      yf = eci_rankings_f_rds,
+      zr = pci_rankings_r_rds,
+      ze = pci_rankings_e_rds,
+      zf = pci_rankings_f_rds,
+      q = proximity_countries_rds,
+      w = proximity_products_rds,
       mc.cores = n_cores
     )
   } else {
     lapply(seq_along(years_full),
       compute_complexity_measures,
-      x = rca_exports_gz,
-      yr = eci_rankings_r_gz,
-      ye = eci_rankings_e_gz,
-      yf = eci_rankings_f_gz,
-      zr = pci_rankings_r_gz,
-      ze = pci_rankings_e_gz,
-      zf = pci_rankings_f_gz,
-      q = proximity_countries_gz,
-      w = proximity_products_gz
+      x = rca_exports_rds,
+      yr = eci_rankings_r_rds,
+      ye = eci_rankings_e_rds,
+      yf = eci_rankings_f_rds,
+      zr = pci_rankings_r_rds,
+      ze = pci_rankings_e_rds,
+      zf = pci_rankings_f_rds,
+      q = proximity_countries_rds,
+      w = proximity_products_rds
     )
   }
   
   # join ECI rankings ----
   
   tidy_eci <- function(d,t) {
-    fread2(d) %>% 
+    readRDS(d) %>% 
       arrange(-value) %>%
       rename(eci = value) %>%
       mutate(
@@ -82,15 +168,14 @@ See https://github.com/tradestatistics/ts-yearly-datasets/LICENSE for the detail
   }
   
   joined_eci_ranking <- list(
-    reflections = map2(eci_rankings_r_gz, years_full, tidy_eci),
-    eigenvalues = map2(eci_rankings_e_gz, years_full, tidy_eci),
-    fitness = map2(eci_rankings_f_gz, years_full, tidy_eci)
+    reflections = map2(eci_rankings_r_rds, years_full, tidy_eci),
+    eigenvalues = map2(eci_rankings_e_rds, years_full, tidy_eci),
+    fitness = map2(eci_rankings_f_rds, years_full, tidy_eci)
   )
   
   write_eci <- function(x,y) {
     d <- bind_rows(joined_eci_ranking[[x]])
-    fwrite(d, paste0(eci_dir, y))
-    compress_gz(paste0(eci_dir, y))
+    saveRDS(d, y)
   }
   
   map2(seq_along(joined_eci_ranking), eci_files, write_eci)
@@ -100,7 +185,7 @@ See https://github.com/tradestatistics/ts-yearly-datasets/LICENSE for the detail
   # join PCI rankings ----
   
   tidy_pci <- function(d,t) {
-    fread2(d, character = c("product")) %>% 
+    readRDS(d) %>% 
       arrange(-value) %>%
       rename(pci = value) %>%
       mutate(
@@ -111,15 +196,14 @@ See https://github.com/tradestatistics/ts-yearly-datasets/LICENSE for the detail
   }
   
   joined_pci_ranking <- list(
-    reflections = map2(pci_rankings_r_gz, years_full, tidy_pci),
-    eigenvalues = map2(pci_rankings_e_gz, years_full, tidy_pci),
-    fitness = map2(pci_rankings_f_gz, years_full, tidy_pci)
+    reflections = map2(pci_rankings_r_rds, years_full, tidy_pci),
+    eigenvalues = map2(pci_rankings_e_rds, years_full, tidy_pci),
+    fitness = map2(pci_rankings_f_rds, years_full, tidy_pci)
   )
   
   write_pci <- function(x,y) {
     d <- bind_rows(joined_pci_ranking[[x]])
-    fwrite(d, paste0(pci_dir, y))
-    compress_gz(paste0(pci_dir, y))
+    saveRDS(d, y)
   }
   
   map2(seq_along(joined_pci_ranking), pci_files, write_pci)

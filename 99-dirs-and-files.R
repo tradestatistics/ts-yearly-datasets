@@ -20,8 +20,8 @@ try(dir.create(raw_dir))
 raw_dir_zip <- sprintf("%s/%s", raw_dir, "zip")
 try(dir.create(raw_dir_zip))
 
-raw_dir_gz <- str_replace(raw_dir_zip, "zip", "gz")
-try(dir.create(raw_dir_gz))
+raw_dir_rds <- str_replace(raw_dir_zip, "zip", "rds")
+try(dir.create(raw_dir_rds))
 
 # 0-2-clean-data.R
 
@@ -32,9 +32,9 @@ raw_zip <- list.files(
 ) %>%
   grep(paste(paste0("ps-", years), collapse = "|"), ., value = TRUE)
 
-raw_gz <- list.files(
-  path = raw_dir_gz,
-  pattern = "\\.csv\\.gz",
+raw_rds <- list.files(
+  path = raw_dir_rds,
+  pattern = "\\.rds",
   full.names = T
 )
 
@@ -43,7 +43,7 @@ rev_dir <- sprintf("%s/%s-rev%s", clean_dir, classification, revision)
 try(dir.create(clean_dir))
 try(dir.create(rev_dir))
 
-clean_gz <- sprintf("02-clean-data/%s-rev%s/%s-rev%s-%s.csv.gz", classification, revision, classification, revision, years)
+clean_rds <- sprintf("02-clean-data/%s-rev%s/%s-rev%s-%s.rds", classification, revision, classification, revision, years)
 
 # 0-3-convert-data.R
 
@@ -56,7 +56,7 @@ try(dir.create(converted_dir))
 
 try(dir.create(paste(converted_dir, c1[dataset], sep = "/")))
 
-converted_gz <- grep(c1[dataset], clean_gz, value = TRUE) %>%
+converted_rds <- grep(c1[dataset], clean_rds, value = TRUE) %>%
   str_replace(clean_dir, converted_dir)
 
 # 0-4-unify-data.R
@@ -65,11 +65,11 @@ unified_dir <- "04-unified-data"
 try(dir.create(unified_dir))
 try(dir.create(paste0(unified_dir, "/", c1[dataset])))
 
-clean_gz_all <- list.files(clean_dir, recursive = T, full.names = T)
+clean_rds_all <- list.files(clean_dir, recursive = T, full.names = T)
 
-converted_gz_all <- list.files(converted_dir, recursive = T, full.names = T)
+converted_rds_all <- list.files(converted_dir, recursive = T, full.names = T)
 
-unified_gz <- paste0(unified_dir, "/", c1[dataset], "/", c1[dataset], "-", years_full, ".csv.gz")
+unified_rds <- paste0(unified_dir, "/", c1[dataset], "/", c1[dataset], "-", years_full, ".rds")
 
 # 0-5-compute-metrics.R
 
@@ -78,41 +78,41 @@ try(dir.create(metrics_dir))
 
 rca_exports_dir <- sprintf("%s/hs-rev2007-rca-exports", metrics_dir)
 try(dir.create(rca_exports_dir))
-rca_exports_gz <- sprintf("%s/rca-exports-%s.csv.gz", rca_exports_dir, years_full)
+rca_exports_rds <- sprintf("%s/rca-exports-%s.rds", rca_exports_dir, years_full)
 
 rca_imports_dir <- sprintf("%s/hs-rev2007-rca-imports", metrics_dir)
 try(dir.create(rca_imports_dir))
-rca_imports_gz <- sprintf("%s/rca-imports-%s.csv.gz", rca_imports_dir, years_full)
+rca_imports_rds <- sprintf("%s/rca-imports-%s.rds", rca_imports_dir, years_full)
 
 proximity_countries_dir <- sprintf("%s/hs-rev2007-proximity-countries", metrics_dir)
 try(dir.create(proximity_countries_dir))
-proximity_countries_gz <- sprintf("%s/proximity-countries-%s.csv.gz", proximity_countries_dir, years_full)
+proximity_countries_rds <- sprintf("%s/proximity-countries-%s.rds", proximity_countries_dir, years_full)
 
 proximity_products_dir <- sprintf("%s/hs-rev2007-proximity-products", metrics_dir)
 try(dir.create(proximity_products_dir))
-proximity_products_gz <- sprintf("%s/proximity-products-%s.csv.gz", proximity_products_dir, years_full)
+proximity_products_rds <- sprintf("%s/proximity-products-%s.rds", proximity_products_dir, years_full)
 
 eci_dir <- sprintf("%s/hs-rev2007-eci", metrics_dir)
 try(dir.create(eci_dir))
 
-eci_rankings_r_gz <- sprintf("%s/eci-reflections-%s.csv.gz", eci_dir, years_full)
-eci_rankings_e_gz <- sprintf("%s/eci-eigenvalues-%s.csv.gz", eci_dir, years_full)
-eci_rankings_f_gz <- sprintf("%s/eci-fitness-%s.csv.gz", eci_dir, years_full)
+eci_rankings_r_rds <- sprintf("%s/eci-reflections-%s.rds", eci_dir, years_full)
+eci_rankings_e_rds <- sprintf("%s/eci-eigenvalues-%s.rds", eci_dir, years_full)
+eci_rankings_f_rds <- sprintf("%s/eci-fitness-%s.rds", eci_dir, years_full)
 
 pci_dir <- sprintf("%s/hs-rev2007-pci", metrics_dir)
 try(dir.create(pci_dir))
 
-pci_rankings_r_gz <- sprintf("%s/pci-reflections-%s.csv.gz", pci_dir, years_full)
-pci_rankings_e_gz <- sprintf("%s/pci-eigenvalues-%s.csv.gz", pci_dir, years_full)
-pci_rankings_f_gz <- sprintf("%s/pci-fitness-%s.csv.gz", pci_dir, years_full)
+pci_rankings_r_rds <- sprintf("%s/pci-reflections-%s.rds", pci_dir, years_full)
+pci_rankings_e_rds <- sprintf("%s/pci-eigenvalues-%s.rds", pci_dir, years_full)
+pci_rankings_f_rds <- sprintf("%s/pci-fitness-%s.rds", pci_dir, years_full)
 
-eci_files <- paste0(eci_dir, c("/eci-reflections-joined-ranking.csv.gz",
-               "/eci-eigenvalues-joined-ranking.csv.gz",
-               "/eci-fitness-joined-ranking.csv.gz"))
+eci_files <- paste0(eci_dir, c("/eci-reflections-joined-ranking.rds",
+               "/eci-eigenvalues-joined-ranking.rds",
+               "/eci-fitness-joined-ranking.rds"))
 
-pci_files <- paste0(pci_dir, c("/pci-reflections-joined-ranking.csv.gz",
-               "/pci-eigenvalues-joined-ranking.csv.gz",
-               "/pci-fitness-joined-ranking.csv.gz"))
+pci_files <- paste0(pci_dir, c("/pci-reflections-joined-ranking.rds",
+               "/pci-eigenvalues-joined-ranking.rds",
+               "/pci-fitness-joined-ranking.rds"))
 
 # 0-6-create-tables.R
 
@@ -140,37 +140,37 @@ try(dir.create(yr_dir))
 yc_dir <- paste0(tables_dir, "/5-yc")
 try(dir.create(yc_dir))
 
-yrpc_gz <- unified_gz %>%
+yrpc_rds <- unified_rds %>%
   gsub(unified_dir, yrpc_dir, .) %>%
   gsub(paste0("/1-yrpc/", classification, "-rev", revision), "/1-yrpc", .) %>% 
   gsub(paste0("/1-yrpc/", classification, "-rev", revision), "/1-yrpc/yrpc", .)
 
-yrpc_csv <- yrpc_gz %>% gsub(".gz", "", .)
+yrpc_csv <- yrpc_rds %>% gsub(".rds", "", .)
 
-yrp_gz <- unified_gz %>%
+yrp_rds <- unified_rds %>%
   gsub(unified_dir, yrp_dir, .) %>%
   gsub(paste0("/2-yrp/", classification, "-rev", revision), "/2-yrp", .) %>% 
   gsub(paste0("/2-yrp/", classification, "-rev", revision), "/2-yrp/yrp", .)
 
-yrp_csv <- yrp_gz %>% gsub(".gz", "", .)
+yrp_csv <- yrp_rds %>% gsub(".rds", "", .)
 
-yrc_gz <- unified_gz %>%
+yrc_rds <- unified_rds %>%
   gsub(unified_dir, yrc_dir, .) %>%
   gsub(paste0("/3-yrc/", classification, "-rev", revision), "/3-yrc", .) %>% 
   gsub(paste0("/3-yrc/", classification, "-rev", revision), "/3-yrc/yrc", .)
 
-yrc_csv <- yrc_gz %>% gsub(".gz", "", .)
+yrc_csv <- yrc_rds %>% gsub(".rds", "", .)
 
-yr_gz <- unified_gz %>%
+yr_rds <- unified_rds %>%
   gsub(unified_dir, yr_dir, .) %>%
   gsub(paste0("/4-yr/", classification, "-rev", revision), "/4-yr", .) %>% 
   gsub(paste0("/4-yr/", classification, "-rev", revision), "/4-yr/yr", .)
 
-yr_csv <- yr_gz %>% gsub(".gz", "", .)
+yr_csv <- yr_rds %>% gsub(".rds", "", .)
 
-yc_gz <- unified_gz %>%
+yc_rds <- unified_rds %>%
   gsub(unified_dir, yc_dir, .) %>%
   gsub(paste0("/5-yc/", classification, "-rev", revision), "/5-yc", .) %>% 
   gsub(paste0("/5-yc/", classification, "-rev", revision), "/5-yc/yc", .)
 
-yc_csv <- yc_gz %>% gsub(".gz", "", .)
+yc_csv <- yc_rds %>% gsub(".rds", "", .)

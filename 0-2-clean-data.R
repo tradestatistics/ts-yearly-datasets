@@ -23,14 +23,16 @@ See https://github.com/tradestatistics/ts-yearly-datasets/LICENSE for the detail
 
   # ask_number_of_cores <<- 1
   
-  source("00-common-scripts/00-user-input-and-derived-classification-digits-years.R")
-  source("00-common-scripts/01-packages.R")
-  source("00-common-scripts/02-dirs-and-files.R")
+  source("99-user-input.R")
+  source("99-input-based-parameters.R")
+  source("99-packages.R")
+  source("99-funs.R")
+  source("99-dirs-and-files.R")
 
   # functions ---------------------------------------------------------------
 
   compute_tidy_data <- function(t) {
-    if (!file.exists(clean_gz[t])) {
+    if (!file.exists(clean_rds[t])) {
       messageline()
       message(paste("Cleaning", years[t], "data..."))
       
@@ -51,11 +53,9 @@ See https://github.com/tradestatistics/ts-yearly-datasets/LICENSE for the detail
       
       # clean data --------------------------------------------------------------
       
-      clean_data <- fread2(raw_gz[t],
-                           select = c("Year", "Aggregate Level", "Trade Flow", "Reporter ISO", "Partner ISO", "Commodity Code", "Trade Value (US$)"),
-                           character = "Commodity Code",
-                           numeric = "Trade Value (US$)"
-      ) %>%
+      clean_data <- readRDS(raw_rds[t]) %>% 
+        select("Year", "Aggregate Level", "Trade Flow", "Reporter ISO", "Partner ISO", "Commodity Code", "Trade Value (US$)") %>%
+        clean_names() %>% 
         rename(
           product_code = commodity_code,
           trade_value_usd = trade_value_us
@@ -77,7 +77,8 @@ See https://github.com/tradestatistics/ts-yearly-datasets/LICENSE for the detail
         filter(
           reporter_iso %in% country_codes,
           partner_iso %in% country_codes
-        )
+        ) %>% 
+        as_tibble()
       
       # exports data ------------------------------------------------------------
       
@@ -136,8 +137,7 @@ See https://github.com/tradestatistics/ts-yearly-datasets/LICENSE for the detail
       
       rm(exports_conciliated_unrepeated_parent, exports_conciliated_repeated_parent, exports_conciliated_repeated_parent_summary)
       
-      fwrite(exports_conciliated, str_replace(clean_gz[t], ".gz", ""))
-      compress_gz(str_replace(clean_gz[t], ".gz", ""))
+      saveRDS(exports_conciliated, clean_rds[t])
     } else {
       messageline()
       message(paste("Skipping year", years[t], "Files exist."))
