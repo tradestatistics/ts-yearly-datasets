@@ -141,7 +141,7 @@ See https://github.com/tradestatistics/ts-yearly-datasets/LICENSE for the detail
       
       rm(data_unrepeated_parent_tidy, data_repeated_parent_tidy)
       
-      saveRDS(data, y[t])
+      saveRDS(data, file = y[t], compress = "xz")
     }
   }
   

@@ -137,7 +137,7 @@ See https://github.com/tradestatistics/ts-yearly-datasets/LICENSE for the detail
       
       rm(exports_conciliated_unrepeated_parent, exports_conciliated_repeated_parent, exports_conciliated_repeated_parent_summary)
       
-      saveRDS(exports_conciliated, clean_rds[t])
+      saveRDS(exports_conciliated, file = clean_rds[t], compress = "xz")
     } else {
       messageline()
       message(paste("Skipping year", years[t], "Files exist."))

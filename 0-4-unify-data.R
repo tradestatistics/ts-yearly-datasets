@@ -244,7 +244,7 @@ See https://github.com/tradestatistics/ts-yearly-datasets/LICENSE for the detail
       data <- bind_rows(data, data2, data3, data4, data5, data6) %>%
         arrange(reporter_iso, partner_iso, product_code)
       
-      saveRDS(data, z[t])
+      saveRDS(data, file = z[t], compress = "xz")
     }
   }
   

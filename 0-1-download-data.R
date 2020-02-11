@@ -208,7 +208,7 @@ See https://github.com/tradestatistics/ts-yearly-datasets/LICENSE for the detail
             numeric = c("Trade Value (US$)", "Qty", "Netweight (kg)")
           ))
         
-        saveRDS(d, file = rds)
+        saveRDS(d, file = rds, compress = "xz")
         
         rm(d)
         file_remove(gsub("\\.rds", "\\.csv", rds))

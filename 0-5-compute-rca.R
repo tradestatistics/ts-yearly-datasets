@@ -98,7 +98,7 @@ See https://github.com/tradestatistics/ts-yearly-datasets/LICENSE for the detail
         names(trade_t1) <- c("year", "country_iso", "product_code", "import_rca")
       }
       
-      saveRDS(trade_t1, y[t])
+      saveRDS(trade_t1, file = y[t], compress = "xz")
     }
   }
   

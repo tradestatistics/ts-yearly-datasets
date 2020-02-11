@@ -70,29 +70,29 @@ See https://github.com/tradestatistics/ts-yearly-datasets/LICENSE for the detail
     # save ECI ----
     
     if (!file.exists(yr[t])) {
-      saveRDS(reflections$complexity_index_c, yr[t])
+      saveRDS(reflections$complexity_index_c, file = yr[t], compress = "xz")
     }
     
     if (!file.exists(ye[t])) {
-      saveRDS(eigenvalues$complexity_index_c, ye[t])
+      saveRDS(eigenvalues$complexity_index_c, file = ye[t], compress = "xz")
     }
     
     if (!file.exists(yf[t])) {
-      saveRDS(fitness$complexity_index_c, yf[t])
+      saveRDS(fitness$complexity_index_c, file = yf[t], compress = "xz")
     }
     
     # save PCI ----
     
     if (!file.exists(zr[t])) {
-      saveRDS(reflections$complexity_index_p, zr[t])
+      saveRDS(reflections$complexity_index_p, file = zr[t], compress = "xz")
     }
     
     if (!file.exists(ze[t])) {
-      saveRDS(eigenvalues$complexity_index_p, ze[t])
+      saveRDS(eigenvalues$complexity_index_p, file = ze[t], compress = "xz")
     }
     
     if (!file.exists(zf[t])) {
-      saveRDS(fitness$complexity_index_p, zf[t])
+      saveRDS(fitness$complexity_index_p, file = zf[t], compress = "xz")
     }
     
     # proximity ----
@@ -107,11 +107,11 @@ See https://github.com/tradestatistics/ts-yearly-datasets/LICENSE for the detail
     }
     
     if (!file.exists(q[t])) {
-      saveRDS(proximity$proximity_c, q[t])
+      saveRDS(proximity$proximity_c, file = q[t], compress = "xz")
     }
     
     if (!file.exists(w[t])) {
-      saveRDS(proximity$proximity_p, w[t])
+      saveRDS(proximity$proximity_p, file = w[t], compress = "xz")
     }
   }
   
@@ -175,7 +175,7 @@ See https://github.com/tradestatistics/ts-yearly-datasets/LICENSE for the detail
   
   write_eci <- function(x,y) {
     d <- bind_rows(joined_eci_ranking[[x]])
-    saveRDS(d, y)
+    saveRDS(d, file = y, compress = "xz")
   }
   
   map2(seq_along(joined_eci_ranking), eci_files, write_eci)
@@ -203,7 +203,7 @@ See https://github.com/tradestatistics/ts-yearly-datasets/LICENSE for the detail
   
   write_pci <- function(x,y) {
     d <- bind_rows(joined_pci_ranking[[x]])
-    saveRDS(d, y)
+    saveRDS(d, file = y, compress = "xz")
   }
   
   map2(seq_along(joined_pci_ranking), pci_files, write_pci)

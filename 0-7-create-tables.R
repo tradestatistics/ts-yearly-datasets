@@ -75,7 +75,7 @@ See https://github.com/tradestatistics/ts-yearly-datasets/LICENSE for the detail
       
       rm(exports, imports)
       
-      saveRDS(yrpc, yrpc_rds[[t]])
+      saveRDS(yrpc, file = yrpc_rds[[t]], compress = "xz")
     } else {
       message(paste("Reading YRPC table for the year", years_full[t]))
       
@@ -97,7 +97,7 @@ See https://github.com/tradestatistics/ts-yearly-datasets/LICENSE for the detail
         filter(trade_balance > 0) %>% 
         select(-trade_balance)
       
-      saveRDS(yrp, yrp_rds[[t]])
+      saveRDS(yrp, file = yrp_rds[[t]], compress = "xz")
       rm(yrp)
     }
     
@@ -127,7 +127,7 @@ See https://github.com/tradestatistics/ts-yearly-datasets/LICENSE for the detail
         left_join(rca_imp, by = c("reporter_iso" = "country_iso", "product_code")) %>%
         select(year, reporter_iso, product_code, everything())
       
-      saveRDS(yrc, yrc_rds[[t]])
+      saveRDS(yrc, file = yrc_rds[[t]], compress = "xz")
       rm(yrc)
     }
     
@@ -197,7 +197,7 @@ See https://github.com/tradestatistics/ts-yearly-datasets/LICENSE for the detail
         left_join(max_exp, by = "reporter_iso") %>%
         left_join(max_imp, by = "reporter_iso")
       
-      saveRDS(yr, yr_rds[t])
+      saveRDS(yr, file = yr_rds[t], compress = "xz")
       rm(
         yr,
         eci_f, eci_r, eci_e,
@@ -272,7 +272,7 @@ See https://github.com/tradestatistics/ts-yearly-datasets/LICENSE for the detail
         left_join(max_imp_2, by = "product_code") %>%
         select(year, product_code, export_value_usd, import_value_usd, starts_with("pci_"), everything())
       
-      saveRDS(yc, yc_rds[[t]])
+      saveRDS(yc, file = yc_rds[[t]], compress = "xz")
     }
   }
   
@@ -311,7 +311,7 @@ See https://github.com/tradestatistics/ts-yearly-datasets/LICENSE for the detail
     select(-country_abbreviation)
 
   if (!file.exists(paste0(attributes_dir, "/attributes_countries.rds"))) {
-    saveRDS(attributes_countries, paste0(attributes_dir, "/attributes_countries.rds"))
+    saveRDS(attributes_countries, file = paste0(attributes_dir, "/attributes_countries.rds"), compress = "xz")
   }
 
   product_names <- product_codes %>%
@@ -356,14 +356,14 @@ See https://github.com/tradestatistics/ts-yearly-datasets/LICENSE for the detail
   rm(product_names_2)
 
   if (!file.exists(paste0(attributes_dir, "/attributes_products.rds"))) {
-    saveRDS(attributes_products, paste0(attributes_dir, "/attributes_products.rds"))
+    saveRDS(attributes_products, file = paste0(attributes_dir, "/attributes_products.rds"), compress = "xz")
   }
 
   attributes_communities <- product_names_3 %>%
     left_join(colors)
 
   if (!file.exists(paste0(attributes_dir, "/attributes_communities.rds"))) {
-    saveRDS(attributes_communities, paste0(attributes_dir, "/attributes_communities.rds"))
+    saveRDS(attributes_communities, file = paste0(attributes_dir, "/attributes_communities.rds"), compress = "xz")
   }
 
   rm(product_names_3)
@@ -407,7 +407,7 @@ See https://github.com/tradestatistics/ts-yearly-datasets/LICENSE for the detail
     select(-product_fullname_english)
 
   if (!file.exists(paste0(attributes_dir, "/attributes_products_shortnames.rds"))) {
-    saveRDS(attributes_products_shortnames, paste0(attributes_dir, "/attributes_products_shortnames.rds"))
+    saveRDS(attributes_products_shortnames, file = paste0(attributes_dir, "/attributes_products_shortnames.rds"), compress = "xz")
   }
 
   rm(attributes_products_shortnames_complete, attributes_products_shortnames_nas)
