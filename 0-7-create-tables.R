@@ -159,6 +159,7 @@ See https://github.com/tradestatistics/ts-yearly-datasets/LICENSE for the detail
         )
       
       max_exp <- yrpc %>%
+        filter(product_code != "9999") %>% 
         group_by(reporter_iso, product_code) %>%
         summarise(export_value_usd = sum(export_value_usd, na.rm = T)) %>%
         group_by(reporter_iso) %>%
@@ -166,9 +167,11 @@ See https://github.com/tradestatistics/ts-yearly-datasets/LICENSE for the detail
         rename(
           top_export_product_code = product_code,
           top_export_trade_value_usd = export_value_usd
-        )
+        ) %>% 
+        filter(top_export_trade_value_usd > 0)
       
       max_imp <- yrpc %>%
+        filter(product_code != "9999") %>% 
         group_by(reporter_iso, product_code) %>%
         summarise(import_value_usd = sum(import_value_usd, na.rm = T)) %>%
         group_by(reporter_iso) %>%
@@ -176,7 +179,8 @@ See https://github.com/tradestatistics/ts-yearly-datasets/LICENSE for the detail
         rename(
           top_import_product_code = product_code,
           top_import_trade_value_usd = import_value_usd
-        )
+        ) %>% 
+        filter(top_import_trade_value_usd > 0)
       
       yr <- yrpc %>%
         group_by(year, reporter_iso) %>%
@@ -198,6 +202,7 @@ See https://github.com/tradestatistics/ts-yearly-datasets/LICENSE for the detail
         left_join(max_imp, by = "reporter_iso")
       
       saveRDS(yr, file = yr_rds[t], compress = "xz")
+      
       rm(
         yr,
         eci_f, eci_r, eci_e,
@@ -233,6 +238,7 @@ See https://github.com/tradestatistics/ts-yearly-datasets/LICENSE for the detail
         )
       
       max_exp_2 <- yrpc %>%
+        filter(product_code != "9999") %>% 
         group_by(reporter_iso, product_code) %>%
         summarise(export_value_usd = sum(export_value_usd, na.rm = T)) %>%
         group_by(product_code) %>%
@@ -240,9 +246,11 @@ See https://github.com/tradestatistics/ts-yearly-datasets/LICENSE for the detail
         rename(
           top_exporter_iso = reporter_iso,
           top_exporter_trade_value_usd = export_value_usd
-        )
+        ) %>% 
+        filter(top_exporter_trade_value_usd > 0)
       
       max_imp_2 <- yrpc %>%
+        filter(product_code != "9999") %>% 
         group_by(reporter_iso, product_code) %>%
         summarise(import_value_usd = sum(import_value_usd, na.rm = T)) %>%
         group_by(product_code) %>%
@@ -250,7 +258,8 @@ See https://github.com/tradestatistics/ts-yearly-datasets/LICENSE for the detail
         rename(
           top_importer_iso = reporter_iso,
           top_importer_trade_value_usd = import_value_usd
-        )
+        ) %>% 
+        filter(top_importer_trade_value_usd > 0)
       
       yc <- yrpc %>%
         group_by(year, product_code) %>%
@@ -285,6 +294,7 @@ See https://github.com/tradestatistics/ts-yearly-datasets/LICENSE for the detail
   hs_product_names_07 <- hs_product_names
 
   load("../observatory-codes/02-2-product-data-tidy/hs-rev1992-product-names.RData")
+  
   hs_product_names_92 <- hs_product_names %>%
     select(hs, product_name) %>%
     rename(

@@ -130,7 +130,7 @@ create_schema <- function(overwrite = F) {
     
     dbSendQuery(
       con,
-      "CREATE INDEX CONCURRENTLY hs07_yr_idx_y ON public.hs07_yr (year)"
+      "CREATE INDEX hs07_yr_idx_y ON public.hs07_yr (year)"
     )
     
     # Year - Reporter - Partner -----------------------------------------------
@@ -154,17 +154,17 @@ create_schema <- function(overwrite = F) {
     
     dbSendQuery(
       con,
-      "CREATE INDEX CONCURRENTLY hs07_yrp_idx_y ON public.hs07_yrp (year)"
+      "CREATE INDEX hs07_yrp_idx_y ON public.hs07_yrp (year)"
     )
     
     dbSendQuery(
       con,
-      "CREATE INDEX CONCURRENTLY hs07_yrp_idx_yr ON public.hs07_yrp (year, reporter_iso)"
+      "CREATE INDEX hs07_yrp_idx_yr ON public.hs07_yrp (year, reporter_iso)"
     )
     
     dbSendQuery(
       con,
-      "CREATE INDEX CONCURRENTLY hs07_yrp_idx_yp ON public.hs07_yrp (year, partner_iso)"
+      "CREATE INDEX hs07_yrp_idx_yp ON public.hs07_yrp (year, partner_iso)"
     )
     
     # Year - Reporter - Partner - Product Code --------------------------------
@@ -190,32 +190,32 @@ create_schema <- function(overwrite = F) {
     
     dbSendQuery(
       con,
-      "CREATE INDEX CONCURRENTLY hs07_yrpc_idx_y ON public.hs07_yrpc (year)"
+      "CREATE INDEX hs07_yrpc_idx_y ON public.hs07_yrpc (year)"
     )
     
     dbSendQuery(
       con,
-      "CREATE INDEX CONCURRENTLY hs07_yrpc_idx_yr ON public.hs07_yrpc (year, reporter_iso)"
+      "CREATE INDEX hs07_yrpc_idx_yr ON public.hs07_yrpc (year, reporter_iso)"
     )
     
     dbSendQuery(
       con,
-      "CREATE INDEX CONCURRENTLY hs07_yrpc_idx_yp ON public.hs07_yrpc (year, partner_iso)"
+      "CREATE INDEX hs07_yrpc_idx_yp ON public.hs07_yrpc (year, partner_iso)"
     )
     
     dbSendQuery(
       con,
-      "CREATE INDEX CONCURRENTLY hs07_yrpc_idx_yrp ON public.hs07_yrpc (year, reporter_iso, partner_iso)"
+      "CREATE INDEX hs07_yrpc_idx_yrp ON public.hs07_yrpc (year, reporter_iso, partner_iso)"
     )
     
     dbSendQuery(
       con,
-      "CREATE INDEX CONCURRENTLY hs07_yrpc_idx_yrc ON public.hs07_yrpc (year, reporter_iso, product_code)"
+      "CREATE INDEX hs07_yrpc_idx_yrc ON public.hs07_yrpc (year, reporter_iso, product_code)"
     )
     
     dbSendQuery(
       con,
-      "CREATE INDEX CONCURRENTLY hs07_yrpc_idx_ypc ON public.hs07_yrpc (year, partner_iso, product_code)"
+      "CREATE INDEX hs07_yrpc_idx_ypc ON public.hs07_yrpc (year, partner_iso, product_code)"
     )
     
     # Year - Reporter - Product Code ------------------------------------------
@@ -241,17 +241,17 @@ create_schema <- function(overwrite = F) {
     
     dbSendQuery(
       con,
-      "CREATE INDEX CONCURRENTLY hs07_yrc_idx_y ON public.hs07_yrc (year)"
+      "CREATE INDEX hs07_yrc_idx_y ON public.hs07_yrc (year)"
     )
     
     dbSendQuery(
       con,
-      "CREATE INDEX CONCURRENTLY hs07_yrc_idx_yr ON public.hs07_yrc (year, reporter_iso)"
+      "CREATE INDEX hs07_yrc_idx_yr ON public.hs07_yrc (year, reporter_iso)"
     )
     
     dbSendQuery(
       con,
-      "CREATE INDEX CONCURRENTLY hs07_yrc_idx_yc ON public.hs07_yrc (year, product_code)"
+      "CREATE INDEX hs07_yrc_idx_yc ON public.hs07_yrc (year, product_code)"
     )
     
     # Year - Product Code -----------------------------------------------------
@@ -283,7 +283,7 @@ create_schema <- function(overwrite = F) {
     
     dbSendQuery(
       con,
-      "CREATE INDEX CONCURRENTLY hs07_yc_idx_y ON public.hs07_yc (year)"
+      "CREATE INDEX hs07_yc_idx_y ON public.hs07_yc (year)"
     )
   }
 }

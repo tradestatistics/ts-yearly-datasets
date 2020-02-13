@@ -72,7 +72,7 @@ copy_to_db <- function(overwrite = F) {
   # data --------------------------------------------------------------------
   
   lapply(
-    seq_along(years_full),
+    rev(seq_along(years_full)),
     function(t) {
       obs_yrpc <- as.numeric(dbGetQuery(con, sprintf("SELECT COUNT(year) FROM public.hs07_yrpc WHERE year = %s", years_full[t])))
       
@@ -88,7 +88,7 @@ copy_to_db <- function(overwrite = F) {
   )
   
   lapply(
-    seq_along(years_full),
+    rev(seq_along(years_full)),
     function(t) {
       obs_yrp <- as.numeric(dbGetQuery(con, sprintf("SELECT COUNT(year) FROM public.hs07_yrp WHERE year = %s", years_full[t])))
       
@@ -105,7 +105,7 @@ copy_to_db <- function(overwrite = F) {
   )
   
   lapply(
-    seq_along(years_full),
+    rev(seq_along(years_full)),
     function(t) {
       obs_yrc <- as.numeric(dbGetQuery(con, sprintf("SELECT COUNT(year) FROM public.hs07_yrc WHERE year = %s", years_full[t])))
       
@@ -122,7 +122,7 @@ copy_to_db <- function(overwrite = F) {
   )
   
   lapply(
-    seq_along(years_full),
+    rev(seq_along(years_full)),
     function(t) {
       obs_yr <- as.numeric(dbGetQuery(con, sprintf("SELECT COUNT(year) FROM public.hs07_yr WHERE year = %s", years_full[t])))
       
@@ -139,7 +139,7 @@ copy_to_db <- function(overwrite = F) {
   )
   
   lapply(
-    seq_along(years_full),
+    rev(seq_along(years_full)),
     function(t) {
       obs_yc <- as.numeric(dbGetQuery(con, sprintf("SELECT COUNT(year) FROM public.hs07_yc WHERE year = %s", years_full[t])))
       
