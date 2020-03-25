@@ -65,9 +65,7 @@ create_schema <- function(overwrite = F) {
       "CREATE TABLE public.attributes_products 
       (
       product_code varchar(4) DEFAULT '' PRIMARY KEY NOT NULL,
-      product_fullname_english varchar(255) DEFAULT NULL,
-      group_code varchar(2) DEFAULT NULL,
-      group_name varchar(255) DEFAULT NULL
+      product_fullname_english varchar(255) DEFAULT NULL
       )"
     )
     
@@ -84,20 +82,67 @@ create_schema <- function(overwrite = F) {
       )"
     )
     
-    # Communities -------------------------------------------------------------
-    
-    dbSendQuery(con, "DROP TABLE IF EXISTS public.attributes_communities")
+    # Groups ------------------------------------------------------------------
+
+    dbSendQuery(con, "DROP TABLE IF EXISTS public.attributes_groups")
     
     dbSendQuery(
       con,
-      "CREATE TABLE public.attributes_communities 
+      "CREATE TABLE public.attributes_groups 
+      (
+      group_code varchar(2) DEFAULT '' PRIMARY KEY NOT NULL,
+      group_fullname_english varchar(255) DEFAULT NULL
+      )"
+    )
+    
+    # Sections -------------------------------------------------------------
+    
+    dbSendQuery(con, "DROP TABLE IF EXISTS public.attributes_sections")
+    
+    dbSendQuery(
+      con,
+      "CREATE TABLE public.attributes_sections
       (
       product_code varchar(4) NOT NULL,
-      community_code varchar(2) DEFAULT NULL,
-      community_name varchar(255) DEFAULT NULL,
-      community_color varchar(7) DEFAULT NULL,
-      CONSTRAINT hs07_attributes_communities_pk PRIMARY KEY (product_code),
-      CONSTRAINT hs07_attributes_communities_attributes_products_fk FOREIGN KEY (product_code) REFERENCES public.attributes_products (product_code)
+      section_code varchar(2) DEFAULT NULL,
+      CONSTRAINT hs07_attributes_sections_pk PRIMARY KEY (product_code),
+      CONSTRAINT hs07_attributes_sections_attributes_products_fk FOREIGN KEY (product_code) REFERENCES public.attributes_products (product_code)
+      )"
+    )
+    
+    dbSendQuery(con, "DROP TABLE IF EXISTS public.attributes_sections_names")
+    
+    dbSendQuery(
+      con,
+      "CREATE TABLE public.attributes_sections_names
+      (
+      section_code varchar(2) NOT NULL,
+      section_fullname_english varchar(255) DEFAULT NULL,
+      CONSTRAINT hs07_attributes_sections_names_pk PRIMARY KEY (section_code)
+      )"
+    )
+    
+    dbSendQuery(con, "DROP TABLE IF EXISTS public.attributes_sections_shortnames")
+    
+    dbSendQuery(
+      con,
+      "CREATE TABLE public.attributes_sections_shortnames
+      (
+      section_code varchar(2) NOT NULL,
+      section_shortname_english varchar(255) DEFAULT NULL,
+      CONSTRAINT hs07_attributes_sections_shortnames_pk PRIMARY KEY (section_code)
+      )"
+    )
+    
+    dbSendQuery(con, "DROP TABLE IF EXISTS public.attributes_sections_colors")
+    
+    dbSendQuery(
+      con,
+      "CREATE TABLE public.attributes_sections_colors
+      (
+      section_code varchar(2) DEFAULT NULL,
+      section_color varchar(7) DEFAULT NULL,
+      CONSTRAINT hs07_attributes_sections_colors_pk PRIMARY KEY (section_code)
       )"
     )
     

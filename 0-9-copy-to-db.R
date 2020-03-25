@@ -59,14 +59,56 @@ copy_to_db <- function(overwrite = F) {
     dbWriteTable(con, "attributes_products_shortnames", attributes_products_shortnames, append = TRUE, overwrite = overwrite, row.names = FALSE)
   }
   
-  # communities attributes
+  # groups attributes
   
-  obs_attributes_communities <- as.numeric(dbGetQuery(con, "SELECT COUNT(*) FROM public.attributes_communities"))
+  obs_attributes_groups <- as.numeric(dbGetQuery(con, "SELECT COUNT(*) FROM public.attributes_groups"))
   
-  if (obs_attributes_communities == 0) {
-    attributes_communities <- readRDS(paste0(tables_dir, "/0-attributes/attributes_communities.rds")) %>% 
-      filter(str_length(product_code) == 4)
-    dbWriteTable(con, "attributes_communities", attributes_communities, append = TRUE, overwrite = overwrite, row.names = FALSE)
+  if (obs_attributes_groups == 0) {
+    attributes_groups <- readRDS(paste0(tables_dir, "/0-attributes/attributes_products.rds")) %>% 
+      select(group_code, group_fullname_english) %>% 
+      distinct()
+    dbWriteTable(con, "attributes_groups", attributes_groups, append = TRUE, overwrite = overwrite, row.names = FALSE)
+  }
+  
+  # sections attributes
+  
+  obs_attributes_sections <- as.numeric(dbGetQuery(con, "SELECT COUNT(*) FROM public.attributes_sections"))
+  
+  if (obs_attributes_sections == 0) {
+    attributes_sections <- readRDS(paste0(tables_dir, "/0-attributes/attributes_sections.rds")) %>% 
+      filter(str_length(product_code) == 4) %>% 
+      select(product_code, section_code)
+    dbWriteTable(con, "attributes_sections", attributes_sections, append = TRUE, overwrite = overwrite, row.names = FALSE)
+  }
+  
+  obs_attributes_sections_names <- as.numeric(dbGetQuery(con, "SELECT COUNT(*) FROM public.attributes_sections_names"))
+  
+  if (obs_attributes_sections_names == 0) {
+    attributes_sections_names <- readRDS(paste0(tables_dir, "/0-attributes/attributes_sections.rds")) %>% 
+      select(section_code, section_fullname_english) %>% 
+      distinct()
+    
+    dbWriteTable(con, "attributes_sections_names", attributes_sections_names, append = TRUE, overwrite = overwrite, row.names = FALSE)
+  }
+  
+  obs_attributes_sections_shortnames <- as.numeric(dbGetQuery(con, "SELECT COUNT(*) FROM public.attributes_sections_shortnames"))
+  
+  if (obs_attributes_sections_shortnames == 0) {
+    attributes_sections_shortnames <- readRDS(paste0(tables_dir, "/0-attributes/attributes_sections.rds")) %>% 
+      select(section_code, section_shortname_english) %>% 
+      distinct()
+    
+    dbWriteTable(con, "attributes_sections_shortnames", attributes_sections_shortnames, append = TRUE, overwrite = overwrite, row.names = FALSE)
+  }
+  
+  obs_attributes_sections_colors <- as.numeric(dbGetQuery(con, "SELECT COUNT(*) FROM public.attributes_sections_colors"))
+  
+  if (obs_attributes_sections_colors == 0) {
+    attributes_sections_colors <- readRDS(paste0(tables_dir, "/0-attributes/attributes_sections.rds")) %>% 
+      select(section_code, section_color) %>% 
+      distinct()
+    
+    dbWriteTable(con, "attributes_sections_colors", attributes_sections_colors, append = TRUE, overwrite = overwrite, row.names = FALSE)
   }
   
   # data --------------------------------------------------------------------
