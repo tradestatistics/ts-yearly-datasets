@@ -1,21 +1,14 @@
 # Open ts-yearly-data.Rproj before running this function
 
-# Copyright (C) 2018-2019, Mauricio \"Pacha\" Vargas.
-# This file is part of Open Trade Statistics project.
-# The scripts within this project are released under GNU General Public License 3.0.
-# This program is free software and comes with ABSOLUTELY NO WARRANTY.
-# You are welcome to redistribute it under certain conditions.
-# See https://github.com/tradestatistics/ts-yearly-datasets/LICENSE for the details.
-
 tables <- function() {
   # messages ----------------------------------------------------------------
 
-  message("Copyright (C) 2018-2019, Mauricio \"Pacha\" Vargas.
+  message("Copyright (C) 2018-2021, Mauricio \"Pacha\" Vargas.
 This file is part of Open Trade Statistics project.
 The scripts within this project are released under GNU General Public License 3.0.\n
 This program is free software and comes with ABSOLUTELY NO WARRANTY.
 You are welcome to redistribute it under certain conditions.
-See https://github.com/tradestatistics/ts-yearly-datasets/LICENSE for the details.\n")
+See https://github.com/tradestatistics/yearly-datasets/LICENSE for the details.\n")
   
   readline(prompt = "Press [enter] to continue if and only if you agree to the license terms")
 
@@ -362,6 +355,10 @@ See https://github.com/tradestatistics/ts-yearly-datasets/LICENSE for the detail
 
   attributes_products <- product_names %>%
     left_join(product_names_2)
+  
+  attributes_products <- attributes_products %>% 
+    select(product_code, product_fullname_english,
+           group_code, group_fullname_english = group_name)
 
   rm(product_names_2)
 

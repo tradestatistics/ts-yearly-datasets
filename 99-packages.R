@@ -17,12 +17,12 @@ if (!require("pacman")) install.packages("pacman")
 
 if (operating_system != "Windows") {
   pacman::p_load(
-    data.table, jsonlite, dplyr, tidyr, stringr, janitor, purrr, rlang,
-    economiccomplexity, Matrix, RPostgreSQL, glue, doParallel
+    data.table, jsonlite, tibble, dplyr, tidyr, stringr, janitor, purrr, rlang,
+    economiccomplexity, Matrix, RPostgres, glue, doParallel
   )
 } else {
   pacman::p_load(
-    data.table, jsonlite, dplyr, tidyr, stringr, janitor, purrr, rlang,
-    economiccomplexity, Matrix, RPostgreSQL, glue
+    data.table, jsonlite, tibble, dplyr, tidyr, stringr, janitor, purrr, rlang,
+    economiccomplexity, Matrix, RPostgres, glue
   )
 }

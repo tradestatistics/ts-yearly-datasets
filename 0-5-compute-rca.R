@@ -1,21 +1,12 @@
-# Open ts-yearly-datasets.Rproj before running this function
-
-# Copyright (C) 2018-2019, Mauricio \"Pacha\" Vargas.
-# This file is part of Open Trade Statistics project.
-# The scripts within this project are released under GNU General Public License 3.0.
-# This program is free software and comes with ABSOLUTELY NO WARRANTY.
-# You are welcome to redistribute it under certain conditions.
-# See https://github.com/tradestatistics/ts-yearly-datasets/LICENSE for the details.
-
 rca <- function() {
   # messages ----------------------------------------------------------------
 
-  message("Copyright (C) 2018-2019, Mauricio \"Pacha\" Vargas.
+  message("Copyright (C) 2018-2021, Mauricio \"Pacha\" Vargas.
 This file is part of Open Trade Statistics project.
 The scripts within this project are released under GNU General Public License 3.0.\n
 This program is free software and comes with ABSOLUTELY NO WARRANTY.
 You are welcome to redistribute it under certain conditions.
-See https://github.com/tradestatistics/ts-yearly-datasets/LICENSE for the details.\n")
+See https://github.com/tradestatistics/yearly-datasets/LICENSE for the details.\n")
   
   readline(prompt = "Press [enter] to continue if and only if you agree to the license terms")
 
@@ -80,14 +71,24 @@ See https://github.com/tradestatistics/ts-yearly-datasets/LICENSE for the detail
           )
         ) %>%
         ungroup() %>%
-        select(-c(trade_value_usd_t1, trade_value_usd_t2, trade_value_usd_t3)) %>%
-        ec_rca(
-          c = group_field,
-          p = "product_code",
-          v = "xcp",
-          discrete = F,
-          tbl = T
-        ) %>%
+        select(-c(trade_value_usd_t1, trade_value_usd_t2, trade_value_usd_t3))
+      
+      trade_t1 <- trade_t1 %>% 
+        balassa_index(
+          country = group_field,
+          product = "product_code",
+          value = "xcp",
+          discrete = F
+        )
+      
+      trade_t1 <- trade_t1 %>% 
+        as.matrix() %>% 
+        as.data.frame() %>% 
+        tibble::rownames_to_column("country") %>% 
+        gather("product", "value", -country) %>% 
+        as_tibble()
+        
+      trade_t1 <- trade_t1 %>% 
         rename(!!sym(group_field) := country, product_code = product) %>%
         mutate(year = years_full[t]) %>%
         select(year, !!sym(group_field), product_code, value)

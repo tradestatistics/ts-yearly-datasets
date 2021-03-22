@@ -57,10 +57,11 @@ if (dataset == 8) {
   classification2 <- "S4"
 }
 
-years <- revision2:2018
-years_full <- 1962:2018
+max_year <- 2020
+years <- revision2:max_year
+years_full <- 1962:max_year
 
 years_missing_t_minus_1 <- 1962
 years_missing_t_minus_2 <- 1963
 years_missing_t_minus_5 <- 1963:1966
-years_with_two_previous_recordings <- 1967:2018
+years_with_two_previous_recordings <- 1967:max_year

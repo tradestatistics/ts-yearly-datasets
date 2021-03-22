@@ -42,11 +42,11 @@ remove_outdated <- function(x,t) {
   )
 }
 
-con <- DBI::dbConnect(
-  DBI::dbDriver("PostgreSQL"),
-  host = dbhost,
-  port = dbport,
+con <- RPostgres::dbConnect(
+  RPostgres::Postgres(),
   user = dbusr,
   password = dbpwd,
-  dbname = dbname
+  dbname = dbname,
+  host = dbhost,
+  port = dbport
 )

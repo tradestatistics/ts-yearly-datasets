@@ -1,21 +1,14 @@
 # Open ts-yearly-datasets.Rproj before running this function
 
-# Copyright (C) 2018-2019, Mauricio \"Pacha\" Vargas.
-# This file is part of Open Trade Statistics project.
-# The scripts within this project are released under GNU General Public License 3.0.
-# This program is free software and comes with ABSOLUTELY NO WARRANTY.
-# You are welcome to redistribute it under certain conditions.
-# See https://github.com/tradestatistics/ts-yearly-datasets/LICENSE for the details.
-
 complexity <- function() {
   # messages ----------------------------------------------------------------
 
-  message("Copyright (C) 2018-2019, Mauricio \"Pacha\" Vargas.
+  message("Copyright (C) 2018-2021, Mauricio \"Pacha\" Vargas.
 This file is part of Open Trade Statistics project.
 The scripts within this project are released under GNU General Public License 3.0.\n
 This program is free software and comes with ABSOLUTELY NO WARRANTY.
 You are welcome to redistribute it under certain conditions.
-See https://github.com/tradestatistics/ts-yearly-datasets/LICENSE for the details.\n")
+See https://github.com/tradestatistics/yearly-datasets/LICENSE for the details.\n")
   
   readline(prompt = "Press [enter] to continue if and only if you agree to the license terms")
 
@@ -43,75 +36,100 @@ See https://github.com/tradestatistics/ts-yearly-datasets/LICENSE for the detail
     
     names(rca_data) <- c("country", "product", "value")
     
+    rca_data <- rca_data %>% 
+      spread(product, value) %>% 
+      as.data.frame()
+    
+    rownames_rca_data <- rca_data[, 1]
+    
+    rca_data <- as.matrix(rca_data[, -1])
+    rownames(rca_data) <- rownames_rca_data
+    rca_data <- Matrix(rca_data, sparse = TRUE)
+    
     if (!file.exists(yr[t])) {
-      reflections <- ec_complexity_measures(
-        rca = rca_data,
-        method = "reflections",
-        tbl = TRUE
-      )
+      reflections <- complexity_measures(rca_data, method = "reflections")
+      
+      reflections$complexity_index_country <- reflections$complexity_index_country %>% 
+        enframe(name = "country", value = "eci")
+      
+      reflections$complexity_index_product <- reflections$complexity_index_product %>% 
+        enframe(name = "product", value = "pci")
     }
     
     if (!file.exists(ye[t])) {
-      eigenvalues <- ec_complexity_measures(
-        rca = rca_data,
-        method = "eigenvalues",
-        tbl = TRUE
-      )
+      eigenvalues <- complexity_measures(rca_data, method = "eigenvalues")
+      
+      eigenvalues$complexity_index_country <- eigenvalues$complexity_index_country %>% 
+        enframe(name = "country", value = "eci")
+      
+      eigenvalues$complexity_index_product <- eigenvalues$complexity_index_product %>% 
+        enframe(name = "product", value = "pci")
     }
     
     if (!file.exists(yf[t])) {
-      fitness <- ec_complexity_measures(
-        rca = rca_data,
-        method = "fitness",
-        tbl = TRUE
-      )
+      fitness <- complexity_measures(rca_data, method = "fitness")
+      
+      fitness$complexity_index_country <- fitness$complexity_index_country %>% 
+        enframe(name = "country", value = "eci")
+      
+      fitness$complexity_index_product <- fitness$complexity_index_product %>% 
+        enframe(name = "product", value = "pci")
     }
     
     # save ECI ----
     
     if (!file.exists(yr[t])) {
-      saveRDS(reflections$complexity_index_c, file = yr[t], compress = "xz")
+      saveRDS(reflections$complexity_index_country, file = yr[t], compress = "xz")
     }
     
     if (!file.exists(ye[t])) {
-      saveRDS(eigenvalues$complexity_index_c, file = ye[t], compress = "xz")
+      saveRDS(eigenvalues$complexity_index_country, file = ye[t], compress = "xz")
     }
     
     if (!file.exists(yf[t])) {
-      saveRDS(fitness$complexity_index_c, file = yf[t], compress = "xz")
+      saveRDS(fitness$complexity_index_country, file = yf[t], compress = "xz")
     }
     
     # save PCI ----
     
     if (!file.exists(zr[t])) {
-      saveRDS(reflections$complexity_index_p, file = zr[t], compress = "xz")
+      saveRDS(reflections$complexity_index_product, file = zr[t], compress = "xz")
     }
     
     if (!file.exists(ze[t])) {
-      saveRDS(eigenvalues$complexity_index_p, file = ze[t], compress = "xz")
+      saveRDS(eigenvalues$complexity_index_product, file = ze[t], compress = "xz")
     }
     
     if (!file.exists(zf[t])) {
-      saveRDS(fitness$complexity_index_p, file = zf[t], compress = "xz")
+      saveRDS(fitness$complexity_index_product, file = zf[t], compress = "xz")
     }
     
     # proximity ----
     
     if (!file.exists(q[t]) | !file.exists(w[t])) {
-      proximity <- ec_proximity(
-        rca = rca_data,
-        d = fitness$diversity,
-        u = fitness$ubiquity,
-        tbl = TRUE
-      )
+      pro <- proximity(rca_data)
+      
+      pro$proximity_country <- pro$proximity_country %>% 
+        as.matrix() %>% 
+        as.data.frame() %>% 
+        tibble::rownames_to_column("country1") %>% 
+        gather("country2", "proximity", -country1) %>% 
+        as_tibble()
+      
+      pro$proximity_product <- pro$proximity_product %>% 
+        as.matrix() %>% 
+        as.data.frame() %>% 
+        tibble::rownames_to_column("product1") %>% 
+        gather("product2", "proximity", -product1) %>% 
+        as_tibble()
     }
     
     if (!file.exists(q[t])) {
-      saveRDS(proximity$proximity_c, file = q[t], compress = "xz")
+      saveRDS(pro$proximity_country, file = q[t], compress = "xz")
     }
     
     if (!file.exists(w[t])) {
-      saveRDS(proximity$proximity_p, file = w[t], compress = "xz")
+      saveRDS(pro$proximity_product, file = w[t], compress = "xz")
     }
   }
   
@@ -158,8 +176,7 @@ See https://github.com/tradestatistics/ts-yearly-datasets/LICENSE for the detail
   
   tidy_eci <- function(d,t) {
     readRDS(d) %>% 
-      arrange(-value) %>%
-      rename(eci = value) %>%
+      arrange(-eci) %>%
       mutate(
         year = t,
         eci_rank = row_number()
@@ -186,8 +203,7 @@ See https://github.com/tradestatistics/ts-yearly-datasets/LICENSE for the detail
   
   tidy_pci <- function(d,t) {
     readRDS(d) %>% 
-      arrange(-value) %>%
-      rename(pci = value) %>%
+      arrange(-pci) %>%
       mutate(
         year = t,
         pci_rank = row_number()
