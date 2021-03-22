@@ -1,6 +1,6 @@
 # Open ts-yearly-datasets.Rproj before running this function
 
-# Copyright (C) 2018-2019, Mauricio \"Pacha\" Vargas.
+# Copyright (C) 2018-2021, Mauricio \"Pacha\" Vargas.
 # This file is part of Open Trade Statistics project.
 # The scripts within this project are released under GNU General Public License 3.0.
 # This program is free software and comes with ABSOLUTELY NO WARRANTY.
@@ -92,12 +92,12 @@ proximity_products_dir <- sprintf("%s/hs-rev2007-proximity-products", metrics_di
 try(dir.create(proximity_products_dir))
 proximity_products_rds <- sprintf("%s/proximity-products-%s.rds", proximity_products_dir, years_full)
 
-eci_dir <- sprintf("%s/hs-rev2007-eci", metrics_dir)
-try(dir.create(eci_dir))
+cci_dir <- sprintf("%s/hs-rev2007-cci", metrics_dir)
+try(dir.create(cci_dir))
 
-eci_rankings_r_rds <- sprintf("%s/eci-reflections-%s.rds", eci_dir, years_full)
-eci_rankings_e_rds <- sprintf("%s/eci-eigenvalues-%s.rds", eci_dir, years_full)
-eci_rankings_f_rds <- sprintf("%s/eci-fitness-%s.rds", eci_dir, years_full)
+cci_rankings_r_rds <- sprintf("%s/cci-reflections-%s.rds", cci_dir, years_full)
+cci_rankings_e_rds <- sprintf("%s/cci-eigenvalues-%s.rds", cci_dir, years_full)
+cci_rankings_f_rds <- sprintf("%s/cci-fitness-%s.rds", cci_dir, years_full)
 
 pci_dir <- sprintf("%s/hs-rev2007-pci", metrics_dir)
 try(dir.create(pci_dir))
@@ -106,9 +106,9 @@ pci_rankings_r_rds <- sprintf("%s/pci-reflections-%s.rds", pci_dir, years_full)
 pci_rankings_e_rds <- sprintf("%s/pci-eigenvalues-%s.rds", pci_dir, years_full)
 pci_rankings_f_rds <- sprintf("%s/pci-fitness-%s.rds", pci_dir, years_full)
 
-eci_files <- paste0(eci_dir, c("/eci-reflections-joined-ranking.rds",
-               "/eci-eigenvalues-joined-ranking.rds",
-               "/eci-fitness-joined-ranking.rds"))
+cci_files <- paste0(cci_dir, c("/cci-reflections-joined-ranking.rds",
+               "/cci-eigenvalues-joined-ranking.rds",
+               "/cci-fitness-joined-ranking.rds"))
 
 pci_files <- paste0(pci_dir, c("/pci-reflections-joined-ranking.rds",
                "/pci-eigenvalues-joined-ranking.rds",

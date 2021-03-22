@@ -33,11 +33,11 @@ See https://github.com/tradestatistics/yearly-datasets/LICENSE for the details.\
   }
   
   compute_tables <- function(t) {
-    # PCI/ECI data ------------------------------------------------------------
+    # PCI/CCI data ------------------------------------------------------------
     
-    eci_f <- readRDS("05-metrics/hs-rev2007-eci/eci-fitness-joined-ranking.rds")
-    eci_r <- readRDS("05-metrics/hs-rev2007-eci/eci-reflections-joined-ranking.rds")
-    eci_e <- readRDS("05-metrics/hs-rev2007-eci/eci-eigenvalues-joined-ranking.rds")
+    cci_f <- readRDS("05-metrics/hs-rev2007-cci/cci-fitness-joined-ranking.rds")
+    cci_r <- readRDS("05-metrics/hs-rev2007-cci/cci-reflections-joined-ranking.rds")
+    cci_e <- readRDS("05-metrics/hs-rev2007-cci/cci-eigenvalues-joined-ranking.rds")
     
     pci_f <- readRDS("05-metrics/hs-rev2007-pci/pci-fitness-joined-ranking.rds")
     pci_r <- readRDS("05-metrics/hs-rev2007-pci/pci-reflections-joined-ranking.rds")
@@ -127,28 +127,28 @@ See https://github.com/tradestatistics/yearly-datasets/LICENSE for the details.\
     # YR -------------------------------------------------------------------
     
     if (!file.exists(yr_rds[t])) {
-      eci_f <- eci_f %>%
+      cci_f <- cci_f %>%
         filter(year == years_full[[t]]) %>%
         select(-year) %>%
         rename(
-          eci_fitness_method = eci,
-          eci_rank_fitness_method = eci_rank
+          cci_fitness_method = cci,
+          cci_rank_fitness_method = cci_rank
         )
       
-      eci_r <- eci_r %>%
+      cci_r <- cci_r %>%
         filter(year == years_full[[t]]) %>%
         select(-year) %>%
         rename(
-          eci_reflections_method = eci,
-          eci_rank_reflections_method = eci_rank
+          cci_reflections_method = cci,
+          cci_rank_reflections_method = cci_rank
         )
       
-      eci_e <- eci_e %>%
+      cci_e <- cci_e %>%
         filter(year == years_full[[t]]) %>%
         select(-year) %>%
         rename(
-          eci_eigenvalues_method = eci,
-          eci_rank_eigenvalues_method = eci_rank
+          cci_eigenvalues_method = cci,
+          cci_rank_eigenvalues_method = cci_rank
         )
       
       max_exp <- yrpc %>%
@@ -188,9 +188,9 @@ See https://github.com/tradestatistics/yearly-datasets/LICENSE for the details.\
         select(-trade_balance)
       
       yr <- yr %>% 
-        left_join(eci_f, by = c("reporter_iso" = "country")) %>%
-        left_join(eci_r, by = c("reporter_iso" = "country")) %>%
-        left_join(eci_e, by = c("reporter_iso" = "country")) %>%
+        left_join(cci_f, by = c("reporter_iso" = "country")) %>%
+        left_join(cci_r, by = c("reporter_iso" = "country")) %>%
+        left_join(cci_e, by = c("reporter_iso" = "country")) %>%
         left_join(max_exp, by = "reporter_iso") %>%
         left_join(max_imp, by = "reporter_iso")
       
@@ -198,7 +198,7 @@ See https://github.com/tradestatistics/yearly-datasets/LICENSE for the details.\
       
       rm(
         yr,
-        eci_f, eci_r, eci_e,
+        cci_f, cci_r, cci_e,
         max_exp, max_imp
       )
     }
